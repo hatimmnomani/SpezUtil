@@ -1,9 +1,9 @@
 import type { CalendarVariantConfig, HijriDate } from "./types";
 
-// Astronomical epoch: Thursday 15 July 622 CE (Julian) == JD 1948439.5.
-// Validated/adjusted against anchor dates in a later task.
+// Epoch: 1 Muharram 1 AH = 15 July 622 CE (Julian). epochJd calibrated to 1948438.5
+// against authoritative anchors (Lokhandwala Misri conversion tables). See anchors.test.ts.
 export const BOHRA_VARIANT: CalendarVariantConfig = {
-  epochJd: 1948439.5,
+  epochJd: 1948438.5,
   leapYears: [2, 5, 8, 10, 13, 16, 19, 21, 24, 27, 29],
 };
 
