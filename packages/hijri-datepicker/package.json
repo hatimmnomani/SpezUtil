@@ -1,0 +1,33 @@
+{
+  "name": "@digitaltakeoff/hijri-datepicker",
+  "version": "0.0.0",
+  "description": "Zero-dependency Hijri date picker Web Component.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": ["**/*.css", "./dist/index.js"],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@digitaltakeoff/hijri-core": "workspace:*"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
