@@ -1,6 +1,7 @@
 import { HijriDatepicker } from "./hijri-datepicker";
 
 export { HijriDatepicker } from "./hijri-datepicker";
+export { buildMonthModel } from "./render";
 export type { DayCell, MonthModel } from "./render";
 
 if (typeof customElements !== "undefined" && !customElements.get("hijri-datepicker")) {

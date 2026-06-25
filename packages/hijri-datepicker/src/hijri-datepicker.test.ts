@@ -39,38 +39,32 @@ describe("<hijri-datepicker>", () => {
     expect(disabled.length).toBeGreaterThan(0);
   });
 
-  it("moves focus with arrow keys and selects with Enter", () => {
+  it("ArrowRight moves roving tabindex one cell forward", () => {
     const el = mount({ value: "2024-03-15" });
     const grid = el.shadowRoot!.querySelector(".grid") as HTMLElement;
+    const before = Array.from(
+      el.shadowRoot!.querySelectorAll<HTMLButtonElement>("[data-i]")
+    );
+    const initial = before.findIndex((b) => b.tabIndex === 0);
+    grid.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    const after = Array.from(
+      el.shadowRoot!.querySelectorAll<HTMLButtonElement>("[data-i]")
+    );
+    const moved = after.findIndex((b) => b.tabIndex === 0);
+    expect(initial).toBeGreaterThanOrEqual(0);
+    expect(moved).toBe(initial + 1);
+  });
+
+  it("Enter on a focused day button selects that exact cell", () => {
+    const el = mount({ value: "2024-03-15" });
     let detail: any = null;
     el.addEventListener("change", (e) => (detail = (e as CustomEvent).detail));
-
-    // Find the initially focused button (the one with tabIndex=0)
-    const dayButtons = Array.from(
-      el.shadowRoot!.querySelectorAll<HTMLButtonElement>("[data-i]")
-    );
-    const initialFocusedIdx = dayButtons.findIndex((b) => b.tabIndex === 0);
-
-    grid.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })
-    );
-
-    // jsdom has incomplete focus tracking inside shadow roots.
-    // Instead of checking shadowRoot.activeElement (which jsdom doesn't track reliably),
-    // we verify roving tabindex: exactly one button should have tabIndex=0 and it
-    // should differ from the initial focused button.
-    const updatedButtons = Array.from(
-      el.shadowRoot!.querySelectorAll<HTMLButtonElement>("[data-i]")
-    );
-    const newFocusedIdx = updatedButtons.findIndex((b) => b.tabIndex === 0);
-    expect(newFocusedIdx).not.toBe(-1);
-    // The focused button should have moved (ArrowRight moves +1, skipping disabled)
-    expect(newFocusedIdx).not.toBe(initialFocusedIdx);
-    const focusedBtn = updatedButtons[newFocusedIdx]!;
-    expect(focusedBtn.classList.contains("cell")).toBe(true);
-
-    // Now simulate Enter on the focused button to trigger selection
-    focusedBtn.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    const btn = el.shadowRoot!.querySelector(
+      '.cell:not(.out):not([disabled])'
+    ) as HTMLButtonElement;
+    const labelDate = btn.getAttribute("aria-label")!.match(/\((\d{4}-\d{2}-\d{2})\)/)![1];
+    btn.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     expect(detail).toBeTruthy();
+    expect(detail.gregorian).toBe(labelDate);
   });
 });

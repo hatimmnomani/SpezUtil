@@ -16,7 +16,8 @@ export const styles = `
 .header button:hover { background: #f0f0f0; }
 .title { font-weight: 600; text-align: center; }
 .title small { display: block; font-weight: 400; color: var(--dtp-muted); font-size: 11px; }
-.grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.grid { display: flex; flex-direction: column; gap: 2px; }
+.dow-row, .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
 .dow { text-align: center; font-size: 11px; color: var(--dtp-muted); padding: 4px 0; }
 .cell { aspect-ratio: 1; border: none; background: none; cursor: pointer; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; color: var(--dtp-fg); }
 .cell:hover:not([disabled]) { background: #f0f0f0; }

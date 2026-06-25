@@ -71,6 +71,7 @@ export class HijriDatepicker extends HTMLElement {
     return (h, g) => {
       if (min && g.getTime() < min.getTime()) return true;
       if (max && g.getTime() > max.getTime()) return true;
+      // weekday numbers are UTC-based (0=Sunday..6=Saturday)
       if (disabledDows.includes(g.getUTCDay())) return true;
       if (this.isDateDisabled && this.isDateDisabled(h, g)) return true;
       return false;
@@ -102,7 +103,6 @@ export class HijriDatepicker extends HTMLElement {
         detail: { hijri: cell.hijri, gregorian: toIso(cell.gregorian) },
       })
     );
-    this.render();
   }
 
   private render(): void {
@@ -132,24 +132,29 @@ export class HijriDatepicker extends HTMLElement {
           <button type="button" part="nav-next" aria-label="Next month" data-nav="1">›</button>
         </div>
         <div class="grid" role="grid">
-          ${weekdayNames.map((d) => `<div class="dow" role="columnheader">${d.slice(0, 2)}</div>`).join("")}
+          <div class="dow-row" role="row">
+            ${weekdayNames.map((d) => `<div class="dow" role="columnheader">${d.slice(0, 2)}</div>`).join("")}
+          </div>
           ${model.weeks
-            .flat()
-            .map((cell, i) => {
-              const cls = [
-                "cell",
-                cell.inCurrentMonth ? "" : "out",
-                cell.isToday ? "today" : "",
-              ]
-                .filter(Boolean)
-                .join(" ");
-              const label = `${formatHijri(cell.hijri, "D MMMM YYYY")} (${toIso(cell.gregorian)})`;
-              return `<button type="button" part="day" class="${cls}" role="gridcell"
-                data-i="${i}" aria-selected="${cell.selected}" aria-label="${label}"
-                tabindex="-1" ${cell.disabled ? "disabled" : ""}>
-                <span class="hijri">${cell.hijri.day}</span>
-                <span class="greg">${cell.gregorian.getUTCDate()}</span>
-              </button>`;
+            .map((week, w) => {
+              const cells = week.map((cell, d) => {
+                const i = w * 7 + d;
+                const cls = [
+                  "cell",
+                  cell.inCurrentMonth ? "" : "out",
+                  cell.isToday ? "today" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
+                const label = `${formatHijri(cell.hijri, "D MMMM YYYY")} (${toIso(cell.gregorian)})`;
+                return `<button type="button" part="day" class="${cls}" role="gridcell"
+                  data-i="${i}" aria-selected="${cell.selected}" aria-label="${label}"
+                  tabindex="-1" ${cell.disabled ? "disabled" : ""}>
+                  <span class="hijri">${cell.hijri.day}</span>
+                  <span class="greg">${cell.gregorian.getUTCDate()}</span>
+                </button>`;
+              }).join("");
+              return `<div class="week" role="row">${cells}</div>`;
             })
             .join("")}
         </div>
@@ -186,8 +191,13 @@ export class HijriDatepicker extends HTMLElement {
 
     const grid = this.root.querySelector(".grid") as HTMLElement;
     grid.addEventListener("keydown", (e: KeyboardEvent) => {
-      const current = this.root.activeElement as HTMLButtonElement | null;
-      const idx = current ? dayButtons.indexOf(current) : initialIdx;
+      const active = this.root.activeElement as HTMLElement | null;
+      const fromEl = (
+        active && active.matches?.("[data-i]")
+          ? active
+          : (e.target as HTMLElement | null)?.closest?.("[data-i]") ?? null
+      ) as HTMLButtonElement | null;
+      const idx = fromEl ? dayButtons.indexOf(fromEl) : -1;
       const deltas: Record<string, number> = {
         ArrowRight: 1,
         ArrowLeft: -1,
@@ -199,8 +209,9 @@ export class HijriDatepicker extends HTMLElement {
         moveFocus(idx === -1 ? initialIdx : idx, deltas[e.key] ?? 0);
       } else if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        if (idx >= 0) {
-          const cell = flat[Number(dayButtons[idx]?.dataset.i)];
+        const useIdx = idx === -1 ? initialIdx : idx;
+        if (useIdx >= 0) {
+          const cell = flat[Number(dayButtons[useIdx]?.dataset.i)];
           if (cell) this.select(cell);
         }
       }
