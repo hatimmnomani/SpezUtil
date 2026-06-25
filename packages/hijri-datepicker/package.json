@@ -4,7 +4,7 @@
   "description": "Zero-dependency Hijri date picker Web Component.",
   "license": "Apache-2.0",
   "type": "module",
-  "sideEffects": ["**/*.css", "./dist/index.js"],
+  "sideEffects": ["**/*.css", "./dist/index.js", "./dist/index.cjs"],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
