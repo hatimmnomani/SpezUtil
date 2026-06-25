@@ -146,7 +146,7 @@ export class HijriDatepicker extends HTMLElement {
               const label = `${formatHijri(cell.hijri, "D MMMM YYYY")} (${toIso(cell.gregorian)})`;
               return `<button type="button" part="day" class="${cls}" role="gridcell"
                 data-i="${i}" aria-selected="${cell.selected}" aria-label="${label}"
-                ${cell.disabled ? "disabled" : ""}>
+                tabindex="-1" ${cell.disabled ? "disabled" : ""}>
                 <span class="hijri">${cell.hijri.day}</span>
                 <span class="greg">${cell.gregorian.getUTCDate()}</span>
               </button>`;
