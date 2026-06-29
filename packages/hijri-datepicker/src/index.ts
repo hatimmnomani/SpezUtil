@@ -1,6 +1,13 @@
 import { HijriDatepicker } from "./hijri-datepicker";
 
 export { HijriDatepicker } from "./hijri-datepicker";
+export type {
+  ChangeDetail,
+  SingleChangeDetail,
+  RangeChangeDetail,
+  MultipleChangeDetail,
+  RangeEndpoint,
+} from "./hijri-datepicker";
 export { buildMonthModel } from "./render";
 export type { DayCell, MonthModel } from "./render";
 

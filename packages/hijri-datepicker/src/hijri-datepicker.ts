@@ -17,6 +17,31 @@ import {
 } from "./time";
 import { styles } from "./styles";
 
+export interface SingleChangeDetail {
+  mode: "single";
+  hijri: HijriDate;
+  gregorian: string;
+  time?: Time;
+}
+export interface RangeEndpoint {
+  hijri: HijriDate;
+  gregorian: string;
+}
+export interface RangeChangeDetail {
+  mode: "range";
+  start: RangeEndpoint | null;
+  end: RangeEndpoint | null;
+}
+export interface MultipleChangeDetail {
+  mode: "multiple";
+  hijri: HijriDate[];
+  gregorian: string[];
+}
+export type ChangeDetail =
+  | SingleChangeDetail
+  | RangeChangeDetail
+  | MultipleChangeDetail;
+
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
 function parseIsoUtc(s: string | null): Date | null {
@@ -49,7 +74,7 @@ export class HijriDatepicker extends HTMLElement {
   private root: ShadowRoot;
   private view: { year: number; month: number };
 
-  private mode: Mode = "single";
+  private _mode: Mode = "single";
   private selected: HijriDate | null = null; // single
   private selectedList: HijriDate[] = []; // multiple
   private rangeStart: HijriDate | null = null;
@@ -61,6 +86,33 @@ export class HijriDatepicker extends HTMLElement {
   private suppress = false;
 
   public isDateDisabled?: (hijri: HijriDate, gregorian: Date) => boolean;
+
+  private reflect(name: string, v: string | null): void {
+    if (v === null) this.removeAttribute(name);
+    else this.setAttribute(name, v);
+  }
+
+  get value(): string | null { return this.getAttribute("value"); }
+  set value(v: string | null) { this.reflect("value", v); }
+  get start(): string | null { return this.getAttribute("start"); }
+  set start(v: string | null) { this.reflect("start", v); }
+  get end(): string | null { return this.getAttribute("end"); }
+  set end(v: string | null) { this.reflect("end", v); }
+  get mode(): string | null { return this.getAttribute("mode"); }
+  set mode(v: string | null) { this.reflect("mode", v); }
+  get min(): string | null { return this.getAttribute("min"); }
+  set min(v: string | null) { this.reflect("min", v); }
+  get max(): string | null { return this.getAttribute("max"); }
+  set max(v: string | null) { this.reflect("max", v); }
+  get timeFormat(): string | null { return this.getAttribute("time-format"); }
+  set timeFormat(v: string | null) { this.reflect("time-format", v); }
+  get disabledWeekdays(): string | null { return this.getAttribute("disabled-weekdays"); }
+  set disabledWeekdays(v: string | null) { this.reflect("disabled-weekdays", v); }
+  get enableTime(): boolean { return this.hasAttribute("enable-time"); }
+  set enableTime(v: boolean) {
+    if (v) this.setAttribute("enable-time", "");
+    else this.removeAttribute("enable-time");
+  }
 
   constructor() {
     super();
@@ -98,15 +150,15 @@ export class HijriDatepicker extends HTMLElement {
   }
 
   private syncFromAttrs(): void {
-    this.mode = isMode(this.getAttribute("mode"));
-    if (this.mode === "range") {
+    this._mode = isMode(this.getAttribute("mode"));
+    if (this._mode === "range") {
       const s = parseIsoUtc(this.getAttribute("start"));
       const e = parseIsoUtc(this.getAttribute("end"));
       this.rangeStart = s ? this.g2h(s) : null;
       this.rangeEnd = e ? this.g2h(e) : null;
       this.hoverDate = null;
       if (this.rangeStart) this.view = { year: this.rangeStart.year, month: this.rangeStart.month };
-    } else if (this.mode === "multiple") {
+    } else if (this._mode === "multiple") {
       const isos = parseIsoList(this.getAttribute("value"));
       this.selectedList = isos
         .map((iso) => parseIsoUtc(iso))
@@ -152,7 +204,7 @@ export class HijriDatepicker extends HTMLElement {
     this.render();
   }
 
-  private emit(detail: Record<string, unknown>): void {
+  private emit(detail: ChangeDetail): void {
     this.dispatchEvent(
       new CustomEvent("change", { bubbles: true, composed: true, detail })
     );
@@ -160,8 +212,8 @@ export class HijriDatepicker extends HTMLElement {
 
   private select(cell: DayCell): void {
     if (cell.disabled) return;
-    if (this.mode === "range") return this.selectRange(cell);
-    if (this.mode === "multiple") return this.selectMultiple(cell);
+    if (this._mode === "range") return this.selectRange(cell);
+    if (this._mode === "multiple") return this.selectMultiple(cell);
     return this.selectSingle(cell);
   }
 
@@ -225,8 +277,8 @@ export class HijriDatepicker extends HTMLElement {
     this.render();
     this.emit({
       mode: "range",
-      start: { hijri: this.rangeStart, gregorian: startIso },
-      end: { hijri: this.rangeEnd, gregorian: endIso },
+      start: { hijri: this.rangeStart!, gregorian: startIso },
+      end: { hijri: this.rangeEnd!, gregorian: endIso },
     });
   }
 
@@ -236,12 +288,12 @@ export class HijriDatepicker extends HTMLElement {
       const iso = this.h2iso(this.selected);
       const value = combineDateTime(iso, t);
       this.applyAttrs(() => this.setAttribute("value", value));
-      this.emit({ mode: "single", hijri: this.selected, gregorian: value, time: t });
+      this.emit({ mode: "single", hijri: this.selected!, gregorian: value, time: t });
     }
   }
 
   private paintRange(hoverHijri: HijriDate | null): void {
-    if (this.mode !== "range" || !this.rangeStart || this.rangeEnd) return;
+    if (this._mode !== "range" || !this.rangeStart || this.rangeEnd) return;
     const startT = this.cal.hijriToGregorian(this.rangeStart).getTime();
     const endT = hoverHijri ? this.cal.hijriToGregorian(hoverHijri).getTime() : startT;
     const lo = Math.min(startT, endT);
@@ -256,7 +308,7 @@ export class HijriDatepicker extends HTMLElement {
   }
 
   private renderTimeRow(): string {
-    if (this.mode !== "single" || !this.hasAttribute("enable-time")) return "";
+    if (this._mode !== "single" || !this.hasAttribute("enable-time")) return "";
     const t: Time = this.time ?? { hour: 0, minute: 0 };
     const is12 = this.getAttribute("time-format") === "12";
     if (is12) {
@@ -307,10 +359,10 @@ export class HijriDatepicker extends HTMLElement {
 
   private render(): void {
     const model = buildMonthModel(this.cal, this.view, {
-      selected: this.mode === "single" ? this.selected : null,
-      selectedList: this.mode === "multiple" ? this.selectedList : undefined,
-      rangeStart: this.mode === "range" ? this.rangeStart : null,
-      rangeEnd: this.mode === "range" ? this.rangeEnd ?? this.hoverDate : null,
+      selected: this._mode === "single" ? this.selected : null,
+      selectedList: this._mode === "multiple" ? this.selectedList : undefined,
+      rangeStart: this._mode === "range" ? this.rangeStart : null,
+      rangeEnd: this._mode === "range" ? this.rangeEnd ?? this.hoverDate : null,
       isDisabled: this.buildDisabledFn(),
       today: new Date(),
     });
@@ -378,7 +430,7 @@ export class HijriDatepicker extends HTMLElement {
     this.root.querySelectorAll<HTMLButtonElement>("[data-i]").forEach((btn) => {
       const cell = flat[Number(btn.dataset.i)]!;
       btn.addEventListener("click", () => this.select(cell));
-      if (this.mode === "range" && this.rangeStart && !this.rangeEnd) {
+      if (this._mode === "range" && this.rangeStart && !this.rangeEnd) {
         btn.addEventListener("mouseenter", () => {
           this.hoverDate = cell.hijri;
           this.paintRange(cell.hijri);
@@ -438,7 +490,7 @@ export class HijriDatepicker extends HTMLElement {
     });
 
     grid.addEventListener("mouseleave", () => {
-      if (this.mode === "range" && this.rangeStart && !this.rangeEnd) {
+      if (this._mode === "range" && this.rangeStart && !this.rangeEnd) {
         this.hoverDate = null;
         this.paintRange(null);
       }

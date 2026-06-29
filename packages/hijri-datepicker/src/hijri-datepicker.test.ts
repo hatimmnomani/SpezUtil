@@ -132,4 +132,24 @@ describe("<hijri-datepicker>", () => {
     const ampm = el.shadowRoot!.querySelector('[data-time="meridiem"]');
     expect(ampm).toBeTruthy();
   });
+
+  it("reflects properties to attributes", () => {
+    const el = document.createElement("hijri-datepicker") as any;
+    el.value = "2024-03-15";
+    el.mode = "range";
+    el.min = "2024-01-01";
+    el.enableTime = true;
+    el.timeFormat = "12";
+    el.disabledWeekdays = "5,6";
+    expect(el.getAttribute("value")).toBe("2024-03-15");
+    expect(el.getAttribute("mode")).toBe("range");
+    expect(el.getAttribute("min")).toBe("2024-01-01");
+    expect(el.hasAttribute("enable-time")).toBe(true);
+    expect(el.getAttribute("time-format")).toBe("12");
+    expect(el.getAttribute("disabled-weekdays")).toBe("5,6");
+    el.value = null;
+    el.enableTime = false;
+    expect(el.hasAttribute("value")).toBe(false);
+    expect(el.hasAttribute("enable-time")).toBe(false);
+  });
 });
