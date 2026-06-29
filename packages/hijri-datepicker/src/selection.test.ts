@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isMode, parseIsoList, toggleIso } from "./selection";
+import { isMode, parseIsoList } from "./selection";
 
 describe("selection helpers", () => {
   it("normalizes mode attribute", () => {
@@ -19,13 +19,4 @@ describe("selection helpers", () => {
     expect(parseIsoList("")).toEqual([]);
   });
 
-  it("toggles an iso in/out and keeps the list sorted", () => {
-    expect(toggleIso(["2024-03-12"], "2024-03-10")).toEqual([
-      "2024-03-10",
-      "2024-03-12",
-    ]);
-    expect(toggleIso(["2024-03-10", "2024-03-12"], "2024-03-12")).toEqual([
-      "2024-03-10",
-    ]);
-  });
 });

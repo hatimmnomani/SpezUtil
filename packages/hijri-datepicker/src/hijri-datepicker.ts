@@ -6,7 +6,7 @@ import {
   type HijriCalendar,
   type HijriDate,
 } from "@digitaltakeoff/hijri-core";
-import { buildMonthModel, type DayCell } from "./render";
+import { buildMonthModel, sameHijri, type DayCell } from "./render";
 import { isMode, parseIsoList, type Mode } from "./selection";
 import {
   combineDateTime,
@@ -27,10 +27,6 @@ function parseIsoUtc(s: string | null): Date | null {
 
 function toIso(date: Date): string {
   return date.toISOString().slice(0, 10);
-}
-
-function sameHijri(a: HijriDate, b: HijriDate): boolean {
-  return a.year === b.year && a.month === b.month && a.day === b.day;
 }
 
 export class HijriDatepicker extends HTMLElement {
@@ -94,8 +90,11 @@ export class HijriDatepicker extends HTMLElement {
 
   private applyAttrs(fn: () => void): void {
     this.suppress = true;
-    fn();
-    this.suppress = false;
+    try {
+      fn();
+    } finally {
+      this.suppress = false;
+    }
   }
 
   private syncFromAttrs(): void {
@@ -119,7 +118,7 @@ export class HijriDatepicker extends HTMLElement {
       const { date, time } = splitDateTime(this.getAttribute("value"));
       const d = parseIsoUtc(date);
       this.selected = d ? this.g2h(d) : null;
-      this.time = time;
+      this.time = time ?? this.time;
       if (this.selected) this.view = { year: this.selected.year, month: this.selected.month };
     }
   }

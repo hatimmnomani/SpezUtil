@@ -14,7 +14,3 @@ export function parseIsoList(v: string | null): string[] {
     .filter((s) => ISO_DATE.test(s));
 }
 
-export function toggleIso(list: string[], iso: string): string[] {
-  const next = list.includes(iso) ? list.filter((x) => x !== iso) : [...list, iso];
-  return next.sort();
-}

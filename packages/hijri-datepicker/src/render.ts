@@ -28,7 +28,7 @@ export interface BuildOptions {
   today?: Date;
 }
 
-function sameHijri(a: HijriDate, b: HijriDate): boolean {
+export function sameHijri(a: HijriDate, b: HijriDate): boolean {
   return a.year === b.year && a.month === b.month && a.day === b.day;
 }
 

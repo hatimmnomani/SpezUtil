@@ -28,6 +28,7 @@ describe("time helpers", () => {
     expect(from12(12, "AM")).toBe(0);
     expect(from12(1, "PM")).toBe(13);
     expect(from12(12, "PM")).toBe(12);
+    expect(to12(12)).toEqual({ hour12: 12, meridiem: "PM" });
   });
 
   it("combines and splits date+time", () => {
