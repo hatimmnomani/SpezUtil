@@ -67,4 +67,69 @@ describe("<hijri-datepicker>", () => {
     expect(detail).toBeTruthy();
     expect(detail.gregorian).toBe(labelDate);
   });
+
+  it("range mode: two clicks set start/end and emit a range change", () => {
+    const el = mount({ mode: "range", start: "2024-03-15" });
+    let detail: any = null;
+    el.addEventListener("change", (e) => (detail = (e as CustomEvent).detail));
+    const enabled = Array.from(
+      el.shadowRoot!.querySelectorAll<HTMLButtonElement>('.cell:not(.out):not([disabled])')
+    );
+    const startBtn = enabled.find((b) => b.classList.contains("range-start"))!;
+    const startIdx = enabled.indexOf(startBtn);
+    const endBtn = enabled[startIdx + 3]!;
+    endBtn.click();
+    expect(detail).toBeTruthy();
+    expect(detail.mode).toBe("range");
+    expect(detail.start.gregorian).toBe("2024-03-15");
+    expect(detail.end.gregorian).toBe(endBtn.getAttribute("aria-label")!.match(/\((\d{4}-\d{2}-\d{2})\)/)![1]);
+    expect(el.getAttribute("end")).toBe(detail.end.gregorian);
+  });
+
+  it("range mode: hovering after start paints an in-range band", () => {
+    const el = mount({ mode: "range", start: "2024-03-15" });
+    const enabled = Array.from(
+      el.shadowRoot!.querySelectorAll<HTMLButtonElement>('.cell:not(.out):not([disabled])')
+    );
+    const startIdx = enabled.findIndex((b) => b.classList.contains("range-start"));
+    const hoverBtn = enabled[startIdx + 4]!;
+    hoverBtn.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
+    const band = el.shadowRoot!.querySelectorAll(".cell.in-range");
+    expect(band.length).toBeGreaterThan(0);
+  });
+
+  it("multiple mode: clicking toggles dates and emits the full list", () => {
+    const el = mount({ mode: "multiple" });
+    let detail: any = null;
+    el.addEventListener("change", (e) => (detail = (e as CustomEvent).detail));
+    const cells = Array.from(
+      el.shadowRoot!.querySelectorAll<HTMLButtonElement>('.cell:not(.out):not([disabled])')
+    );
+    cells[0]!.click();
+    cells[2]!.click();
+    expect(detail.mode).toBe("multiple");
+    expect(detail.gregorian.length).toBe(2);
+    expect(el.getAttribute("value")!.split(",").length).toBe(2);
+    cells[0]!.click();
+    expect(detail.gregorian.length).toBe(1);
+  });
+
+  it("time picker: changing the hour updates value to a datetime and emits time", () => {
+    const el = mount({ value: "2024-03-15", "enable-time": "", "time-format": "24" });
+    let detail: any = null;
+    el.addEventListener("change", (e) => (detail = (e as CustomEvent).detail));
+    const hour = el.shadowRoot!.querySelector('[data-time="hour"]') as HTMLInputElement;
+    expect(hour).toBeTruthy();
+    hour.value = "14";
+    hour.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(el.getAttribute("value")).toBe("2024-03-15T14:00");
+    expect(detail.mode).toBe("single");
+    expect(detail.time).toEqual({ hour: 14, minute: 0 });
+  });
+
+  it("12h time picker shows an AM/PM toggle", () => {
+    const el = mount({ value: "2024-03-15", "enable-time": "", "time-format": "12" });
+    const ampm = el.shadowRoot!.querySelector('[data-time="meridiem"]');
+    expect(ampm).toBeTruthy();
+  });
 });

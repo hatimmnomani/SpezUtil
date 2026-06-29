@@ -28,6 +28,19 @@ communities over time.
 </script>
 ```
 
+### Modes
+
+```html
+<!-- range -->
+<hijri-datepicker mode="range" start="2024-03-10" end="2024-03-18"></hijri-datepicker>
+
+<!-- multiple -->
+<hijri-datepicker mode="multiple" value="2024-03-05,2024-03-12"></hijri-datepicker>
+
+<!-- single with time -->
+<hijri-datepicker value="2024-03-15" enable-time time-format="12"></hijri-datepicker>
+```
+
 ## Quick start (engine only)
 
 ```ts
@@ -56,9 +69,9 @@ pnpm --filter @digitaltakeoff/storybook dev   # component playground at http://l
 
 ## Status
 
-Milestone M0–M2 complete: monorepo, `hijri-core` engine, single-date `<hijri-datepicker>`
-(range/multi/time, React/Angular wrappers, Docusaurus, and the npm release pipeline are planned
-follow-on milestones).
+Milestone M0–M3 complete: monorepo, `hijri-core` engine, and `<hijri-datepicker>` with single,
+range, multiple, and single-mode time-picker modes. React/Angular wrappers, Docusaurus, and the
+npm release pipeline are planned follow-on milestones.
 
 ## License
 
