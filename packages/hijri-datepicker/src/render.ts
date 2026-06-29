@@ -7,6 +7,9 @@ export interface DayCell {
   selected: boolean;
   disabled: boolean;
   isToday: boolean;
+  rangeStart: boolean;
+  rangeEnd: boolean;
+  inRange: boolean;
 }
 
 export interface MonthModel {
@@ -17,6 +20,10 @@ export interface MonthModel {
 
 export interface BuildOptions {
   selected?: HijriDate | null;
+  selectedList?: HijriDate[];
+  rangeStart?: HijriDate | null;
+  /** Effective end (committed end or hover preview); range band is drawn start..end inclusive of endpoints. */
+  rangeEnd?: HijriDate | null;
   isDisabled?: (h: HijriDate, g: Date) => boolean;
   today?: Date;
 }
@@ -39,19 +46,31 @@ export function buildMonthModel(
   const gridStart = addDaysUtc(firstGreg, -startOffset);
   const todayHijri = opts.today ? cal.gregorianToHijri(opts.today) : null;
 
+  const startT = opts.rangeStart ? cal.hijriToGregorian(opts.rangeStart).getTime() : null;
+  const endT = opts.rangeEnd ? cal.hijriToGregorian(opts.rangeEnd).getTime() : null;
+  const lo = startT !== null && endT !== null ? Math.min(startT, endT) : null;
+  const hi = startT !== null && endT !== null ? Math.max(startT, endT) : null;
+
   const weeks: DayCell[][] = [];
   for (let w = 0; w < 6; w++) {
     const week: DayCell[] = [];
     for (let d = 0; d < 7; d++) {
       const g = addDaysUtc(gridStart, w * 7 + d);
+      const t = g.getTime();
       const hijri = cal.gregorianToHijri(g);
+      const selected =
+        (opts.selected ? sameHijri(hijri, opts.selected) : false) ||
+        (opts.selectedList ? opts.selectedList.some((s) => sameHijri(hijri, s)) : false);
       week.push({
         hijri,
         gregorian: g,
         inCurrentMonth: hijri.year === view.year && hijri.month === view.month,
-        selected: opts.selected ? sameHijri(hijri, opts.selected) : false,
+        selected,
         disabled: opts.isDisabled ? opts.isDisabled(hijri, g) : false,
         isToday: todayHijri ? sameHijri(hijri, todayHijri) : false,
+        rangeStart: startT !== null && t === startT,
+        rangeEnd: endT !== null && t === endT,
+        inRange: lo !== null && hi !== null && t > lo && t < hi,
       });
     }
     weeks.push(week);

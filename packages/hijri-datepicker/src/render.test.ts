@@ -28,4 +28,36 @@ describe("buildMonthModel", () => {
     expect(cells.some((c) => c.selected && c.hijri.day === 5)).toBe(true);
     expect(cells.some((c) => c.disabled && c.hijri.day === 7 && c.inCurrentMonth)).toBe(true);
   });
+
+  it("marks multiple-selected cells from selectedList", () => {
+    const model = buildMonthModel(cal, { year: 1445, month: 9 }, {
+      selectedList: [
+        { year: 1445, month: 9, day: 3 },
+        { year: 1445, month: 9, day: 8 },
+      ],
+    });
+    const sel = model.weeks.flat().filter((c) => c.selected && c.inCurrentMonth);
+    expect(sel.map((c) => c.hijri.day).sort((a, b) => a - b)).toEqual([3, 8]);
+  });
+
+  it("marks range endpoints and the in-between band", () => {
+    const model = buildMonthModel(cal, { year: 1445, month: 9 }, {
+      rangeStart: { year: 1445, month: 9, day: 5 },
+      rangeEnd: { year: 1445, month: 9, day: 9 },
+    });
+    const cells = model.weeks.flat();
+    expect(cells.some((c) => c.rangeStart && c.hijri.day === 5)).toBe(true);
+    expect(cells.some((c) => c.rangeEnd && c.hijri.day === 9)).toBe(true);
+    const band = cells.filter((c) => c.inRange && c.inCurrentMonth).map((c) => c.hijri.day);
+    expect(band.sort((a, b) => a - b)).toEqual([6, 7, 8]);
+  });
+
+  it("normalizes a reversed range (end before start)", () => {
+    const model = buildMonthModel(cal, { year: 1445, month: 9 }, {
+      rangeStart: { year: 1445, month: 9, day: 9 },
+      rangeEnd: { year: 1445, month: 9, day: 5 },
+    });
+    const band = model.weeks.flat().filter((c) => c.inRange && c.inCurrentMonth).map((c) => c.hijri.day);
+    expect(band.sort((a, b) => a - b)).toEqual([6, 7, 8]);
+  });
 });
