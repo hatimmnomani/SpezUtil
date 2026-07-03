@@ -12,6 +12,8 @@ communities over time.
 | --- | --- |
 | `@digitaltakeoff/hijri-core` | Zero-dependency Hijri (Fatimid/Bohra Misri) calendar engine. |
 | `@digitaltakeoff/hijri-datepicker` | `<hijri-datepicker>` Web Component — Hijri primary, Gregorian secondary. |
+| `@digitaltakeoff/hijri-datepicker-react` | React wrapper (`@lit/react`) with typed props + `onChange`. |
+| `@digitaltakeoff/hijri-datepicker-angular` | Angular standalone component wrapper. |
 
 ## Quick start (Web Component)
 
@@ -39,6 +41,29 @@ communities over time.
 
 <!-- single with time -->
 <hijri-datepicker value="2024-03-15" enable-time time-format="12"></hijri-datepicker>
+```
+
+### React
+
+```tsx
+import { HijriDatepicker, type ChangeDetail } from "@digitaltakeoff/hijri-datepicker-react";
+
+<HijriDatepicker
+  mode="range"
+  start="2024-03-10"
+  end="2024-03-18"
+  onChange={(e) => console.log((e as CustomEvent<ChangeDetail>).detail)}
+/>;
+```
+
+### Angular
+
+```ts
+import { HijriDatepickerComponent } from "@digitaltakeoff/hijri-datepicker-angular";
+
+// Add HijriDatepickerComponent to a standalone component's `imports`, then in the template:
+// <hijri-datepicker-ng mode="multiple" value="2024-03-05,2024-03-12"
+//   (change)="onChange($event)"></hijri-datepicker-ng>
 ```
 
 ## Quick start (engine only)
@@ -69,9 +94,9 @@ pnpm --filter @digitaltakeoff/storybook dev   # component playground at http://l
 
 ## Status
 
-Milestone M0–M3 complete: monorepo, `hijri-core` engine, and `<hijri-datepicker>` with single,
-range, multiple, and single-mode time-picker modes. React/Angular wrappers, Docusaurus, and the
-npm release pipeline are planned follow-on milestones.
+Milestone M0–M4 complete: monorepo, `hijri-core` engine, `<hijri-datepicker>` (single/range/multiple
++ single-mode time picker), and React + Angular wrappers. Docusaurus docs and the npm release
+pipeline are planned follow-on milestones.
 
 ## License
 
