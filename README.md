@@ -92,11 +92,22 @@ pnpm test
 pnpm --filter @digitaltakeoff/storybook dev   # component playground at http://localhost:6006
 ```
 
+## Documentation
+
+The docs site (Docusaurus) lives in `apps/docs`:
+
+```bash
+pnpm --filter @digitaltakeoff/docs dev     # local docs at http://localhost:3000
+pnpm --filter @digitaltakeoff/docs build   # static build in apps/docs/build
+```
+
+It is deployed to GitHub Pages by `.github/workflows/docs.yml` on pushes to `main`.
+
 ## Status
 
-Milestone M0–M4 complete: monorepo, `hijri-core` engine, `<hijri-datepicker>` (single/range/multiple
-+ single-mode time picker), and React + Angular wrappers. Docusaurus docs and the npm release
-pipeline are planned follow-on milestones.
+Milestone M0–M5 complete: monorepo, `hijri-core` engine, `<hijri-datepicker>` (single/range/multiple
++ time), React + Angular wrappers, and a Docusaurus docs site with live demos. The npm release
+pipeline (Changesets) is the remaining planned milestone.
 
 ## License
 
