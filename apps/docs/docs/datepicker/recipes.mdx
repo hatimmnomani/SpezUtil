@@ -1,0 +1,33 @@
+---
+title: Recipes
+---
+
+import HijriDemo from "@site/src/components/HijriDemo";
+
+# Recipes
+
+Every demo below is the real Web Component. Selecting a date logs the emitted `ChangeDetail`.
+
+## Single date
+
+<HijriDemo value="2024-03-15" />
+
+## Range
+
+<HijriDemo mode="range" start="2024-03-10" end="2024-03-18" />
+
+## Multiple dates
+
+<HijriDemo mode="multiple" value="2024-03-05,2024-03-12,2024-03-20" />
+
+## Time picker (12-hour)
+
+<HijriDemo value="2024-03-15" enableTime timeFormat="12" />
+
+## Min / max constraints
+
+<HijriDemo value="2024-03-15" min="2024-03-10" max="2024-03-25" />
+
+## Right-to-left
+
+<HijriDemo value="2024-03-15" dir="rtl" />
