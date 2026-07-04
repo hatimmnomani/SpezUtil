@@ -1,0 +1,28 @@
+{
+  "name": "@digitaltakeoff/docs",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "docusaurus start",
+    "build": "docusaurus build",
+    "serve": "docusaurus serve",
+    "lint": "echo \"docs: build is the gate\""
+  },
+  "dependencies": {
+    "@docusaurus/core": "^3.6.0",
+    "@docusaurus/preset-classic": "^3.6.0",
+    "@mdx-js/react": "^3.0.0",
+    "clsx": "^2.1.1",
+    "prism-react-renderer": "^2.4.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@digitaltakeoff/hijri-core": "workspace:*",
+    "@digitaltakeoff/hijri-datepicker-react": "workspace:*"
+  },
+  "devDependencies": {
+    "@docusaurus/module-type-aliases": "^3.6.0",
+    "@docusaurus/tsconfig": "^3.6.0",
+    "@docusaurus/types": "^3.6.0",
+    "typescript": "~5.6.0"
+  }
+}
