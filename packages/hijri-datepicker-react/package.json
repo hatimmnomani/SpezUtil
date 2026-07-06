@@ -1,8 +1,17 @@
 {
   "name": "@digitaltakeoff/hijri-datepicker-react",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "React wrapper for the Hijri datepicker Web Component.",
   "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hatimmnomani/SpezUtil.git",
+    "directory": "packages/hijri-datepicker-react"
+  },
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.cjs",
@@ -15,7 +24,9 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run",

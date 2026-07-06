@@ -105,9 +105,15 @@ It is deployed to GitHub Pages by `.github/workflows/docs.yml` on pushes to `mai
 
 ## Status
 
-Milestone M0–M5 complete: monorepo, `hijri-core` engine, `<hijri-datepicker>` (single/range/multiple
-+ time), React + Angular wrappers, and a Docusaurus docs site with live demos. The npm release
-pipeline (Changesets) is the remaining planned milestone.
+Milestone M0–M6 complete: monorepo, `hijri-core` engine, `<hijri-datepicker>` (single/range/multiple
++ time), React + Angular wrappers, a Docusaurus docs site, and a Changesets release pipeline (first
+`0.1.0` staged, publish via a dispatched workflow). See [`RELEASING.md`](./RELEASING.md).
+
+## Releasing
+
+Versioned with [Changesets](https://github.com/changesets/changesets); published to npm with
+provenance via a manually-dispatched GitHub Actions workflow. Add a changeset with
+`pnpm changeset`; full flow in [`RELEASING.md`](./RELEASING.md).
 
 ## License
 
