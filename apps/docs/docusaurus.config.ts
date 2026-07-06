@@ -2,14 +2,14 @@ import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 import { themes as prismThemes } from "prism-react-renderer";
 
-// NOTE: organizationName/projectName/url/baseUrl are placeholders for GitHub Pages.
+// GitHub Pages config for the hatimmnomani/SpezUtil repo.
 const config: Config = {
   title: "Digital Takeoff UI",
   tagline: "Hijri datepicker and community UI packages",
-  url: "https://digitaltakeoff.github.io",
-  baseUrl: "/db-sotware-packages/",
-  organizationName: "digitaltakeoff",
-  projectName: "db-sotware-packages",
+  url: "https://hatimmnomani.github.io",
+  baseUrl: "/SpezUtil/",
+  organizationName: "hatimmnomani",
+  projectName: "SpezUtil",
   trailingSlash: false,
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
