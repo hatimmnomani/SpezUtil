@@ -7,7 +7,7 @@ export {
   jdToHijri,
 } from "./tabular";
 export { formatHijri, parseHijri } from "./format";
-export { arMonthNames, translitMonthNames, weekdayNames } from "./locale";
+export { arMonthNames, arWeekdayNames, translitMonthNames, weekdayNames } from "./locale";
 export {
   dateToJd,
   jdToDate,

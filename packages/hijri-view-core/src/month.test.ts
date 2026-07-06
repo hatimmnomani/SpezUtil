@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createCalendar } from "@spezutil/hijri-core";
-import { buildMonthModel } from "./render";
+import { buildMonthModel } from "./month";
 
 describe("buildMonthModel", () => {
   const cal = createCalendar();
@@ -50,6 +50,21 @@ describe("buildMonthModel", () => {
     expect(cells.some((c) => c.rangeEnd && c.hijri.day === 9)).toBe(true);
     const band = cells.filter((c) => c.inRange && c.inCurrentMonth).map((c) => c.hijri.day);
     expect(band.sort((a, b) => a - b)).toEqual([6, 7, 8]);
+  });
+
+  it("starts grid on the configured weekStart day", () => {
+    const model = buildMonthModel(cal, { year: 1445, month: 9 }, { weekStart: 1 });
+    for (const week of model.weeks) {
+      expect(week[0]!.gregorian.getUTCDay()).toBe(1);
+    }
+    const inMonth = model.weeks.flat().filter((c) => c.inCurrentMonth);
+    expect(inMonth.length).toBe(cal.monthLength(1445, 9));
+    expect(inMonth[0]!.hijri.day).toBe(1);
+  });
+
+  it("defaults weekStart to Sunday", () => {
+    const model = buildMonthModel(cal, { year: 1445, month: 9 }, {});
+    expect(model.weeks[0]![0]!.gregorian.getUTCDay()).toBe(0);
   });
 
   it("normalizes a reversed range (end before start)", () => {

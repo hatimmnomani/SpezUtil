@@ -1,7 +1,7 @@
 {
-  "name": "@spezutil/hijri-datepicker",
-  "version": "0.1.0",
-  "description": "Zero-dependency Hijri date picker Web Component.",
+  "name": "@spezutil/hijri-calendar",
+  "version": "0.0.0",
+  "description": "Hijri-first interactive calendar view Web Component (month, week, day, agenda) with event support.",
   "license": "Apache-2.0",
   "publishConfig": {
     "access": "public"
@@ -9,7 +9,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hatimmnomani/SpezUtil.git",
-    "directory": "packages/hijri-datepicker"
+    "directory": "packages/hijri-calendar"
   },
   "type": "module",
   "sideEffects": [

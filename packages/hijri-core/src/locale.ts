@@ -37,3 +37,13 @@ export const weekdayNames: string[] = [
   "Friday",
   "Saturday",
 ];
+
+export const arWeekdayNames: string[] = [
+  "الأحد",
+  "الاثنين",
+  "الثلاثاء",
+  "الأربعاء",
+  "الخميس",
+  "الجمعة",
+  "السبت",
+];
