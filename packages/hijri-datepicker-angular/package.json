@@ -5,7 +5,6 @@
   "license": "Apache-2.0",
   "publishConfig": {
     "access": "public",
-    "provenance": true,
     "directory": "dist"
   },
   "repository": {
