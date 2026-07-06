@@ -3,6 +3,12 @@
   "version": "0.0.0",
   "description": "Zero-dependency Hijri date picker Web Component.",
   "license": "Apache-2.0",
+  "publishConfig": { "access": "public", "provenance": true },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hatimmnomani/SpezUtil.git",
+    "directory": "packages/hijri-datepicker"
+  },
   "type": "module",
   "sideEffects": ["**/*.css", "./dist/index.js", "./dist/index.cjs"],
   "main": "./dist/index.cjs",
