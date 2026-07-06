@@ -1,5 +1,5 @@
 {
-  "name": "@digitaltakeoff/storybook",
+  "name": "@spezutil/storybook",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -8,7 +8,7 @@
     "lint": "echo \"no lint\""
   },
   "dependencies": {
-    "@digitaltakeoff/hijri-datepicker": "workspace:*"
+    "@spezutil/hijri-datepicker": "workspace:*"
   },
   "devDependencies": {
     "@storybook/addon-a11y": "^8.3.0",

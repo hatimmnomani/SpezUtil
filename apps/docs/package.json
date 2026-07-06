@@ -1,5 +1,5 @@
 {
-  "name": "@digitaltakeoff/docs",
+  "name": "@spezutil/docs",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -16,8 +16,8 @@
     "prism-react-renderer": "^2.4.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "@digitaltakeoff/hijri-core": "workspace:*",
-    "@digitaltakeoff/hijri-datepicker-react": "workspace:*"
+    "@spezutil/hijri-core": "workspace:*",
+    "@spezutil/hijri-datepicker-react": "workspace:*"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "^3.6.0",

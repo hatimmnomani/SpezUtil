@@ -5,7 +5,7 @@ import {
   weekdayNames,
   type HijriCalendar,
   type HijriDate,
-} from "@digitaltakeoff/hijri-core";
+} from "@spezutil/hijri-core";
 import { buildMonthModel, sameHijri, type DayCell } from "./render";
 import { isMode, parseIsoList, type Mode } from "./selection";
 import {

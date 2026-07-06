@@ -29,7 +29,7 @@ picker (Flatpickr-class) where **Hijri is the primary date and Gregorian is seco
 | Docs | Docusaurus (guides/landing) + Storybook (live component playground) |
 | Versioning/publish | Changesets |
 | CI | GitHub Actions (lint/test/build) |
-| npm scope | `@digitaltakeoff/*` |
+| npm scope | `@spezutil/*` |
 | License | Apache-2.0 |
 | i18n (v1) | English UI + Arabic Hijri month names + transliteration, RTL-aware |
 
@@ -54,7 +54,7 @@ db-software-packages/
 └── README.md
 ```
 
-## 4. `@digitaltakeoff/hijri-core` — Engine
+## 4. `@spezutil/hijri-core` — Engine
 
 Pure functions. No dependencies. No DOM access.
 
@@ -93,7 +93,7 @@ interface CorrectionProvider {
 - Anchor-date tests: a fixture of verified greg/hijri pairs must all pass.
 - Correction-layer tests: with and without the override dataset.
 
-## 5. `@digitaltakeoff/hijri-datepicker` — Web Component
+## 5. `@spezutil/hijri-datepicker` — Web Component
 
 Custom element `<hijri-datepicker>`. Zero runtime deps. Imports `hijri-core`.
 
@@ -118,9 +118,9 @@ Custom element `<hijri-datepicker>`. Zero runtime deps. Imports `hijri-core`.
 
 ## 6. Wrappers
 
-- `@digitaltakeoff/hijri-datepicker-react` — thin wrapper mapping props↔attributes/properties
+- `@spezutil/hijri-datepicker-react` — thin wrapper mapping props↔attributes/properties
   and DOM events↔callbacks (`onChange`, `onInput`). No logic duplication.
-- `@digitaltakeoff/hijri-datepicker-angular` — Angular component/directive binding
+- `@spezutil/hijri-datepicker-angular` — Angular component/directive binding
   inputs↔properties and `@Output()`↔events. `CUSTOM_ELEMENTS_SCHEMA` friendly.
 
 ## 7. Docs & Showcase

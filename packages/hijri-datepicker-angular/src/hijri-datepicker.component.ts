@@ -5,8 +5,8 @@ import {
   Input,
   Output,
 } from "@angular/core";
-import "@digitaltakeoff/hijri-datepicker";
-import type { ChangeDetail } from "@digitaltakeoff/hijri-datepicker";
+import "@spezutil/hijri-datepicker";
+import type { ChangeDetail } from "@spezutil/hijri-datepicker";
 
 @Component({
   selector: "hijri-datepicker-ng",

@@ -1,4 +1,4 @@
-# @digitaltakeoff/hijri-datepicker
+# @spezutil/hijri-datepicker
 
 ## 0.1.0
 
@@ -11,4 +11,4 @@
 ### Patch Changes
 
 - Updated dependencies
-  - @digitaltakeoff/hijri-core@0.1.0
+  - @spezutil/hijri-core@0.1.0

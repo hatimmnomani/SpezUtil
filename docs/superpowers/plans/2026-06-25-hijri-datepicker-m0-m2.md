@@ -157,7 +157,7 @@ git commit -m "chore: monorepo skeleton (pnpm + turborepo + tsconfig)"
 
 ```json
 {
-  "name": "@digitaltakeoff/hijri-core",
+  "name": "@spezutil/hijri-core",
   "version": "0.0.0",
   "description": "Zero-dependency Hijri (Fatimid/Bohra) calendar engine.",
   "license": "Apache-2.0",
@@ -231,7 +231,7 @@ export {};
 - [ ] **Step 6: Install workspace deps**
 
 Run: `pnpm install`
-Expected: `@digitaltakeoff/hijri-core` linked into workspace.
+Expected: `@spezutil/hijri-core` linked into workspace.
 
 - [ ] **Step 7: Commit**
 
@@ -274,7 +274,7 @@ describe("julian day", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-core test`
+Run: `pnpm --filter @spezutil/hijri-core test`
 Expected: FAIL — cannot resolve `./jd`.
 
 - [ ] **Step 3: Implement `jd.ts`**
@@ -345,7 +345,7 @@ function mod(a: number, b: number): number {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-core test`
+Run: `pnpm --filter @spezutil/hijri-core test`
 Expected: PASS (3 tests).
 
 - [ ] **Step 5: Commit**
@@ -463,7 +463,7 @@ describe("fatimid tabular", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-core test tabular`
+Run: `pnpm --filter @spezutil/hijri-core test tabular`
 Expected: FAIL — cannot resolve `./tabular`.
 
 - [ ] **Step 3: Implement `tabular.ts`**
@@ -543,7 +543,7 @@ function mod(a: number, b: number): number {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-core test tabular`
+Run: `pnpm --filter @spezutil/hijri-core test tabular`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -599,7 +599,7 @@ describe("createCalendar", () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-core test calendar`
+Run: `pnpm --filter @spezutil/hijri-core test calendar`
 Expected: FAIL — cannot resolve `./calendar`.
 
 - [ ] **Step 4: Implement `calendar.ts`**
@@ -654,7 +654,7 @@ export function createCalendar(options: CalendarOptions = {}): HijriCalendar {
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-core test calendar`
+Run: `pnpm --filter @spezutil/hijri-core test calendar`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -747,7 +747,7 @@ describe("format", () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-core test format`
+Run: `pnpm --filter @spezutil/hijri-core test format`
 Expected: FAIL — cannot resolve `./format`.
 
 - [ ] **Step 4: Implement `format.ts`**
@@ -803,7 +803,7 @@ export function parseHijri(input: string, pattern: string): HijriDate {
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-core test format`
+Run: `pnpm --filter @spezutil/hijri-core test format`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -864,7 +864,7 @@ describe("anchor calibration", () => {
 
 - [ ] **Step 3: Run, then calibrate**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-core test anchors`
+Run: `pnpm --filter @spezutil/hijri-core test anchors`
 If anchors fail by a constant integer day offset, adjust `BOHRA_VARIANT.epochJd` in `tabular.ts`
 by that offset and re-run. For any anchor still off after epoch alignment, add an entry to
 `corrections.json` (key = Gregorian ISO date, value = the Hijri object from the source).
@@ -901,7 +901,7 @@ export type {
 
 - [ ] **Step 5: Build and run full test suite**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-core build && pnpm --filter @digitaltakeoff/hijri-core test`
+Run: `pnpm --filter @spezutil/hijri-core build && pnpm --filter @spezutil/hijri-core test`
 Expected: build emits `dist/index.js`, `dist/index.cjs`, `dist/index.d.ts`; all tests PASS.
 
 - [ ] **Step 6: Commit**
@@ -922,7 +922,7 @@ git commit -m "feat(hijri-core): anchor calibration and public API"
 
 ```json
 {
-  "name": "@digitaltakeoff/hijri-datepicker",
+  "name": "@spezutil/hijri-datepicker",
   "version": "0.0.0",
   "description": "Zero-dependency Hijri date picker Web Component.",
   "license": "Apache-2.0",
@@ -945,7 +945,7 @@ git commit -m "feat(hijri-core): anchor calibration and public API"
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@digitaltakeoff/hijri-core": "workspace:*"
+    "@spezutil/hijri-core": "workspace:*"
   },
   "devDependencies": {
     "jsdom": "^25.0.0",
@@ -1024,7 +1024,7 @@ unit-testable in plain Node-style tests under jsdom.
 ```ts
 // src/render.test.ts
 import { describe, expect, it } from "vitest";
-import { createCalendar } from "@digitaltakeoff/hijri-core";
+import { createCalendar } from "@spezutil/hijri-core";
 import { buildMonthModel } from "./render";
 
 describe("buildMonthModel", () => {
@@ -1058,14 +1058,14 @@ describe("buildMonthModel", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test render`
+Run: `pnpm --filter @spezutil/hijri-datepicker test render`
 Expected: FAIL — cannot resolve `./render`.
 
 - [ ] **Step 3: Implement `render.ts`**
 
 ```ts
 // src/render.ts
-import type { HijriCalendar, HijriDate } from "@digitaltakeoff/hijri-core";
+import type { HijriCalendar, HijriDate } from "@spezutil/hijri-core";
 
 export interface DayCell {
   hijri: HijriDate;
@@ -1130,7 +1130,7 @@ export function buildMonthModel(
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test render`
+Run: `pnpm --filter @spezutil/hijri-datepicker test render`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1247,7 +1247,7 @@ describe("<hijri-datepicker>", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test hijri-datepicker`
+Run: `pnpm --filter @spezutil/hijri-datepicker test hijri-datepicker`
 Expected: FAIL — element not defined.
 
 - [ ] **Step 3: Implement `hijri-datepicker.ts`**
@@ -1261,7 +1261,7 @@ import {
   weekdayNames,
   type HijriCalendar,
   type HijriDate,
-} from "@digitaltakeoff/hijri-core";
+} from "@spezutil/hijri-core";
 import { buildMonthModel, type DayCell } from "./render";
 import { styles } from "./styles";
 
@@ -1445,12 +1445,12 @@ declare global {
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test`
+Run: `pnpm --filter @spezutil/hijri-datepicker test`
 Expected: PASS (render + component tests).
 
 - [ ] **Step 6: Build and commit**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker build`
+Run: `pnpm --filter @spezutil/hijri-datepicker build`
 Expected: emits `dist/index.js`, `dist/index.cjs`, `dist/index.d.ts`.
 ```bash
 git add -A
@@ -1488,7 +1488,7 @@ it("moves focus with arrow keys and selects with Enter", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test hijri-datepicker`
+Run: `pnpm --filter @spezutil/hijri-datepicker test hijri-datepicker`
 Expected: FAIL — no focus moves / no key handling.
 
 - [ ] **Step 3: Add keyboard handling to `render()`**
@@ -1544,7 +1544,7 @@ Add this block at the end of `render()` in `hijri-datepicker.ts`, after the exis
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test hijri-datepicker`
+Run: `pnpm --filter @spezutil/hijri-datepicker test hijri-datepicker`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1565,7 +1565,7 @@ git commit -m "feat(hijri-datepicker): keyboard navigation and roving tabindex"
 
 ```json
 {
-  "name": "@digitaltakeoff/storybook",
+  "name": "@spezutil/storybook",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -1574,7 +1574,7 @@ git commit -m "feat(hijri-datepicker): keyboard navigation and roving tabindex"
     "lint": "echo \"no lint\""
   },
   "dependencies": {
-    "@digitaltakeoff/hijri-datepicker": "workspace:*"
+    "@spezutil/hijri-datepicker": "workspace:*"
   },
   "devDependencies": {
     "@storybook/addon-a11y": "^8.3.0",
@@ -1617,7 +1617,7 @@ export default preview;
 
 ```ts
 import { html } from "lit-html";
-import "@digitaltakeoff/hijri-datepicker";
+import "@spezutil/hijri-datepicker";
 
 export default {
   title: "Components/HijriDatepicker",
@@ -1657,12 +1657,12 @@ export const RightToLeft = Template.bind({});
 
 - [ ] **Step 5: Build hijri packages, then verify Storybook builds**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-core build && pnpm --filter @digitaltakeoff/hijri-datepicker build && pnpm install && pnpm --filter @digitaltakeoff/storybook build`
+Run: `pnpm --filter @spezutil/hijri-core build && pnpm --filter @spezutil/hijri-datepicker build && pnpm install && pnpm --filter @spezutil/storybook build`
 Expected: `storybook-static/` produced with no errors.
 
 - [ ] **Step 6: Smoke-test dev server (optional manual)**
 
-Run: `pnpm --filter @digitaltakeoff/storybook dev`
+Run: `pnpm --filter @spezutil/storybook dev`
 Open http://localhost:6006 — the three stories render a working picker; clicking a day updates it;
 the a11y addon shows no critical violations. Stop the server when done.
 
@@ -1697,8 +1697,8 @@ Web Components with optional React/Angular wrappers.
 
 | Package | Description |
 | --- | --- |
-| `@digitaltakeoff/hijri-core` | Zero-dependency Hijri (Fatimid/Bohra) calendar engine. |
-| `@digitaltakeoff/hijri-datepicker` | `<hijri-datepicker>` Web Component (Hijri primary, Gregorian secondary). |
+| `@spezutil/hijri-core` | Zero-dependency Hijri (Fatimid/Bohra) calendar engine. |
+| `@spezutil/hijri-datepicker` | `<hijri-datepicker>` Web Component (Hijri primary, Gregorian secondary). |
 
 ## Develop
 
@@ -1706,7 +1706,7 @@ Web Components with optional React/Angular wrappers.
 pnpm install
 pnpm build
 pnpm test
-pnpm --filter @digitaltakeoff/storybook dev   # component playground at :6006
+pnpm --filter @spezutil/storybook dev   # component playground at :6006
 ```
 
 ## License

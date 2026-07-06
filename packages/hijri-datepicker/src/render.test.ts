@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createCalendar } from "@digitaltakeoff/hijri-core";
+import { createCalendar } from "@spezutil/hijri-core";
 import { buildMonthModel } from "./render";
 
 describe("buildMonthModel", () => {

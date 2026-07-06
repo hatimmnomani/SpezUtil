@@ -8,7 +8,7 @@ title: Getting started
 
 ```html
 <script type="module">
-  import "@digitaltakeoff/hijri-datepicker";
+  import "@spezutil/hijri-datepicker";
 </script>
 
 <hijri-datepicker value="2024-03-15" min="2024-01-01" max="2024-12-31"></hijri-datepicker>
@@ -23,7 +23,7 @@ title: Getting started
 ## React
 
 ```tsx
-import { HijriDatepicker, type ChangeDetail } from "@digitaltakeoff/hijri-datepicker-react";
+import { HijriDatepicker, type ChangeDetail } from "@spezutil/hijri-datepicker-react";
 
 export function Example() {
   return (
@@ -41,7 +41,7 @@ export function Example() {
 
 ```ts
 import { Component } from "@angular/core";
-import { HijriDatepickerComponent, type ChangeDetail } from "@digitaltakeoff/hijri-datepicker-angular";
+import { HijriDatepickerComponent, type ChangeDetail } from "@spezutil/hijri-datepicker-angular";
 
 @Component({
   standalone: true,

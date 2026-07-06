@@ -1,5 +1,5 @@
 {
-  "name": "@digitaltakeoff/hijri-datepicker-angular",
+  "name": "@spezutil/hijri-datepicker-angular",
   "version": "0.1.0",
   "description": "Angular wrapper for the Hijri datepicker Web Component.",
   "license": "Apache-2.0",
@@ -21,7 +21,7 @@
   "peerDependencies": {
     "@angular/core": ">=17",
     "@angular/common": ">=17",
-    "@digitaltakeoff/hijri-datepicker": "workspace:*"
+    "@spezutil/hijri-datepicker": "workspace:*"
   },
   "dependencies": {
     "tslib": "^2.6.0"
@@ -31,7 +31,7 @@
     "@angular/compiler": "^19.2.0",
     "@angular/compiler-cli": "^19.2.0",
     "@angular/core": "^19.2.0",
-    "@digitaltakeoff/hijri-datepicker": "workspace:*",
+    "@spezutil/hijri-datepicker": "workspace:*",
     "ng-packagr": "^19.2.0",
     "rxjs": "^7.8.0",
     "typescript": "~5.6.0",

@@ -10,8 +10,8 @@ Reproducible, semver-correct releases of the public libraries with changelogs an
 
 ## 2. Public vs private packages
 
-Publish: `@digitaltakeoff/hijri-core`, `hijri-datepicker`, `hijri-datepicker-react`, `hijri-datepicker-angular`.
-Never publish (ignored / private): `@digitaltakeoff/storybook`, `@digitaltakeoff/docs`.
+Publish: `@spezutil/hijri-core`, `hijri-datepicker`, `hijri-datepicker-react`, `hijri-datepicker-angular`.
+Never publish (ignored / private): `@spezutil/storybook`, `@spezutil/docs`.
 
 ## 3. Decisions
 
@@ -52,7 +52,7 @@ Versions stay `0.0.0`; `changeset version` bumps them to `0.1.0`.
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@digitaltakeoff/storybook", "@digitaltakeoff/docs"]
+  "ignore": ["@spezutil/storybook", "@spezutil/docs"]
 }
 ```
 
@@ -85,5 +85,5 @@ as `NODE_AUTH_TOKEN`. Provenance comes from `publishConfig.provenance` + `id-tok
 - Canary/snapshot releases.
 
 ## 10. Prerequisites for the user (documented, not done here)
-- Create the `@digitaltakeoff` npm org (or adjust scope) and an automation `NPM_TOKEN`; add it as a
+- Create the `@spezutil` npm org (or adjust scope) and an automation `NPM_TOKEN`; add it as a
   repo secret. Push `main` to `origin`.

@@ -5,4 +5,4 @@ export type {
   RangeChangeDetail,
   MultipleChangeDetail,
   RangeEndpoint,
-} from "@digitaltakeoff/hijri-datepicker";
+} from "@spezutil/hijri-datepicker";

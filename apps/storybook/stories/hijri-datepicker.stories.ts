@@ -1,5 +1,5 @@
 import { html } from "lit-html";
-import "@digitaltakeoff/hijri-datepicker";
+import "@spezutil/hijri-datepicker";
 
 export default {
   title: "Components/HijriDatepicker",

@@ -16,7 +16,7 @@ are thin: they map framework props ↔ element properties and the `change` event
 | React wrapper | `@lit/react` `createComponent` (adds `@lit/react` dep; `react`/`react-dom` as peers) |
 | Angular wrapper | Standalone component built with **ng-packagr** (Angular Package Format) |
 | API surface | Typed props mirroring element attributes + a typed `onChange(detail)` / `(change)` output |
-| Element change | Add reflecting **property accessors** so framework property-bindings drive the element; export a typed `ChangeDetail` union from `@digitaltakeoff/hijri-datepicker` |
+| Element change | Add reflecting **property accessors** so framework property-bindings drive the element; export a typed `ChangeDetail` union from `@spezutil/hijri-datepicker` |
 
 ## 3. Why element changes are needed
 
@@ -30,7 +30,7 @@ Reflected properties (property → attribute):
 `value→value`, `start→start`, `end→end`, `mode→mode`, `min→min`, `max→max`, `dir→dir`,
 `timeFormat→time-format`, `disabledWeekdays→disabled-weekdays`, `enableTime→enable-time` (boolean).
 
-## 4. Exported types (from `@digitaltakeoff/hijri-datepicker`)
+## 4. Exported types (from `@spezutil/hijri-datepicker`)
 
 ```ts
 export interface SingleChangeDetail { mode: "single"; hijri: HijriDate; gregorian: string; time?: Time; }
@@ -42,20 +42,20 @@ export type ChangeDetail = SingleChangeDetail | RangeChangeDetail | MultipleChan
 
 ## 5. Packages
 
-### `@digitaltakeoff/hijri-datepicker-react`
+### `@spezutil/hijri-datepicker-react`
 - `createComponent({ tagName: "hijri-datepicker", elementClass: HijriDatepicker, react: React, events: { onChange: "change" } })`.
 - Exports `HijriDatepicker` (the React component) + re-exports `ChangeDetail` and related types.
-- deps: `@lit/react`; peers: `react`, `react-dom`, `@digitaltakeoff/hijri-datepicker`.
+- deps: `@lit/react`; peers: `react`, `react-dom`, `@spezutil/hijri-datepicker`.
 - Built with tsup (ESM+CJS+types), `react`/`react-dom`/`@lit/react`/the element externalized.
 - Test (vitest + jsdom + @testing-library/react): renders with props, clicking a day fires
   `onChange` with a typed `single` detail; `value` prop drives the rendered selection.
 
-### `@digitaltakeoff/hijri-datepicker-angular`
+### `@spezutil/hijri-datepicker-angular`
 - Standalone `HijriDatepickerComponent` (selector `hijri-datepicker-ng`) with `CUSTOM_ELEMENTS_SCHEMA`.
 - `@Input()`s mirror the reflected properties; `@Output() change = EventEmitter<ChangeDetail>` wired
   from the element's `change` event (`$event.detail`).
 - Imports the element package for side-effect registration.
-- deps/peers: `@angular/core`, `@angular/common`, `@digitaltakeoff/hijri-datepicker`.
+- deps/peers: `@angular/core`, `@angular/common`, `@spezutil/hijri-datepicker`.
 - Built with **ng-packagr** (`ng-package.json`, `tsconfig.lib.json`, `public-api.ts`).
 - Verification: ng-packagr build succeeds (AOT-compatible output). A TestBed render smoke test if the
   jsdom/zone setup is reasonable; otherwise build success + `tsc` is the gate (documented).

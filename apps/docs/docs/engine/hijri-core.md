@@ -4,11 +4,11 @@ title: hijri-core engine
 
 # hijri-core
 
-`@digitaltakeoff/hijri-core` is the zero-dependency calendar engine behind the picker. Use it
+`@spezutil/hijri-core` is the zero-dependency calendar engine behind the picker. Use it
 directly for conversions and formatting.
 
 ```ts
-import { createCalendar, formatHijri, parseHijri } from "@digitaltakeoff/hijri-core";
+import { createCalendar, formatHijri, parseHijri } from "@spezutil/hijri-core";
 
 const cal = createCalendar();
 const h = cal.gregorianToHijri(new Date(Date.UTC(2024, 2, 15)));

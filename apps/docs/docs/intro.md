@@ -13,20 +13,20 @@ Gregorian date is secondary.
 
 | Package | Description |
 | --- | --- |
-| `@digitaltakeoff/hijri-core` | Zero-dependency Hijri calendar engine. |
-| `@digitaltakeoff/hijri-datepicker` | `<hijri-datepicker>` Web Component. |
-| `@digitaltakeoff/hijri-datepicker-react` | React wrapper. |
-| `@digitaltakeoff/hijri-datepicker-angular` | Angular standalone component. |
+| `@spezutil/hijri-core` | Zero-dependency Hijri calendar engine. |
+| `@spezutil/hijri-datepicker` | `<hijri-datepicker>` Web Component. |
+| `@spezutil/hijri-datepicker-react` | React wrapper. |
+| `@spezutil/hijri-datepicker-angular` | Angular standalone component. |
 
 ## Install
 
 ```bash
 # Web Component (vanilla)
-npm i @digitaltakeoff/hijri-datepicker
+npm i @spezutil/hijri-datepicker
 
 # React
-npm i @digitaltakeoff/hijri-datepicker-react react react-dom
+npm i @spezutil/hijri-datepicker-react react react-dom
 
 # Angular
-npm i @digitaltakeoff/hijri-datepicker-angular
+npm i @spezutil/hijri-datepicker-angular
 ```

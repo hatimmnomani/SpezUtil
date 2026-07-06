@@ -1,5 +1,5 @@
 {
-  "name": "@digitaltakeoff/hijri-datepicker-react",
+  "name": "@spezutil/hijri-datepicker-react",
   "version": "0.1.0",
   "description": "React wrapper for the Hijri datepicker Web Component.",
   "license": "Apache-2.0",
@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@lit/react": "^1.0.6",
-    "@digitaltakeoff/hijri-datepicker": "workspace:*"
+    "@spezutil/hijri-datepicker": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=18",

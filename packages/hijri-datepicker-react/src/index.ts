@@ -3,7 +3,7 @@ import { createComponent, type EventName } from "@lit/react";
 import {
   HijriDatepicker as HijriDatepickerElement,
   type ChangeDetail,
-} from "@digitaltakeoff/hijri-datepicker";
+} from "@spezutil/hijri-datepicker";
 
 export const HijriDatepicker = createComponent({
   tagName: "hijri-datepicker",
@@ -20,4 +20,4 @@ export type {
   RangeChangeDetail,
   MultipleChangeDetail,
   RangeEndpoint,
-} from "@digitaltakeoff/hijri-datepicker";
+} from "@spezutil/hijri-datepicker";

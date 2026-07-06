@@ -10,16 +10,16 @@ communities over time.
 
 | Package | Description |
 | --- | --- |
-| `@digitaltakeoff/hijri-core` | Zero-dependency Hijri (Fatimid/Bohra Misri) calendar engine. |
-| `@digitaltakeoff/hijri-datepicker` | `<hijri-datepicker>` Web Component — Hijri primary, Gregorian secondary. |
-| `@digitaltakeoff/hijri-datepicker-react` | React wrapper (`@lit/react`) with typed props + `onChange`. |
-| `@digitaltakeoff/hijri-datepicker-angular` | Angular standalone component wrapper. |
+| `@spezutil/hijri-core` | Zero-dependency Hijri (Fatimid/Bohra Misri) calendar engine. |
+| `@spezutil/hijri-datepicker` | `<hijri-datepicker>` Web Component — Hijri primary, Gregorian secondary. |
+| `@spezutil/hijri-datepicker-react` | React wrapper (`@lit/react`) with typed props + `onChange`. |
+| `@spezutil/hijri-datepicker-angular` | Angular standalone component wrapper. |
 
 ## Quick start (Web Component)
 
 ```html
 <script type="module">
-  import "@digitaltakeoff/hijri-datepicker";
+  import "@spezutil/hijri-datepicker";
 </script>
 
 <hijri-datepicker value="2024-03-15" min="2024-01-01" max="2024-12-31"></hijri-datepicker>
@@ -46,7 +46,7 @@ communities over time.
 ### React
 
 ```tsx
-import { HijriDatepicker, type ChangeDetail } from "@digitaltakeoff/hijri-datepicker-react";
+import { HijriDatepicker, type ChangeDetail } from "@spezutil/hijri-datepicker-react";
 
 <HijriDatepicker
   mode="range"
@@ -59,7 +59,7 @@ import { HijriDatepicker, type ChangeDetail } from "@digitaltakeoff/hijri-datepi
 ### Angular
 
 ```ts
-import { HijriDatepickerComponent } from "@digitaltakeoff/hijri-datepicker-angular";
+import { HijriDatepickerComponent } from "@spezutil/hijri-datepicker-angular";
 
 // Add HijriDatepickerComponent to a standalone component's `imports`, then in the template:
 // <hijri-datepicker-ng mode="multiple" value="2024-03-05,2024-03-12"
@@ -69,7 +69,7 @@ import { HijriDatepickerComponent } from "@digitaltakeoff/hijri-datepicker-angul
 ## Quick start (engine only)
 
 ```ts
-import { createCalendar, formatHijri } from "@digitaltakeoff/hijri-core";
+import { createCalendar, formatHijri } from "@spezutil/hijri-core";
 
 const cal = createCalendar();
 const hijri = cal.gregorianToHijri(new Date(Date.UTC(2024, 2, 15)));
@@ -89,7 +89,7 @@ leap years), calibrated against authoritative anchor dates. A pluggable correcti
 pnpm install
 pnpm build
 pnpm test
-pnpm --filter @digitaltakeoff/storybook dev   # component playground at http://localhost:6006
+pnpm --filter @spezutil/storybook dev   # component playground at http://localhost:6006
 ```
 
 ## Documentation
@@ -97,8 +97,8 @@ pnpm --filter @digitaltakeoff/storybook dev   # component playground at http://l
 The docs site (Docusaurus) lives in `apps/docs`:
 
 ```bash
-pnpm --filter @digitaltakeoff/docs dev     # local docs at http://localhost:3000
-pnpm --filter @digitaltakeoff/docs build   # static build in apps/docs/build
+pnpm --filter @spezutil/docs dev     # local docs at http://localhost:3000
+pnpm --filter @spezutil/docs build   # static build in apps/docs/build
 ```
 
 It is deployed to GitHub Pages by `.github/workflows/docs.yml` on pushes to `main`.

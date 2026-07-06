@@ -1,5 +1,5 @@
 {
-  "name": "@digitaltakeoff/hijri-core",
+  "name": "@spezutil/hijri-core",
   "version": "0.1.0",
   "description": "Zero-dependency Hijri (Fatimid/Bohra) calendar engine.",
   "license": "Apache-2.0",

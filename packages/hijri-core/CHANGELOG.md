@@ -1,4 +1,4 @@
-# @digitaltakeoff/hijri-core
+# @spezutil/hijri-core
 
 ## 0.1.0
 

@@ -14,10 +14,10 @@ Live, interactive demos (real Web Component), not screenshots.
 | Topic | Decision |
 | --- | --- |
 | Framework | Docusaurus 3 (classic preset, TypeScript) |
-| Live demos | Real `<hijri-datepicker>` via `@digitaltakeoff/hijri-datepicker-react`, wrapped in Docusaurus `<BrowserOnly>` (client-only; the element self-registers only in the browser) |
+| Live demos | Real `<hijri-datepicker>` via `@spezutil/hijri-datepicker-react`, wrapped in Docusaurus `<BrowserOnly>` (client-only; the element self-registers only in the browser) |
 | Deploy | GitHub Pages via a GitHub Actions workflow |
 | Content | Getting started + install; API reference; calendar-engine guide; recipes with live demos |
-| Location | `apps/docs` workspace package (`@digitaltakeoff/docs`, private) |
+| Location | `apps/docs` workspace package (`@spezutil/docs`, private) |
 
 ## 3. Why BrowserOnly
 

@@ -5,5 +5,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@digitaltakeoff/storybook", "@digitaltakeoff/docs"]
+  "ignore": ["@spezutil/storybook", "@spezutil/docs"]
 }

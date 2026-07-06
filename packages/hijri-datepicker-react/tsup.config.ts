@@ -7,5 +7,5 @@ export default defineConfig({
   clean: true,
   treeshake: true,
   sourcemap: true,
-  external: ["react", "react-dom", "@lit/react", "@digitaltakeoff/hijri-datepicker"],
+  external: ["react", "react-dom", "@lit/react", "@spezutil/hijri-datepicker"],
 });

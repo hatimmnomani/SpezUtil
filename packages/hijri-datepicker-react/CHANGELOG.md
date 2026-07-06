@@ -1,4 +1,4 @@
-# @digitaltakeoff/hijri-datepicker-react
+# @spezutil/hijri-datepicker-react
 
 ## 0.1.0
 
@@ -11,4 +11,4 @@
 ### Patch Changes
 
 - Updated dependencies
-  - @digitaltakeoff/hijri-datepicker@0.1.0
+  - @spezutil/hijri-datepicker@0.1.0

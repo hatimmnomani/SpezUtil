@@ -1,4 +1,4 @@
-import type { HijriCalendar, HijriDate } from "@digitaltakeoff/hijri-core";
+import type { HijriCalendar, HijriDate } from "@spezutil/hijri-core";
 
 export interface DayCell {
   hijri: HijriDate;

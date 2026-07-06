@@ -4,13 +4,13 @@
 
 **Goal:** A Docusaurus 3 docs site at `apps/docs` with live interactive picker demos, API reference, engine guide, and recipes, plus a GitHub Pages deploy workflow.
 
-**Architecture:** `apps/docs` is a private workspace package. Docs are Markdown/MDX. Live demos render the real Web Component via `@digitaltakeoff/hijri-datepicker-react` inside Docusaurus `<BrowserOnly>` (client-only). The verification gate for every content task is a clean `docusaurus build` (broken links throw).
+**Architecture:** `apps/docs` is a private workspace package. Docs are Markdown/MDX. Live demos render the real Web Component via `@spezutil/hijri-datepicker-react` inside Docusaurus `<BrowserOnly>` (client-only). The verification gate for every content task is a clean `docusaurus build` (broken links throw).
 
 **Tech Stack:** Docusaurus 3.6 (classic preset, TypeScript), React 18, MDX, workspace packages.
 
 **Spec:** `docs/superpowers/specs/2026-06-29-hijri-datepicker-m5-docs-design.md`
 
-**Note:** Docs are prose, not TDD. "Verify" = `pnpm --filter @digitaltakeoff/docs build` succeeds with no broken-link errors.
+**Note:** Docs are prose, not TDD. "Verify" = `pnpm --filter @spezutil/docs build` succeeds with no broken-link errors.
 
 ---
 
@@ -23,7 +23,7 @@
 
 ```json
 {
-  "name": "@digitaltakeoff/docs",
+  "name": "@spezutil/docs",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -40,8 +40,8 @@
     "prism-react-renderer": "^2.4.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "@digitaltakeoff/hijri-core": "workspace:*",
-    "@digitaltakeoff/hijri-datepicker-react": "workspace:*"
+    "@spezutil/hijri-core": "workspace:*",
+    "@spezutil/hijri-datepicker-react": "workspace:*"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "^3.6.0",
@@ -183,22 +183,22 @@ Gregorian date is secondary.
 
 | Package | Description |
 | --- | --- |
-| `@digitaltakeoff/hijri-core` | Zero-dependency Hijri calendar engine. |
-| `@digitaltakeoff/hijri-datepicker` | `<hijri-datepicker>` Web Component. |
-| `@digitaltakeoff/hijri-datepicker-react` | React wrapper. |
-| `@digitaltakeoff/hijri-datepicker-angular` | Angular standalone component. |
+| `@spezutil/hijri-core` | Zero-dependency Hijri calendar engine. |
+| `@spezutil/hijri-datepicker` | `<hijri-datepicker>` Web Component. |
+| `@spezutil/hijri-datepicker-react` | React wrapper. |
+| `@spezutil/hijri-datepicker-angular` | Angular standalone component. |
 
 ## Install
 
 ```bash
 # Web Component (vanilla)
-npm i @digitaltakeoff/hijri-datepicker
+npm i @spezutil/hijri-datepicker
 
 # React
-npm i @digitaltakeoff/hijri-datepicker-react react react-dom
+npm i @spezutil/hijri-datepicker-react react react-dom
 
 # Angular
-npm i @digitaltakeoff/hijri-datepicker-angular
+npm i @spezutil/hijri-datepicker-angular
 ```
 
 Continue to [Getting started](/datepicker/getting-started).
@@ -207,8 +207,8 @@ Continue to [Getting started](/datepicker/getting-started).
 - [ ] **Step 9: Install + build**
 
 Run: `pnpm install`
-Run: `pnpm --filter @digitaltakeoff/hijri-core build && pnpm --filter @digitaltakeoff/hijri-datepicker build && pnpm --filter @digitaltakeoff/hijri-datepicker-react build`
-Run: `pnpm --filter @digitaltakeoff/docs build`
+Run: `pnpm --filter @spezutil/hijri-core build && pnpm --filter @spezutil/hijri-datepicker build && pnpm --filter @spezutil/hijri-datepicker-react build`
+Run: `pnpm --filter @spezutil/docs build`
 Expected: Docusaurus build succeeds, emits `apps/docs/build/`. (The sidebar references pages created in later tasks — for THIS task, temporarily the sidebar will fail broken-link/missing-doc checks. To keep Task 1 self-contained, comment out the `datepicker` and `engine` categories in `sidebars.ts`, leaving only `"intro"`, then build. Re-enable them in Task 3 when those pages exist.)
 
 - [ ] **Step 10: Commit**
@@ -228,7 +228,7 @@ git add -A && git commit -m "feat(docs): scaffold Docusaurus site"
 
 ```tsx
 import React, { useState } from "react";
-import { HijriDatepicker } from "@digitaltakeoff/hijri-datepicker-react";
+import { HijriDatepicker } from "@spezutil/hijri-datepicker-react";
 
 export interface HijriDemoProps {
   mode?: string;
@@ -330,7 +330,7 @@ The element exposes CSS custom properties and `::part()` selectors. See the
 
 - [ ] **Step 4: Build**
 
-Run: `pnpm --filter @digitaltakeoff/docs build`
+Run: `pnpm --filter @spezutil/docs build`
 Expected: build succeeds; the recipes route renders (demos are client-only via BrowserOnly, so they
 prerender as the fallback and hydrate in the browser). If the build fails importing the wrapper during
 SSR, confirm `HijriDemoClient` is only referenced through `require()` inside `BrowserOnly` (never a
@@ -365,7 +365,7 @@ title: Getting started
 
 ```html
 <script type="module">
-  import "@digitaltakeoff/hijri-datepicker";
+  import "@spezutil/hijri-datepicker";
 </script>
 
 <hijri-datepicker value="2024-03-15" min="2024-01-01" max="2024-12-31"></hijri-datepicker>
@@ -380,7 +380,7 @@ title: Getting started
 ## React
 
 ```tsx
-import { HijriDatepicker, type ChangeDetail } from "@digitaltakeoff/hijri-datepicker-react";
+import { HijriDatepicker, type ChangeDetail } from "@spezutil/hijri-datepicker-react";
 
 export function Example() {
   return (
@@ -398,7 +398,7 @@ export function Example() {
 
 ```ts
 import { Component } from "@angular/core";
-import { HijriDatepickerComponent, type ChangeDetail } from "@digitaltakeoff/hijri-datepicker-angular";
+import { HijriDatepickerComponent, type ChangeDetail } from "@spezutil/hijri-datepicker-angular";
 
 @Component({
   standalone: true,
@@ -499,11 +499,11 @@ title: hijri-core engine
 
 # hijri-core
 
-`@digitaltakeoff/hijri-core` is the zero-dependency calendar engine behind the picker. Use it
+`@spezutil/hijri-core` is the zero-dependency calendar engine behind the picker. Use it
 directly for conversions and formatting.
 
 ```ts
-import { createCalendar, formatHijri, parseHijri } from "@digitaltakeoff/hijri-core";
+import { createCalendar, formatHijri, parseHijri } from "@spezutil/hijri-core";
 
 const cal = createCalendar();
 const h = cal.gregorianToHijri(new Date(Date.UTC(2024, 2, 15)));
@@ -540,7 +540,7 @@ numeric tokens (`YYYY`, `MM`, `DD`).
 
 - [ ] **Step 5: Build (broken links throw)**
 
-Run: `pnpm --filter @digitaltakeoff/docs build`
+Run: `pnpm --filter @spezutil/docs build`
 Expected: succeeds; all sidebar entries resolve; no broken internal links (`/datepicker/api#theming`,
 `/datepicker/recipes`, `/datepicker/getting-started`, `/` all exist).
 
@@ -591,7 +591,7 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build --filter @digitaltakeoff/docs...
+      - run: pnpm build --filter @spezutil/docs...
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -638,8 +638,8 @@ Expected: all packages + the docs site build; all tests pass.
 The docs site (Docusaurus) lives in `apps/docs`:
 
 ```bash
-pnpm --filter @digitaltakeoff/docs dev     # local docs at http://localhost:3000
-pnpm --filter @digitaltakeoff/docs build   # static build in apps/docs/build
+pnpm --filter @spezutil/docs dev     # local docs at http://localhost:3000
+pnpm --filter @spezutil/docs build   # static build in apps/docs/build
 ```
 
 It is deployed to GitHub Pages by `.github/workflows/docs.yml` on pushes to `main`.

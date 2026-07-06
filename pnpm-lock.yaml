@@ -20,12 +20,6 @@ importers:
 
   apps/docs:
     dependencies:
-      '@digitaltakeoff/hijri-core':
-        specifier: workspace:*
-        version: link:../../packages/hijri-core
-      '@digitaltakeoff/hijri-datepicker-react':
-        specifier: workspace:*
-        version: link:../../packages/hijri-datepicker-react
       '@docusaurus/core':
         specifier: ^3.6.0
         version: 3.10.1(@mdx-js/react@3.1.1(@types/react@19.2.17)(react@18.3.1))(postcss@8.5.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.6.3)
@@ -35,6 +29,12 @@ importers:
       '@mdx-js/react':
         specifier: ^3.0.0
         version: 3.1.1(@types/react@19.2.17)(react@18.3.1)
+      '@spezutil/hijri-core':
+        specifier: workspace:*
+        version: link:../../packages/hijri-core
+      '@spezutil/hijri-datepicker-react':
+        specifier: workspace:*
+        version: link:../../packages/hijri-datepicker-react
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -63,7 +63,7 @@ importers:
 
   apps/storybook:
     dependencies:
-      '@digitaltakeoff/hijri-datepicker':
+      '@spezutil/hijri-datepicker':
         specifier: workspace:*
         version: link:../../packages/hijri-datepicker
     devDependencies:
@@ -106,7 +106,7 @@ importers:
 
   packages/hijri-datepicker:
     dependencies:
-      '@digitaltakeoff/hijri-core':
+      '@spezutil/hijri-core':
         specifier: workspace:*
         version: link:../hijri-core
     devDependencies:
@@ -141,7 +141,7 @@ importers:
       '@angular/core':
         specifier: ^19.2.0
         version: 19.2.25(rxjs@7.8.2)(zone.js@0.15.1)
-      '@digitaltakeoff/hijri-datepicker':
+      '@spezutil/hijri-datepicker':
         specifier: workspace:*
         version: link:../hijri-datepicker
       ng-packagr:
@@ -156,15 +156,16 @@ importers:
       zone.js:
         specifier: ^0.15.0
         version: 0.15.1
+    publishDirectory: dist
 
   packages/hijri-datepicker-react:
     dependencies:
-      '@digitaltakeoff/hijri-datepicker':
-        specifier: workspace:*
-        version: link:../hijri-datepicker
       '@lit/react':
         specifier: ^1.0.6
         version: 1.0.8(@types/react@18.3.31)
+      '@spezutil/hijri-datepicker':
+        specifier: workspace:*
+        version: link:../hijri-datepicker
     devDependencies:
       '@testing-library/react':
         specifier: ^16.0.1

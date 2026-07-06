@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship `@digitaltakeoff/hijri-datepicker-react` and `@digitaltakeoff/hijri-datepicker-angular` thin wrapper packages, plus the element changes (reflecting property accessors + exported `ChangeDetail` types) they depend on.
+**Goal:** Ship `@spezutil/hijri-datepicker-react` and `@spezutil/hijri-datepicker-angular` thin wrapper packages, plus the element changes (reflecting property accessors + exported `ChangeDetail` types) they depend on.
 
 **Architecture:** The element gains property↔attribute reflection so framework property-bindings drive it. React wrapper uses `@lit/react` `createComponent`. Angular wrapper is a standalone component built with ng-packagr. Both expose typed props mirroring attributes + a typed change callback.
 
@@ -48,7 +48,7 @@ The element class currently has a `private mode: Mode` field, which collides wit
 
 - [ ] **Step 2: Run, confirm fail**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test hijri-datepicker`
+Run: `pnpm --filter @spezutil/hijri-datepicker test hijri-datepicker`
 Expected: FAIL (setting `el.value` is an expando, not reflected).
 
 - [ ] **Step 3: Rename the private `mode` field**
@@ -154,7 +154,7 @@ export type {
 
 - [ ] **Step 7: Run tests + lint + build**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test && pnpm --filter @digitaltakeoff/hijri-datepicker lint && pnpm --filter @digitaltakeoff/hijri-datepicker build`
+Run: `pnpm --filter @spezutil/hijri-datepicker test && pnpm --filter @spezutil/hijri-datepicker lint && pnpm --filter @spezutil/hijri-datepicker build`
 Expected: all tests pass (reflection test + existing); lint clean; dist emitted with the new types in `dist/index.d.ts`.
 
 - [ ] **Step 8: Commit**
@@ -174,7 +174,7 @@ git add -A && git commit -m "feat(hijri-datepicker): reflecting property accesso
 
 ```json
 {
-  "name": "@digitaltakeoff/hijri-datepicker-react",
+  "name": "@spezutil/hijri-datepicker-react",
   "version": "0.0.0",
   "description": "React wrapper for the Hijri datepicker Web Component.",
   "license": "Apache-2.0",
@@ -198,7 +198,7 @@ git add -A && git commit -m "feat(hijri-datepicker): reflecting property accesso
   },
   "dependencies": {
     "@lit/react": "^1.0.6",
-    "@digitaltakeoff/hijri-datepicker": "workspace:*"
+    "@spezutil/hijri-datepicker": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=18",
@@ -240,7 +240,7 @@ export default defineConfig({
   clean: true,
   treeshake: true,
   sourcemap: true,
-  external: ["react", "react-dom", "@lit/react", "@digitaltakeoff/hijri-datepicker"],
+  external: ["react", "react-dom", "@lit/react", "@spezutil/hijri-datepicker"],
 });
 ```
 
@@ -262,7 +262,7 @@ import { createComponent, type EventName } from "@lit/react";
 import {
   HijriDatepicker as HijriDatepickerElement,
   type ChangeDetail,
-} from "@digitaltakeoff/hijri-datepicker";
+} from "@spezutil/hijri-datepicker";
 
 export const HijriDatepicker = createComponent({
   tagName: "hijri-datepicker",
@@ -279,7 +279,7 @@ export type {
   RangeChangeDetail,
   MultipleChangeDetail,
   RangeEndpoint,
-} from "@digitaltakeoff/hijri-datepicker";
+} from "@spezutil/hijri-datepicker";
 ```
 
 - [ ] **Step 6: Create `src/index.test.tsx`**
@@ -320,10 +320,10 @@ describe("HijriDatepicker (React)", () => {
 - [ ] **Step 7: Install, test, lint, build**
 
 Run: `pnpm install`
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker build` (ensure the dependency is built first)
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker-react test`
+Run: `pnpm --filter @spezutil/hijri-datepicker build` (ensure the dependency is built first)
+Run: `pnpm --filter @spezutil/hijri-datepicker-react test`
 Expected: 2 tests PASS.
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker-react lint && pnpm --filter @digitaltakeoff/hijri-datepicker-react build`
+Run: `pnpm --filter @spezutil/hijri-datepicker-react lint && pnpm --filter @spezutil/hijri-datepicker-react build`
 Expected: lint clean; dist emits `index.js`, `index.cjs`, `index.d.ts`.
 
 > If `@lit/react` types complain that the element class isn't assignable, ensure the dependency was
@@ -347,7 +347,7 @@ git add -A && git commit -m "feat(hijri-datepicker-react): @lit/react wrapper wi
 
 ```json
 {
-  "name": "@digitaltakeoff/hijri-datepicker-angular",
+  "name": "@spezutil/hijri-datepicker-angular",
   "version": "0.0.0",
   "description": "Angular wrapper for the Hijri datepicker Web Component.",
   "license": "Apache-2.0",
@@ -359,7 +359,7 @@ git add -A && git commit -m "feat(hijri-datepicker-react): @lit/react wrapper wi
   "peerDependencies": {
     "@angular/core": ">=17",
     "@angular/common": ">=17",
-    "@digitaltakeoff/hijri-datepicker": "workspace:*"
+    "@spezutil/hijri-datepicker": "workspace:*"
   },
   "dependencies": {
     "tslib": "^2.6.0"
@@ -369,7 +369,7 @@ git add -A && git commit -m "feat(hijri-datepicker-react): @lit/react wrapper wi
     "@angular/compiler": "^19.2.0",
     "@angular/compiler-cli": "^19.2.0",
     "@angular/core": "^19.2.0",
-    "@digitaltakeoff/hijri-datepicker": "workspace:*",
+    "@spezutil/hijri-datepicker": "workspace:*",
     "ng-packagr": "^19.2.0",
     "rxjs": "^7.8.0",
     "typescript": "^5.6.0"
@@ -426,8 +426,8 @@ import {
   Input,
   Output,
 } from "@angular/core";
-import "@digitaltakeoff/hijri-datepicker";
-import type { ChangeDetail } from "@digitaltakeoff/hijri-datepicker";
+import "@spezutil/hijri-datepicker";
+import type { ChangeDetail } from "@spezutil/hijri-datepicker";
 
 @Component({
   selector: "hijri-datepicker-ng",
@@ -479,14 +479,14 @@ export type {
   RangeChangeDetail,
   MultipleChangeDetail,
   RangeEndpoint,
-} from "@digitaltakeoff/hijri-datepicker";
+} from "@spezutil/hijri-datepicker";
 ```
 
 - [ ] **Step 6: Install + build**
 
 Run: `pnpm install`
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker build` (dependency first)
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker-angular build`
+Run: `pnpm --filter @spezutil/hijri-datepicker build` (dependency first)
+Run: `pnpm --filter @spezutil/hijri-datepicker-angular build`
 Expected: ng-packagr completes, producing `packages/hijri-datepicker-angular/dist/` with FESM + types + a `package.json`. The partial-AOT compilation of the component template is the correctness gate.
 
 > If ng-packagr errors that the entry `package.json` is missing build fields, that's fine —
@@ -521,8 +521,8 @@ Record totals. If the Angular `build` is slow under turbo, that is expected for 
 - [ ] **Step 2: Update `README.md` packages table** — add the two wrapper rows under the existing table:
 
 ```markdown
-| `@digitaltakeoff/hijri-datepicker-react` | React wrapper (`@lit/react`) with typed props + `onChange`. |
-| `@digitaltakeoff/hijri-datepicker-angular` | Angular standalone component wrapper. |
+| `@spezutil/hijri-datepicker-react` | React wrapper (`@lit/react`) with typed props + `onChange`. |
+| `@spezutil/hijri-datepicker-angular` | Angular standalone component wrapper. |
 ```
 
 - [ ] **Step 3: Add framework usage examples** after the `### Modes` block:
@@ -531,7 +531,7 @@ Record totals. If the Angular `build` is slow under turbo, that is expected for 
 ### React
 
 \`\`\`tsx
-import { HijriDatepicker, type ChangeDetail } from "@digitaltakeoff/hijri-datepicker-react";
+import { HijriDatepicker, type ChangeDetail } from "@spezutil/hijri-datepicker-react";
 
 <HijriDatepicker
   mode="range"
@@ -544,7 +544,7 @@ import { HijriDatepicker, type ChangeDetail } from "@digitaltakeoff/hijri-datepi
 ### Angular
 
 \`\`\`ts
-import { HijriDatepickerComponent } from "@digitaltakeoff/hijri-datepicker-angular";
+import { HijriDatepickerComponent } from "@spezutil/hijri-datepicker-angular";
 
 // standalone: add HijriDatepickerComponent to a component's imports, then:
 // <hijri-datepicker-ng mode="multiple" value="2024-03-05,2024-03-12"
@@ -582,7 +582,7 @@ git add -A && git commit -m "docs: document React + Angular wrappers; M4 status"
 - **`dir` not reflected:** native `HTMLElement.dir` already covers it (noted in Task 1 Step 5).
 - **Angular gate:** ng-packagr partial-AOT build is the verification gate; runtime TestBed deferred to
   avoid heavy zone/jsdom setup (documented in spec §5 and Task 3).
-- **Type consistency:** both wrappers import `ChangeDetail` from `@digitaltakeoff/hijri-datepicker`;
+- **Type consistency:** both wrappers import `ChangeDetail` from `@spezutil/hijri-datepicker`;
   the React event prop is typed `EventName<CustomEvent<ChangeDetail>>`, the Angular `@Output` is
   `EventEmitter<ChangeDetail>`.
 ```

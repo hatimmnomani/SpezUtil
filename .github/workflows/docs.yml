@@ -29,7 +29,7 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build --filter @digitaltakeoff/docs...
+      - run: pnpm build --filter @spezutil/docs...
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

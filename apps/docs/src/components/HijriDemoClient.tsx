@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { HijriDatepicker } from "@digitaltakeoff/hijri-datepicker-react";
+import { HijriDatepicker } from "@spezutil/hijri-datepicker-react";
 
 export interface HijriDemoProps {
   mode?: string;

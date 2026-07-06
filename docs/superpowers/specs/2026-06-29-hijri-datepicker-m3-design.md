@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-29
 **Status:** Approved (design)
-**Scope:** Extend `@digitaltakeoff/hijri-datepicker` with range, multiple-date, and time-picker modes. No new packages.
+**Scope:** Extend `@spezutil/hijri-datepicker` with range, multiple-date, and time-picker modes. No new packages.
 
 ## 1. Goal
 

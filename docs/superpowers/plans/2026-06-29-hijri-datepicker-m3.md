@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add range, multiple-date, and (single-mode) time-picker support to `@digitaltakeoff/hijri-datepicker`, keeping M2 single-date behavior fully backward-compatible.
+**Goal:** Add range, multiple-date, and (single-mode) time-picker support to `@spezutil/hijri-datepicker`, keeping M2 single-date behavior fully backward-compatible.
 
 **Architecture:** Extend the existing zero-dep Web Component. Pure logic moves to small testable modules: `render.ts` gains range/multi cell flags; new `selection.ts` (value encode/decode) and `time.ts` (clock parse/format, 12/24h). The element class gains a `mode` state machine, range hover painting (class-toggling, no full re-render), and a time-picker row.
 
@@ -56,13 +56,13 @@
 
 - [ ] **Step 2: Run, confirm fail**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test render`
+Run: `pnpm --filter @spezutil/hijri-datepicker test render`
 Expected: FAIL (rangeStart/selectedList not handled).
 
 - [ ] **Step 3: Replace `render.ts` with the extended version**
 
 ```ts
-import type { HijriCalendar, HijriDate } from "@digitaltakeoff/hijri-core";
+import type { HijriCalendar, HijriDate } from "@spezutil/hijri-core";
 
 export interface DayCell {
   hijri: HijriDate;
@@ -145,7 +145,7 @@ export function buildMonthModel(
 
 - [ ] **Step 4: Run, confirm pass**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test render`
+Run: `pnpm --filter @spezutil/hijri-datepicker test render`
 Expected: PASS (all render tests, old + new).
 
 - [ ] **Step 5: Commit**
@@ -199,7 +199,7 @@ describe("selection helpers", () => {
 
 - [ ] **Step 2: Run, confirm fail**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test selection`
+Run: `pnpm --filter @spezutil/hijri-datepicker test selection`
 Expected: FAIL — cannot resolve `./selection`.
 
 - [ ] **Step 3: Implement `selection.ts`**
@@ -229,7 +229,7 @@ export function toggleIso(list: string[], iso: string): string[] {
 
 - [ ] **Step 4: Run, confirm pass**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test selection`
+Run: `pnpm --filter @spezutil/hijri-datepicker test selection`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -296,7 +296,7 @@ describe("time helpers", () => {
 
 - [ ] **Step 2: Run, confirm fail**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test time`
+Run: `pnpm --filter @spezutil/hijri-datepicker test time`
 Expected: FAIL — cannot resolve `./time`.
 
 - [ ] **Step 3: Implement `time.ts`**
@@ -356,7 +356,7 @@ export function splitDateTime(value: string | null): {
 
 - [ ] **Step 4: Run, confirm pass**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test time`
+Run: `pnpm --filter @spezutil/hijri-datepicker test time`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -446,7 +446,7 @@ git add -A && git commit -m "feat(hijri-datepicker): pure clock-time helpers"
 
 - [ ] **Step 2: Run, confirm fail**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test hijri-datepicker`
+Run: `pnpm --filter @spezutil/hijri-datepicker test hijri-datepicker`
 Expected: FAIL (mode/time not implemented).
 
 - [ ] **Step 3: Replace `hijri-datepicker.ts` entirely with:**
@@ -459,7 +459,7 @@ import {
   weekdayNames,
   type HijriCalendar,
   type HijriDate,
-} from "@digitaltakeoff/hijri-core";
+} from "@spezutil/hijri-core";
 import { buildMonthModel, type DayCell } from "./render";
 import { isMode, parseIsoList, type Mode } from "./selection";
 import {
@@ -907,12 +907,12 @@ export class HijriDatepicker extends HTMLElement {
 
 - [ ] **Step 4: Run, confirm pass**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker test hijri-datepicker`
+Run: `pnpm --filter @spezutil/hijri-datepicker test hijri-datepicker`
 Expected: PASS — M2 tests + the 5 new M3 tests. If a test fails, fix production code (not by weakening assertions). If lint flags an unused `current`/`void current` line, remove that line (it is only a clarity placeholder).
 
 - [ ] **Step 5: Lint**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker lint`
+Run: `pnpm --filter @spezutil/hijri-datepicker lint`
 Expected: clean. Fix any `noUncheckedIndexedAccess` issues with the same `!`/`?? ""` patterns already used in the file.
 
 - [ ] **Step 6: Commit**
@@ -943,7 +943,7 @@ git add -A && git commit -m "feat(hijri-datepicker): range, multiple, and single
 
 - [ ] **Step 2: Build to confirm the CSS string still compiles into the bundle**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker build`
+Run: `pnpm --filter @spezutil/hijri-datepicker build`
 Expected: build success (no TS errors — it is a template string).
 
 - [ ] **Step 3: Commit**
@@ -963,7 +963,7 @@ git add -A && git commit -m "feat(hijri-datepicker): range band and time-row sty
 
 ```ts
 import { html } from "lit-html";
-import "@digitaltakeoff/hijri-datepicker";
+import "@spezutil/hijri-datepicker";
 
 export default {
   title: "Components/HijriDatepicker",
@@ -1024,7 +1024,7 @@ export const RightToLeft = Template.bind({});
 
 - [ ] **Step 2: Verify Storybook builds**
 
-Run: `pnpm --filter @digitaltakeoff/hijri-datepicker build && pnpm --filter @digitaltakeoff/storybook build`
+Run: `pnpm --filter @spezutil/hijri-datepicker build && pnpm --filter @spezutil/storybook build`
 Expected: `storybook-static/` produced, no errors.
 
 - [ ] **Step 3: Commit**

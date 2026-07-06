@@ -39,7 +39,7 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["@digitaltakeoff/storybook", "@digitaltakeoff/docs"]
+  "ignore": ["@spezutil/storybook", "@spezutil/docs"]
 }
 ```
 
@@ -93,10 +93,10 @@ Where `<dir>` is the package's folder: `hijri-core`, `hijri-datepicker`, `hijri-
 
 ```markdown
 ---
-"@digitaltakeoff/hijri-core": minor
-"@digitaltakeoff/hijri-datepicker": minor
-"@digitaltakeoff/hijri-datepicker-react": minor
-"@digitaltakeoff/hijri-datepicker-angular": minor
+"@spezutil/hijri-core": minor
+"@spezutil/hijri-datepicker": minor
+"@spezutil/hijri-datepicker-react": minor
+"@spezutil/hijri-datepicker-angular": minor
 ---
 
 Initial public release: zero-dependency Hijri (Fatimid/Bohra Misri) calendar engine, the
@@ -189,7 +189,7 @@ and runs `changeset publish`, publishing any package whose version is not yet on
 provenance attestation.
 
 **Prerequisites:** an `NPM_TOKEN` automation token stored as a repo secret, and the
-`@digitaltakeoff` npm org (or update the package scope). Provenance requires the workflow's
+`@spezutil` npm org (or update the package scope). Provenance requires the workflow's
 `id-token: write` permission (already set).
 
 ## Local fallback (no provenance)
@@ -213,7 +213,7 @@ This publishes without a provenance attestation (provenance needs CI OIDC).
 - [ ] **Step 1:** Dry-run the tarball for each lib to confirm contents (dist + package.json + no source/tests). From each package dir, e.g.:
 
 ```bash
-pnpm --filter @digitaltakeoff/hijri-core exec npm pack --dry-run
+pnpm --filter @spezutil/hijri-core exec npm pack --dry-run
 ```
 
 Expected: the file list includes `dist/**` and `package.json` (and LICENSE/README if present), and
