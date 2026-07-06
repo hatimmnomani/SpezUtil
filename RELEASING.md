@@ -42,8 +42,13 @@ git push
 ## 3. Publish (with provenance)
 
 Trigger the **Release** workflow from the GitHub Actions tab (Run workflow). It builds the libraries
-and runs `changeset publish`, publishing any package whose version is not yet on npm, with an npm
+and runs `pnpm -r publish` (which honors each package's `publishConfig`, including the Angular
+wrapper's ng-packagr `dist` directory, and rewrites `workspace:*` deps to real versions) with an npm
 provenance attestation.
+
+> **Why `pnpm publish`, not `changeset publish`:** `changeset publish` shells out to `npm`, which
+> ignores `publishConfig.directory` — so the ng-packagr Angular package would ship its source. `pnpm`
+> honors `directory` and publishes the built `dist`. Changesets is still used for versioning.
 
 **Prerequisites:**
 
@@ -51,10 +56,15 @@ provenance attestation.
 - The `@spezutil` npm org (or update the package scope).
 - The workflow's `id-token: write` permission (already set) — required for provenance.
 
-## Local fallback (no provenance)
+## Local publish (no provenance)
 
 ```bash
-pnpm release   # build + changeset publish, using your local npm auth
+pnpm release   # build + pnpm -r publish, using your local npm auth
 ```
 
-This publishes without a provenance attestation (provenance requires CI OIDC).
+No provenance attestation (that requires CI OIDC). Your npm account must allow non-interactive
+publishing — either set 2FA to **Authorization only**, or use an **Automation** token:
+
+1. npmjs.com → Access Tokens → Generate New Token → **Automation** (bypasses 2FA).
+2. `npm config set //registry.npmjs.org/:_authToken <TOKEN>`
+3. `pnpm release`
