@@ -1,9 +1,12 @@
 {
   "name": "@digitaltakeoff/hijri-datepicker-angular",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Angular wrapper for the Hijri datepicker Web Component.",
   "license": "Apache-2.0",
-  "publishConfig": { "access": "public", "provenance": true },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hatimmnomani/SpezUtil.git",

@@ -1,9 +1,12 @@
 {
   "name": "@digitaltakeoff/hijri-core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Zero-dependency Hijri (Fatimid/Bohra) calendar engine.",
   "license": "Apache-2.0",
-  "publishConfig": { "access": "public", "provenance": true },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hatimmnomani/SpezUtil.git",
@@ -21,7 +24,9 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
