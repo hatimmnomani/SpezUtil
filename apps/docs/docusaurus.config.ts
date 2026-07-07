@@ -29,6 +29,9 @@ const config: Config = {
       title: "Digital Takeoff UI",
       items: [
         { type: "docSidebar", sidebarId: "docs", position: "left", label: "Docs" },
+        // Storybook is built into static/storybook by the deploy workflow.
+        // pathname:// prepends baseUrl and bypasses SPA routing + broken-link checks.
+        { href: "pathname:///storybook/", label: "Storybook", position: "left" },
       ],
     },
     prism: { theme: prismThemes.github, darkTheme: prismThemes.dracula },

@@ -1,0 +1,42 @@
+---
+title: Recipes
+---
+
+import CalendarDemo from "@site/src/components/CalendarDemo";
+
+# Recipes
+
+Every demo below is the real Web Component with sample meeting data. Interactions log the emitted `detail` underneath.
+
+## Month view
+
+<CalendarDemo date="2026-07-06" />
+
+## Week view (working hours)
+
+<CalendarDemo view="week" date="2026-07-06" dayStart={7} dayEnd={21} />
+
+## Day view
+
+<CalendarDemo view="day" date="2026-07-06" dayStart={7} dayEnd={21} />
+
+## Agenda
+
+<CalendarDemo view="agenda" date="2026-07-06" />
+
+## Arabic, right-to-left
+
+<CalendarDemo date="2026-07-06" locale="ar" dir="rtl" />
+
+## Handling clicks to build scheduling UI
+
+`slot-click` gives you the exact 30-minute slot the user clicked — open your create-meeting dialog with it. `event-click` returns the full event object including your `data` payload:
+
+```tsx
+<HijriCalendar
+  view="week"
+  events={meetings}
+  onSlotClick={(e) => openCreateDialog(e.detail.gregorian)}
+  onEventClick={(e) => openMeeting(e.detail.event.data as Meeting)}
+/>
+```

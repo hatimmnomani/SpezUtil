@@ -7,6 +7,7 @@ export type {
   RangeChangeDetail,
   MultipleChangeDetail,
   RangeEndpoint,
+  SecondaryPosition,
 } from "./hijri-datepicker";
 export { buildMonthModel } from "./render";
 export type { DayCell, MonthModel } from "./render";

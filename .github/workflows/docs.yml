@@ -29,6 +29,12 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Build Storybook and stage it as a static asset so it ships at /SpezUtil/storybook/
+      - run: pnpm build --filter @spezutil/storybook...
+      - run: |
+          rm -rf apps/docs/static/storybook
+          mkdir -p apps/docs/static/storybook
+          cp -r apps/storybook/storybook-static/. apps/docs/static/storybook/
       - run: pnpm build --filter @spezutil/docs...
       - uses: actions/configure-pages@v5
         with:

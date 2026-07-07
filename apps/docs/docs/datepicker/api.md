@@ -24,6 +24,10 @@ Every attribute has a matching reflected property (e.g. `el.value`, `el.enableTi
 | `enable-time` | `enableTime` | boolean | single | Show the time picker. |
 | `time-format` | `timeFormat` | 12 \| 24 | single | Time display format. |
 | `dir` | `dir` | ltr \| rtl | all | Text direction. |
+| `primary` | `primary` | hijri \| gregorian | all | Which day number is prominent in cells (default `hijri`). |
+| `secondary-position` | `secondaryPosition` | end \| start \| above \| below \| hidden | all | Where the secondary number sits (default `below`), or hide it. |
+
+When the Gregorian month changes inside the grid, the first of the month is labelled with its abbreviated name (e.g. "1 Apr").
 
 ### isDateDisabled (property only)
 
@@ -57,7 +61,7 @@ Style via CSS custom properties on the host:
 | `--dtp-accent-fg` | Text on accent. |
 | `--dtp-radius` | Corner radius. |
 
-`::part()` hooks: `day`, `nav-prev`, `nav-next`, `time`.
+`::part()` hooks: `day`, `day-primary`, `day-secondary`, `nav-prev`, `nav-next`, `time`.
 
 ```css
 hijri-datepicker {

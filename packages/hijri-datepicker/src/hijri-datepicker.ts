@@ -44,6 +44,9 @@ export type ChangeDetail =
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
+export type SecondaryPosition = "end" | "start" | "above" | "below" | "hidden";
+const SECONDARY_POSITIONS: SecondaryPosition[] = ["end", "start", "above", "below", "hidden"];
+
 function parseIsoUtc(s: string | null): Date | null {
   if (!s || !ISO.test(s)) return null;
   const [y, m, d] = s.split("-").map(Number);
@@ -67,6 +70,8 @@ export class HijriDatepicker extends HTMLElement {
       "mode",
       "enable-time",
       "time-format",
+      "primary",
+      "secondary-position",
     ];
   }
 
@@ -113,6 +118,17 @@ export class HijriDatepicker extends HTMLElement {
     if (v) this.setAttribute("enable-time", "");
     else this.removeAttribute("enable-time");
   }
+  get primary(): "hijri" | "gregorian" {
+    return this.getAttribute("primary") === "gregorian" ? "gregorian" : "hijri";
+  }
+  set primary(v: string) { this.reflect("primary", v); }
+  get secondaryPosition(): SecondaryPosition {
+    const v = this.getAttribute("secondary-position");
+    return SECONDARY_POSITIONS.includes(v as SecondaryPosition)
+      ? (v as SecondaryPosition)
+      : "below";
+  }
+  set secondaryPosition(v: string) { this.reflect("secondary-position", v); }
 
   constructor() {
     super();
@@ -307,6 +323,24 @@ export class HijriDatepicker extends HTMLElement {
     });
   }
 
+  /** Gregorian day number, with "1 Mar"-style month marker on the first of a month. */
+  private gregDayLabel(g: Date): string {
+    const d = g.getUTCDate();
+    if (d !== 1) return String(d);
+    return `1 ${g.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" })}`;
+  }
+
+  /** Primary/secondary day-number spans honoring `primary` and `secondary-position`. */
+  private dayNumbersHtml(cell: DayCell): string {
+    const gregLabel = this.gregDayLabel(cell.gregorian);
+    const hijriLabel = String(cell.hijri.day);
+    const [prim, sec] =
+      this.primary === "gregorian" ? [gregLabel, hijriLabel] : [hijriLabel, gregLabel];
+    const primarySpan = `<span class="num-primary" part="day-primary">${prim}</span>`;
+    if (this.secondaryPosition === "hidden") return primarySpan;
+    return `${primarySpan}<span class="num-secondary" part="day-secondary">${sec}</span>`;
+  }
+
   private renderTimeRow(): string {
     if (this._mode !== "single" || !this.hasAttribute("enable-time")) return "";
     const t: Time = this.time ?? { hour: 0, minute: 0 };
@@ -411,8 +445,7 @@ export class HijriDatepicker extends HTMLElement {
                   return `<button type="button" part="day" class="${cls}" role="gridcell"
                     data-i="${i}" aria-selected="${ariaSelected}" aria-label="${label}"
                     tabindex="-1" ${cell.disabled ? "disabled" : ""}>
-                    <span class="hijri">${cell.hijri.day}</span>
-                    <span class="greg">${cell.gregorian.getUTCDate()}</span>
+                    ${this.dayNumbersHtml(cell)}
                   </button>`;
                 })
                 .join("");

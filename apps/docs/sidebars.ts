@@ -10,6 +10,11 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Calendar",
+      items: ["calendar/getting-started", "calendar/api", "calendar/recipes"],
+    },
+    {
+      type: "category",
       label: "Engine",
       items: ["engine/hijri-core"],
     },

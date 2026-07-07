@@ -31,10 +31,13 @@ export const styles = `
 .week:last-child { border-bottom: none; }
 .day-head { grid-row: 1; border: none; background: none; cursor: pointer; font: inherit; color: var(--hcal-fg); display: flex; align-items: baseline; gap: 4px; justify-content: center; padding: 4px 4px 2px; border-radius: 6px; }
 .day-head:hover { background: color-mix(in srgb, var(--hcal-fg) 6%, transparent); }
-.day-head .hijri { font-weight: 600; font-size: 14px; }
-.day-head .greg { font-size: 9px; color: var(--hcal-muted); }
+.day-head .num-primary { font-weight: 600; font-size: 14px; }
+.day-head .num-secondary { font-size: 9px; color: var(--hcal-muted); white-space: nowrap; }
+:host([secondary-position="start"]) .day-head { flex-direction: row-reverse; }
+:host([secondary-position="below"]) .day-head { flex-direction: column; gap: 0; align-items: center; }
+:host([secondary-position="above"]) .day-head { flex-direction: column-reverse; gap: 0; align-items: center; }
 .day-head.out { opacity: 0.45; }
-.day-head.today .hijri { background: var(--hcal-accent); color: var(--hcal-accent-fg); border-radius: 999px; padding: 1px 6px; }
+.day-head.today .num-primary { background: var(--hcal-accent); color: var(--hcal-accent-fg); border-radius: 999px; padding: 1px 6px; }
 .day-head[data-disabled] { cursor: not-allowed; opacity: 0.3; }
 .chip { border: none; cursor: pointer; font: inherit; font-size: 11px; text-align: start; color: var(--hcal-event-fg); background: var(--_ev-color, var(--hcal-accent)); border-radius: 4px; padding: 1px 6px; margin: 1px 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip.continues-before { border-start-start-radius: 0; border-end-start-radius: 0; }
@@ -45,20 +48,23 @@ export const styles = `
 /* time grid (week/day) */
 .timegrid { display: flex; flex-direction: column; flex: 1; }
 .tg-head { display: grid; border-bottom: 1px solid var(--hcal-border); }
-.tg-col-head { text-align: center; padding: 6px 2px; border-inline-start: 1px solid var(--hcal-border); }
+.tg-col-head { text-align: center; padding: 6px 2px; border-inline-start: 1px solid var(--hcal-border); display: flex; flex-direction: column; align-items: center; }
 .tg-col-head .dow { padding: 0; }
-.tg-col-head .hijri { font-weight: 600; font-size: 15px; }
-.tg-col-head .greg { font-size: 10px; color: var(--hcal-muted); }
-.tg-col-head.today .hijri { color: var(--hcal-accent); }
+.tg-col-head .num-primary { font-weight: 600; font-size: 15px; }
+.tg-col-head .num-secondary { font-size: 10px; color: var(--hcal-muted); white-space: nowrap; }
+.tg-col-head.today .num-primary { color: var(--hcal-accent); }
 .tg-allday { display: grid; border-bottom: 1px solid var(--hcal-border); min-height: 22px; }
 .tg-allday-label { font-size: 10px; color: var(--hcal-muted); display: flex; align-items: center; justify-content: center; }
 .tg-allday-col { border-inline-start: 1px solid var(--hcal-border); display: flex; flex-direction: column; }
 .tg-body { display: grid; position: relative; overflow-y: auto; max-height: 640px; }
 .tg-gutter { position: relative; }
-.tg-hour { height: 48px; position: relative; }
-.tg-gutter .tg-hour span { position: absolute; top: -7px; inset-inline-end: 6px; font-size: 10px; color: var(--hcal-muted); }
+.tg-slot { height: 24px; box-sizing: border-box; }
+.tg-gutter .tg-slot { position: relative; }
+.tg-gutter .tg-slot span { position: absolute; top: -7px; inset-inline-end: 6px; font-size: 10px; color: var(--hcal-muted); white-space: nowrap; }
 .tg-day-col { border-inline-start: 1px solid var(--hcal-border); position: relative; }
-.tg-day-col .tg-hour { border-bottom: 1px solid color-mix(in srgb, var(--hcal-border) 60%, transparent); cursor: pointer; }
+.tg-day-col .tg-slot { cursor: pointer; }
+.tg-day-col .tg-slot.hour-end { border-bottom: 1px solid color-mix(in srgb, var(--hcal-border) 60%, transparent); }
+.tg-day-col .tg-slot:hover { background: color-mix(in srgb, var(--hcal-fg) 4%, transparent); }
 .tg-event { position: absolute; inset-inline: 2px; border: none; cursor: pointer; font: inherit; font-size: 11px; text-align: start; color: var(--hcal-event-fg); background: var(--_ev-color, var(--hcal-accent)); border-radius: 4px; padding: 2px 6px; overflow: hidden; box-shadow: 0 0 0 1px var(--hcal-bg); }
 .tg-event small { display: block; opacity: 0.85; font-size: 10px; }
 .now-line { position: absolute; inset-inline: 0; height: 2px; background: #ea4335; pointer-events: none; }

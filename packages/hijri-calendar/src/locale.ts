@@ -13,6 +13,7 @@ export interface CalendarLocale {
   todayLabel: string;
   moreLabel: (n: number) => string;
   allDayLabel: string;
+  emptyLabel: string;
   viewLabels: Record<"month" | "week" | "day" | "agenda", string>;
 }
 
@@ -22,6 +23,7 @@ const translit: CalendarLocale = {
   todayLabel: "Today",
   moreLabel: (n) => `+${n} more`,
   allDayLabel: "All day",
+  emptyLabel: "No events",
   viewLabels: { month: "Month", week: "Week", day: "Day", agenda: "Agenda" },
 };
 
@@ -31,6 +33,7 @@ const ar: CalendarLocale = {
   todayLabel: "اليوم",
   moreLabel: (n) => `+${n} أخرى`,
   allDayLabel: "طوال اليوم",
+  emptyLabel: "لا توجد أحداث",
   viewLabels: { month: "شهر", week: "أسبوع", day: "يوم", agenda: "جدول" },
 };
 

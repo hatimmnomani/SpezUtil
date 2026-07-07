@@ -24,6 +24,8 @@ import type { ChangeDetail } from "@spezutil/hijri-datepicker";
       [enableTime]="enableTime"
       [timeFormat]="timeFormat"
       [disabledWeekdays]="disabledWeekdays"
+      [primary]="primary"
+      [secondaryPosition]="secondaryPosition"
       (change)="onChange($event)"
     ></hijri-datepicker>
   `,
@@ -39,6 +41,8 @@ export class HijriDatepickerComponent {
   @Input() enableTime = false;
   @Input() timeFormat: string | null = null;
   @Input() disabledWeekdays: string | null = null;
+  @Input() primary: "hijri" | "gregorian" = "hijri";
+  @Input() secondaryPosition = "below";
 
   @Output() change = new EventEmitter<ChangeDetail>();
 

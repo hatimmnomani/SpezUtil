@@ -90,6 +90,25 @@ describe("<hijri-calendar> shell", () => {
     expect(el.getAttribute("view")).toBe("week");
   });
 
+  it("reflects camelCase properties to attributes", () => {
+    const el = mount({ date: "2026-07-06" });
+    el.locale = "ar";
+    el.dayStart = 8;
+    el.dayEnd = 18;
+    el.weekStart = 1;
+    el.maxEvents = 5;
+    el.timeFormat = "24";
+    expect(el.getAttribute("locale")).toBe("ar");
+    expect(el.getAttribute("day-start")).toBe("8");
+    expect(el.getAttribute("day-end")).toBe("18");
+    expect(el.getAttribute("week-start")).toBe("1");
+    expect(el.getAttribute("max-events")).toBe("5");
+    expect(el.getAttribute("time-format")).toBe("24");
+    expect(el.locale).toBe("ar");
+    expect(el.dayStart).toBe(8);
+    expect(el.dayEnd).toBe(18);
+  });
+
   it("applies rtl direction", () => {
     const el = mount({ date: "2026-07-06", dir: "rtl" });
     expect(el.getAttribute("dir")).toBe("rtl");
