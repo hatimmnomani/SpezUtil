@@ -6,3 +6,4 @@ dist/
 storybook-static/
 build/
 .docusaurus/
+apps/docs/static/storybook/
