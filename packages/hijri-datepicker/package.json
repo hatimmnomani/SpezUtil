@@ -1,6 +1,6 @@
 {
   "name": "@spezutil/hijri-datepicker",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Zero-dependency Hijri date picker Web Component.",
   "license": "Apache-2.0",
   "publishConfig": {
