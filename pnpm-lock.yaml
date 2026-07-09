@@ -101,10 +101,10 @@ importers:
   packages/hijri-calendar:
     dependencies:
       '@spezutil/hijri-core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../hijri-core
       '@spezutil/hijri-view-core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../hijri-view-core
     devDependencies:
       jsdom:
@@ -139,7 +139,7 @@ importers:
         specifier: ^19.2.0
         version: 19.2.25(rxjs@7.8.2)(zone.js@0.15.1)
       '@spezutil/hijri-calendar':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../hijri-calendar
       ng-packagr:
         specifier: ^19.2.0
@@ -161,7 +161,7 @@ importers:
         specifier: ^1.0.6
         version: 1.0.8(@types/react@18.3.31)
       '@spezutil/hijri-calendar':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../hijri-calendar
     devDependencies:
       '@testing-library/react':
@@ -207,10 +207,10 @@ importers:
   packages/hijri-datepicker:
     dependencies:
       '@spezutil/hijri-core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../hijri-core
       '@spezutil/hijri-view-core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../hijri-view-core
     devDependencies:
       jsdom:
@@ -245,7 +245,7 @@ importers:
         specifier: ^19.2.0
         version: 19.2.25(rxjs@7.8.2)(zone.js@0.15.1)
       '@spezutil/hijri-datepicker':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../hijri-datepicker
       ng-packagr:
         specifier: ^19.2.0
@@ -267,7 +267,7 @@ importers:
         specifier: ^1.0.6
         version: 1.0.8(@types/react@18.3.31)
       '@spezutil/hijri-datepicker':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../hijri-datepicker
     devDependencies:
       '@testing-library/react':
@@ -301,7 +301,7 @@ importers:
   packages/hijri-view-core:
     dependencies:
       '@spezutil/hijri-core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../hijri-core
     devDependencies:
       tsup:

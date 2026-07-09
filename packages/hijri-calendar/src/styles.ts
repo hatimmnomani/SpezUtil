@@ -1,4 +1,7 @@
+import { alKanzFontFace, ALKANZ_FONT_FAMILY } from "./font-al-kanz";
+
 export const styles = `
+${alKanzFontFace}
 :host {
   --hcal-bg: #fff;
   --hcal-fg: #1a1a1a;
@@ -9,6 +12,7 @@ export const styles = `
   --hcal-radius: 8px;
   --hcal-today-bg: color-mix(in srgb, var(--hcal-accent) 10%, transparent);
   --hcal-event-fg: #fff;
+  --hcal-font-family-arabic: "${ALKANZ_FONT_FAMILY}", "Traditional Arabic", serif;
   display: block;
   font-family: system-ui, sans-serif;
   color: var(--hcal-fg);
@@ -18,21 +22,21 @@ export const styles = `
 .toolbar button { background: none; border: 1px solid var(--hcal-border); cursor: pointer; font: inherit; color: var(--hcal-fg); border-radius: 6px; padding: 4px 10px; }
 .toolbar button:hover { background: color-mix(in srgb, var(--hcal-fg) 6%, transparent); }
 .nav-group { display: flex; gap: 4px; }
-.title { flex: 1; text-align: center; font-weight: 600; min-width: 160px; }
-.title small { display: block; font-weight: 400; color: var(--hcal-muted); font-size: 11px; }
+.title { flex: 1; text-align: center; font-weight: 600; min-width: 160px; font-family: var(--hcal-font-family-arabic); }
+.title small { display: block; font-weight: 400; color: var(--hcal-muted); font-size: 11px; font-family: var(--hcal-font-family); }
 .view-switch { display: flex; gap: 2px; }
 .view-switch button[aria-pressed="true"] { background: var(--hcal-accent); color: var(--hcal-accent-fg); border-color: var(--hcal-accent); }
 
 /* month view */
 .month { display: flex; flex-direction: column; flex: 1; }
 .dow-row { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--hcal-border); }
-.dow { text-align: center; font-size: 11px; color: var(--hcal-muted); padding: 6px 0; }
+.dow { text-align: center; font-size: 11px; color: var(--hcal-muted); padding: 6px 0; font-family: var(--hcal-font-family-arabic); }
 .week { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: min-content; border-bottom: 1px solid var(--hcal-border); min-height: 96px; align-content: start; position: relative; }
 .week:last-child { border-bottom: none; }
 .day-head { grid-row: 1; border: none; background: none; cursor: pointer; font: inherit; color: var(--hcal-fg); display: flex; align-items: baseline; gap: 4px; justify-content: center; padding: 4px 4px 2px; border-radius: 6px; }
 .day-head:hover { background: color-mix(in srgb, var(--hcal-fg) 6%, transparent); }
-.day-head .num-primary { font-weight: 600; font-size: 14px; }
-.day-head .num-secondary { font-size: 9px; color: var(--hcal-muted); white-space: nowrap; }
+.day-head .num-primary { font-weight: 600; font-size: 14px; font-family: var(--hcal-font-family-arabic); }
+.day-head .num-secondary { font-size: 9px; color: var(--hcal-muted); white-space: nowrap; font-family: var(--hcal-font-family-arabic); }
 :host([secondary-position="start"]) .day-head { flex-direction: row-reverse; }
 :host([secondary-position="below"]) .day-head { flex-direction: column; gap: 0; align-items: center; }
 :host([secondary-position="above"]) .day-head { flex-direction: column-reverse; gap: 0; align-items: center; }
@@ -50,8 +54,8 @@ export const styles = `
 .tg-head { display: grid; border-bottom: 1px solid var(--hcal-border); }
 .tg-col-head { text-align: center; padding: 6px 2px; border-inline-start: 1px solid var(--hcal-border); display: flex; flex-direction: column; align-items: center; }
 .tg-col-head .dow { padding: 0; }
-.tg-col-head .num-primary { font-weight: 600; font-size: 15px; }
-.tg-col-head .num-secondary { font-size: 10px; color: var(--hcal-muted); white-space: nowrap; }
+.tg-col-head .num-primary { font-weight: 600; font-size: 15px; font-family: var(--hcal-font-family-arabic); }
+.tg-col-head .num-secondary { font-size: 10px; color: var(--hcal-muted); white-space: nowrap; font-family: var(--hcal-font-family-arabic); }
 .tg-col-head.today .num-primary { color: var(--hcal-accent); }
 .tg-allday { display: grid; border-bottom: 1px solid var(--hcal-border); min-height: 22px; }
 .tg-allday-label { font-size: 10px; color: var(--hcal-muted); display: flex; align-items: center; justify-content: center; }
@@ -74,7 +78,7 @@ export const styles = `
 .agenda { padding: 8px 0; overflow-y: auto; max-height: 640px; }
 .agenda-day { display: flex; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--hcal-border); }
 .agenda-date { min-width: 120px; }
-.agenda-date .hijri { font-weight: 600; }
+.agenda-date .hijri { font-weight: 600; font-family: var(--hcal-font-family-arabic); }
 .agenda-date .greg { font-size: 11px; color: var(--hcal-muted); }
 .agenda-items { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 .agenda-item { display: flex; gap: 10px; align-items: baseline; border: none; background: none; cursor: pointer; font: inherit; color: var(--hcal-fg); text-align: start; padding: 2px 4px; border-radius: 4px; }

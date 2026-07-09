@@ -1,6 +1,6 @@
 {
   "name": "@spezutil/hijri-datepicker",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Zero-dependency Hijri date picker Web Component.",
   "license": "Apache-2.0",
   "publishConfig": {
@@ -36,8 +36,8 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@spezutil/hijri-core": "workspace:*",
-    "@spezutil/hijri-view-core": "workspace:*"
+    "@spezutil/hijri-core": "workspace:^",
+    "@spezutil/hijri-view-core": "workspace:^"
   },
   "devDependencies": {
     "jsdom": "^25.0.0",
