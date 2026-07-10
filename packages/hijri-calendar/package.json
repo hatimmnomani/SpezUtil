@@ -1,6 +1,6 @@
 {
   "name": "@spezutil/hijri-calendar",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Hijri-first interactive calendar view Web Component (month, week, day, agenda) with event support.",
   "license": "Apache-2.0",
   "publishConfig": {
