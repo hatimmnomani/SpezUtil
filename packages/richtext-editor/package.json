@@ -1,0 +1,67 @@
+{
+  "name": "@spezutil/richtext-editor",
+  "version": "0.1.0",
+  "description": "Rich-text editor Web Component for Arabic / Lisan-ud-Dawat content, built on Lexical.",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hatimmnomani/SpezUtil.git",
+    "directory": "packages/richtext-editor"
+  },
+  "type": "module",
+  "sideEffects": [
+    "**/*.css",
+    "./dist/index.js",
+    "./dist/index.cjs"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@lexical/clipboard": "^0.47.0",
+    "@lexical/history": "^0.47.0",
+    "@lexical/html": "^0.47.0",
+    "@lexical/link": "^0.47.0",
+    "@lexical/list": "^0.47.0",
+    "@lexical/rich-text": "^0.47.0",
+    "@lexical/selection": "^0.47.0",
+    "@lexical/table": "^0.47.0",
+    "@lexical/text": "^0.47.0",
+    "@lexical/utils": "^0.47.0",
+    "@spezutil/hijri-core": "workspace:^",
+    "lexical": "^0.47.0"
+  },
+  "peerDependencies": {
+    "@spezutil/hijri-datepicker": "workspace:^"
+  },
+  "peerDependenciesMeta": {
+    "@spezutil/hijri-datepicker": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@spezutil/hijri-datepicker": "workspace:^",
+    "jsdom": "^25.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

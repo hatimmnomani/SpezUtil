@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "@spezutil/hijri-datepicker": "workspace:*",
-    "@spezutil/hijri-calendar": "workspace:*"
+    "@spezutil/hijri-calendar": "workspace:*",
+    "@spezutil/richtext-editor": "workspace:*"
   },
   "devDependencies": {
     "@storybook/addon-a11y": "^8.3.0",

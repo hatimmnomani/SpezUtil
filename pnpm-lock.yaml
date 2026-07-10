@@ -72,6 +72,9 @@ importers:
       '@spezutil/hijri-datepicker':
         specifier: workspace:*
         version: link:../../packages/hijri-datepicker
+      '@spezutil/richtext-editor':
+        specifier: workspace:*
+        version: link:../../packages/richtext-editor
     devDependencies:
       '@storybook/addon-a11y':
         specifier: ^8.3.0
@@ -304,6 +307,133 @@ importers:
         specifier: workspace:^
         version: link:../hijri-core
     devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@1.21.7)(postcss@8.5.15)(typescript@5.6.3)
+      typescript:
+        specifier: ^5.6.0
+        version: 5.6.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@26.1.0)(jsdom@25.0.1)(less@4.6.7)(sass@1.101.0)(terser@5.48.0)
+
+  packages/richtext-editor:
+    dependencies:
+      '@lexical/clipboard':
+        specifier: ^0.47.0
+        version: 0.47.0(typescript@5.6.3)
+      '@lexical/history':
+        specifier: ^0.47.0
+        version: 0.47.0(typescript@5.6.3)
+      '@lexical/html':
+        specifier: ^0.47.0
+        version: 0.47.0(typescript@5.6.3)
+      '@lexical/link':
+        specifier: ^0.47.0
+        version: 0.47.0(typescript@5.6.3)
+      '@lexical/list':
+        specifier: ^0.47.0
+        version: 0.47.0(typescript@5.6.3)
+      '@lexical/rich-text':
+        specifier: ^0.47.0
+        version: 0.47.0(typescript@5.6.3)
+      '@lexical/selection':
+        specifier: ^0.47.0
+        version: 0.47.0(typescript@5.6.3)
+      '@lexical/table':
+        specifier: ^0.47.0
+        version: 0.47.0(typescript@5.6.3)
+      '@lexical/text':
+        specifier: ^0.47.0
+        version: 0.47.0(typescript@5.6.3)
+      '@lexical/utils':
+        specifier: ^0.47.0
+        version: 0.47.0(typescript@5.6.3)
+      '@spezutil/hijri-core':
+        specifier: workspace:^
+        version: link:../hijri-core
+      lexical:
+        specifier: ^0.47.0
+        version: 0.47.0(typescript@5.6.3)
+    devDependencies:
+      '@spezutil/hijri-datepicker':
+        specifier: workspace:^
+        version: link:../hijri-datepicker
+      jsdom:
+        specifier: ^25.0.0
+        version: 25.0.1
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@1.21.7)(postcss@8.5.15)(typescript@5.6.3)
+      typescript:
+        specifier: ^5.6.0
+        version: 5.6.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@26.1.0)(jsdom@25.0.1)(less@4.6.7)(sass@1.101.0)(terser@5.48.0)
+
+  packages/richtext-editor-angular:
+    dependencies:
+      tslib:
+        specifier: ^2.6.0
+        version: 2.8.1
+    devDependencies:
+      '@angular/common':
+        specifier: ^19.2.0
+        version: 19.2.25(@angular/core@19.2.25(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2)
+      '@angular/compiler':
+        specifier: ^19.2.0
+        version: 19.2.25
+      '@angular/compiler-cli':
+        specifier: ^19.2.0
+        version: 19.2.25(@angular/compiler@19.2.25)(typescript@5.6.3)
+      '@angular/core':
+        specifier: ^19.2.0
+        version: 19.2.25(rxjs@7.8.2)(zone.js@0.15.1)
+      '@spezutil/richtext-editor':
+        specifier: workspace:^
+        version: link:../richtext-editor
+      ng-packagr:
+        specifier: ^19.2.0
+        version: 19.2.2(@angular/compiler-cli@19.2.25(@angular/compiler@19.2.25)(typescript@5.6.3))(tslib@2.8.1)(typescript@5.6.3)
+      rxjs:
+        specifier: ^7.8.0
+        version: 7.8.2
+      typescript:
+        specifier: ~5.6.0
+        version: 5.6.3
+      zone.js:
+        specifier: ^0.15.0
+        version: 0.15.1
+    publishDirectory: dist
+
+  packages/richtext-editor-react:
+    dependencies:
+      '@lit/react':
+        specifier: ^1.0.6
+        version: 1.0.8(@types/react@18.3.31)
+      '@spezutil/richtext-editor':
+        specifier: workspace:^
+        version: link:../richtext-editor
+    devDependencies:
+      '@testing-library/react':
+        specifier: ^16.0.1
+        version: 16.3.2(@testing-library/dom@10.4.0)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/react':
+        specifier: ^18.3.0
+        version: 18.3.31
+      '@types/react-dom':
+        specifier: ^18.3.0
+        version: 18.3.7(@types/react@18.3.31)
+      jsdom:
+        specifier: ^25.0.0
+        version: 25.0.1
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
       tsup:
         specifier: ^8.3.0
         version: 8.5.1(jiti@1.21.7)(postcss@8.5.15)(typescript@5.6.3)
@@ -2194,6 +2324,110 @@ packages:
   '@leichtgewicht/ip-codec@2.0.5':
     resolution: {integrity: sha512-Vo+PSpZG2/fmgmiNzYK9qWRh8h/CHrwD0mo1h1DzL4yzHNSfWYujGTYsWGreD000gcgmZ7K4Ys6Tx9TxtsKdDw==}
 
+  '@lexical/clipboard@0.47.0':
+    resolution: {integrity: sha512-OIB+NxHjfpRJJoTtU/mqeb7vPVMks5l97QgwoZthQLR/GIc5zrOtvoLftxl5hKAG5lwOe9BzhashKgVcsSPB3g==}
+    peerDependencies:
+      typescript: '>=5.2'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@lexical/dragon@0.47.0':
+    resolution: {integrity: sha512-qqkro6sTLddOh2aYSqoXtm1QOQ/DY71AtWj3XmHPIPtxN/PkVKbvJBVZiP/a9kgFoPs+2a2Tlq9cCIDf6xSHuw==}
+    peerDependencies:
+      typescript: '>=5.2'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@lexical/extension@0.47.0':
+    resolution: {integrity: sha512-F9WyXB0eDsCbeSuShzgjBS3ugxNnTvHQa+P+VZiVSWilbDNGjJyysco2JCwn5ruLmEP4MXCQn5IKeW7A9FG8KQ==}
+    peerDependencies:
+      typescript: '>=5.2'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@lexical/history@0.47.0':
+    resolution: {integrity: sha512-CqAR6G4x6WewKS2uDgf2N1/rszIlXiDCW4dwu0IiQV9oVbhOklvAmPBJX6319myJxB+ArtjuuMgDU3gi/iTqXA==}
+    peerDependencies:
+      typescript: '>=5.2'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@lexical/html@0.47.0':
+    resolution: {integrity: sha512-VrJ9tSRuoUP5tTQb7TB+6PTW0Gh5aC3Hnne4GuXDwKUIzoWFXWkxlB0oIlfL5HVljrzO/Ra65v5M3RnR4TX1PA==}
+    peerDependencies:
+      typescript: '>=5.2'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@lexical/internal@0.47.0':
+    resolution: {integrity: sha512-VKDTHajXvjCkjYHwWra4Qjz8AI6PWeNPW7l6Q9AIlAwUiolAXrlkyfrBAFzdAP360IyDbC2gO9fwTb9ZvZM85Q==}
+    peerDependencies:
+      typescript: '>=5.2'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@lexical/link@0.47.0':
+    resolution: {integrity: sha512-lDAbTyJwufKs3yUn1D4AY0IoBU9O4JXzTDqSRa8qVCK7LC3+cF0u+rR5o9RJfxtHUzmALk+s2I0IqlxGCyIocg==}
+    peerDependencies:
+      typescript: '>=5.2'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@lexical/list@0.47.0':
+    resolution: {integrity: sha512-g8AApVZNqqcCDXfJtgxEfAv7ylK0HmblRaJYMxB0OI7nlLipUjutIUy8cRX5GKI0woa+oGPYi68cZcMQnBysGw==}
+    peerDependencies:
+      typescript: '>=5.2'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@lexical/rich-text@0.47.0':
+    resolution: {integrity: sha512-GtRH7KNW7fVJzd3Xftdr/EPXaMqHt2xCIO/eJtf17Yrs7vlVOljM0xMcDoj4QOY2Gp4p3CheLlwBbcO96YYV0A==}
+    peerDependencies:
+      typescript: '>=5.2'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@lexical/selection@0.47.0':
+    resolution: {integrity: sha512-/q+eXnryZxCeqeWAODhTRlJL+jGa6/vIhE/bh+KvHmLbZJM8qfwa0qzt4rb3g+L1/CbjcowS/Xwv2ha1OmjBFQ==}
+    peerDependencies:
+      typescript: '>=5.2'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@lexical/table@0.47.0':
+    resolution: {integrity: sha512-T0sOB1i0I05f2U+tTVXDitYq4ACtFob42gULwwqqKfQ/SEPq26Kfd5CljI1rSS4+N+vQz/VTDYF/BN7ZMgHpjA==}
+    peerDependencies:
+      typescript: '>=5.2'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@lexical/text@0.47.0':
+    resolution: {integrity: sha512-Rj1xa/MMhgOckjOJ+ifDUO8BUyi7o+a/vpYcsftMTCpiKmeteO+qSAKoyhvZke496nLh/WFCWKw/iD43bst/Ig==}
+    peerDependencies:
+      typescript: '>=5.2'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@lexical/utils@0.47.0':
+    resolution: {integrity: sha512-uVAqNr5qiE4t9GSj+L4rv06WaIGADzblxEKCn134sPzvsVouDv0VTT0pBKjQYUgshT4z9iW5cFtO11+iPacBYg==}
+    peerDependencies:
+      typescript: '>=5.2'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   '@lit-labs/ssr-dom-shim@1.6.0':
     resolution: {integrity: sha512-VHb0ALPMTlgKjM6yIxxoQNnpKyUKLD04VzeQdsiXkMqkvYlAHxq9glGLmgbb889/1GsohSOAjvQYoiBppXFqrQ==}
 
@@ -2475,6 +2709,9 @@ packages:
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
+
+  '@preact/signals-core@1.14.4':
+    resolution: {integrity: sha512-HNB6HYeYKhQbJ1aKl+YRjrS4+QWHLKX6qKoUsfS/m0vqzsVaEBiZiaKbG/e+NKk2ch5ALQr/ihWaMHxiCuuWHA==}
 
   '@rollup/plugin-json@6.1.0':
     resolution: {integrity: sha512-EGI2te5ENk1coGeADSIwZ7G2Q8CJS2sF120T7jLw4xFw9n7wIOXHo+kIYRAoVpJAN+kmqZSoO3Fp4JtoNF4ReA==}
@@ -5052,6 +5289,14 @@ packages:
   leven@3.1.0:
     resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
     engines: {node: '>=6'}
+
+  lexical@0.47.0:
+    resolution: {integrity: sha512-ZKsxsk3jUpXsRtG20EBq42z2bq8A20UHtjqvVT/kIxfsaiXwaRFBBcLSFxPa77j+hXkBF5w96C3/imwtmLoRdg==}
+    peerDependencies:
+      typescript: '>=5.2'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   lilconfig@3.1.3:
     resolution: {integrity: sha512-/vlFKAoH5Cgt3Ie+JLhRbwOsCQePABiU3tJ1egGvyQ+33R/vcwM2Zl2QR/LzjsBeItPt3oSVXapn+m4nQDvpzw==}
@@ -10204,6 +10449,122 @@ snapshots:
 
   '@leichtgewicht/ip-codec@2.0.5': {}
 
+  '@lexical/clipboard@0.47.0(typescript@5.6.3)':
+    dependencies:
+      '@lexical/extension': 0.47.0(typescript@5.6.3)
+      '@lexical/html': 0.47.0(typescript@5.6.3)
+      '@lexical/internal': 0.47.0(typescript@5.6.3)
+      '@lexical/list': 0.47.0(typescript@5.6.3)
+      '@lexical/selection': 0.47.0(typescript@5.6.3)
+      '@lexical/utils': 0.47.0(typescript@5.6.3)
+      '@types/trusted-types': 2.0.7
+      lexical: 0.47.0(typescript@5.6.3)
+    optionalDependencies:
+      typescript: 5.6.3
+
+  '@lexical/dragon@0.47.0(typescript@5.6.3)':
+    dependencies:
+      '@lexical/extension': 0.47.0(typescript@5.6.3)
+      lexical: 0.47.0(typescript@5.6.3)
+    optionalDependencies:
+      typescript: 5.6.3
+
+  '@lexical/extension@0.47.0(typescript@5.6.3)':
+    dependencies:
+      '@lexical/internal': 0.47.0(typescript@5.6.3)
+      '@lexical/utils': 0.47.0(typescript@5.6.3)
+      '@preact/signals-core': 1.14.4
+      lexical: 0.47.0(typescript@5.6.3)
+    optionalDependencies:
+      typescript: 5.6.3
+
+  '@lexical/history@0.47.0(typescript@5.6.3)':
+    dependencies:
+      '@lexical/extension': 0.47.0(typescript@5.6.3)
+      '@lexical/utils': 0.47.0(typescript@5.6.3)
+      lexical: 0.47.0(typescript@5.6.3)
+    optionalDependencies:
+      typescript: 5.6.3
+
+  '@lexical/html@0.47.0(typescript@5.6.3)':
+    dependencies:
+      '@lexical/extension': 0.47.0(typescript@5.6.3)
+      '@lexical/internal': 0.47.0(typescript@5.6.3)
+      '@lexical/selection': 0.47.0(typescript@5.6.3)
+      '@lexical/utils': 0.47.0(typescript@5.6.3)
+      lexical: 0.47.0(typescript@5.6.3)
+    optionalDependencies:
+      typescript: 5.6.3
+
+  '@lexical/internal@0.47.0(typescript@5.6.3)':
+    optionalDependencies:
+      typescript: 5.6.3
+
+  '@lexical/link@0.47.0(typescript@5.6.3)':
+    dependencies:
+      '@lexical/extension': 0.47.0(typescript@5.6.3)
+      '@lexical/html': 0.47.0(typescript@5.6.3)
+      '@lexical/internal': 0.47.0(typescript@5.6.3)
+      '@lexical/utils': 0.47.0(typescript@5.6.3)
+      lexical: 0.47.0(typescript@5.6.3)
+    optionalDependencies:
+      typescript: 5.6.3
+
+  '@lexical/list@0.47.0(typescript@5.6.3)':
+    dependencies:
+      '@lexical/extension': 0.47.0(typescript@5.6.3)
+      '@lexical/html': 0.47.0(typescript@5.6.3)
+      '@lexical/internal': 0.47.0(typescript@5.6.3)
+      '@lexical/utils': 0.47.0(typescript@5.6.3)
+      lexical: 0.47.0(typescript@5.6.3)
+    optionalDependencies:
+      typescript: 5.6.3
+
+  '@lexical/rich-text@0.47.0(typescript@5.6.3)':
+    dependencies:
+      '@lexical/clipboard': 0.47.0(typescript@5.6.3)
+      '@lexical/dragon': 0.47.0(typescript@5.6.3)
+      '@lexical/extension': 0.47.0(typescript@5.6.3)
+      '@lexical/html': 0.47.0(typescript@5.6.3)
+      '@lexical/selection': 0.47.0(typescript@5.6.3)
+      '@lexical/utils': 0.47.0(typescript@5.6.3)
+      lexical: 0.47.0(typescript@5.6.3)
+    optionalDependencies:
+      typescript: 5.6.3
+
+  '@lexical/selection@0.47.0(typescript@5.6.3)':
+    dependencies:
+      '@lexical/internal': 0.47.0(typescript@5.6.3)
+      lexical: 0.47.0(typescript@5.6.3)
+    optionalDependencies:
+      typescript: 5.6.3
+
+  '@lexical/table@0.47.0(typescript@5.6.3)':
+    dependencies:
+      '@lexical/clipboard': 0.47.0(typescript@5.6.3)
+      '@lexical/extension': 0.47.0(typescript@5.6.3)
+      '@lexical/html': 0.47.0(typescript@5.6.3)
+      '@lexical/internal': 0.47.0(typescript@5.6.3)
+      '@lexical/utils': 0.47.0(typescript@5.6.3)
+      lexical: 0.47.0(typescript@5.6.3)
+    optionalDependencies:
+      typescript: 5.6.3
+
+  '@lexical/text@0.47.0(typescript@5.6.3)':
+    dependencies:
+      '@lexical/internal': 0.47.0(typescript@5.6.3)
+      lexical: 0.47.0(typescript@5.6.3)
+    optionalDependencies:
+      typescript: 5.6.3
+
+  '@lexical/utils@0.47.0(typescript@5.6.3)':
+    dependencies:
+      '@lexical/internal': 0.47.0(typescript@5.6.3)
+      '@lexical/selection': 0.47.0(typescript@5.6.3)
+      lexical: 0.47.0(typescript@5.6.3)
+    optionalDependencies:
+      typescript: 5.6.3
+
   '@lit-labs/ssr-dom-shim@1.6.0': {}
 
   '@lit/react@1.0.8(@types/react@18.3.31)':
@@ -10520,6 +10881,8 @@ snapshots:
       config-chain: 1.1.13
 
   '@polka/url@1.0.0-next.29': {}
+
+  '@preact/signals-core@1.14.4': {}
 
   '@rollup/plugin-json@6.1.0(rollup@4.62.2)':
     dependencies:
@@ -13348,6 +13711,12 @@ snapshots:
       source-map: 0.6.1
 
   leven@3.1.0: {}
+
+  lexical@0.47.0(typescript@5.6.3):
+    dependencies:
+      '@lexical/internal': 0.47.0(typescript@5.6.3)
+    optionalDependencies:
+      typescript: 5.6.3
 
   lilconfig@3.1.3: {}
 
