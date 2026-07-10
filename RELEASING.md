@@ -3,8 +3,17 @@
 Packages are versioned with [Changesets](https://github.com/changesets/changesets) and published to
 npm with provenance from a manually-dispatched GitHub Actions workflow.
 
-Published packages: `@spezutil/hijri-core`, `hijri-datepicker`, `hijri-datepicker-react`,
-`hijri-datepicker-angular`. The `storybook` and `docs` apps are private and never published.
+Published package families:
+
+- Hijri internals: `@spezutil/hijri-core`, `@spezutil/hijri-view-core`
+- Datepicker: `@spezutil/hijri-datepicker`, `@spezutil/hijri-datepicker-react`,
+  `@spezutil/hijri-datepicker-angular`
+- Calendar: `@spezutil/hijri-calendar`, `@spezutil/hijri-calendar-react`,
+  `@spezutil/hijri-calendar-angular`
+- Rich-text editor: `@spezutil/richtext-editor`, `@spezutil/richtext-editor-react`,
+  `@spezutil/richtext-editor-angular`
+
+The `storybook` and `docs` apps are private and never published.
 
 ## 1. Record changes
 
@@ -19,7 +28,17 @@ generated file in `.changeset/`.
 
 ## 2. Version
 
-When ready to release, apply pending changesets locally:
+When ready to release, inspect the calculated release before changing any files:
+
+```bash
+pnpm changeset status
+```
+
+Confirm the package list and every target version. In particular, new packages intended to start at
+`0.1.0` must not already be set to `0.1.0` before a minor changeset is applied, or Changesets will
+calculate `0.2.0`.
+
+Once the status matches the intended release, apply pending changesets locally:
 
 ```bash
 pnpm version-packages   # = changeset version
@@ -33,11 +52,11 @@ git add -A && git commit -m "chore(release): version packages"
 git push
 ```
 
-> **Note — Angular wrapper peer bump.** `@spezutil/hijri-datepicker-angular` lists
-> `@spezutil/hijri-datepicker` as a `peerDependency`. Changesets force-majors a package when a
-> peer dependency it declares is bumped in the same release. If that over-bumps the Angular wrapper
-> beyond the intended semver (e.g. to `1.0.0` on a non-breaking release), reconcile its `version` and
-> `CHANGELOG.md` heading manually before committing.
+> **Note — peer dependency bumps.** Angular wrappers declare their corresponding Web Component as a
+> peer dependency, and `@spezutil/richtext-editor` has an optional datepicker peer. Changesets can
+> force-major a package when a peer is bumped in the same release. If the status shows an unintended
+> major, fix the changeset or dependency range before running `pnpm version-packages`; do not repair
+> the generated versions after the fact.
 
 ## 3. Publish (with provenance)
 
@@ -45,6 +64,10 @@ Trigger the **Release** workflow from the GitHub Actions tab (Run workflow). It 
 and runs `pnpm -r publish` (which honors each package's `publishConfig`, including the Angular
 wrapper's ng-packagr `dist` directory, and rewrites `workspace:*` deps to real versions) with an npm
 provenance attestation.
+
+Before dispatching, compare workspace versions with npm and run `pnpm publish --dry-run` in every
+package expected to be released. The recursive publish command skips versions that already exist in
+the registry, so the unpublished-version list must exactly match the approved release scope.
 
 > **Why `pnpm publish`, not `changeset publish`:** `changeset publish` shells out to `npm`, which
 > ignores `publishConfig.directory` — so the ng-packagr Angular package would ship its source. `pnpm`

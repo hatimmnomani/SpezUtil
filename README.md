@@ -11,9 +11,16 @@ communities over time.
 | Package | Description |
 | --- | --- |
 | `@spezutil/hijri-core` | Zero-dependency Hijri (Fatimid/Bohra Misri) calendar engine. |
+| `@spezutil/hijri-view-core` | Pure view models for calendar month, time-grid, and agenda views. |
 | `@spezutil/hijri-datepicker` | `<hijri-datepicker>` Web Component — Hijri primary, Gregorian secondary. |
 | `@spezutil/hijri-datepicker-react` | React wrapper (`@lit/react`) with typed props + `onChange`. |
 | `@spezutil/hijri-datepicker-angular` | Angular standalone component wrapper. |
+| `@spezutil/hijri-calendar` | `<hijri-calendar>` Web Component with month, week, day, and agenda views. |
+| `@spezutil/hijri-calendar-react` | React wrapper for the calendar Web Component. |
+| `@spezutil/hijri-calendar-angular` | Angular standalone wrapper for the calendar Web Component. |
+| `@spezutil/richtext-editor` | `<spez-richtext>` Lexical editor for Arabic and Lisan-ud-Dawat content. |
+| `@spezutil/richtext-editor-react` | Typed React wrapper for the rich-text editor. |
+| `@spezutil/richtext-editor-angular` | Angular standalone wrapper for the rich-text editor. |
 
 ## Quick start (Web Component)
 
@@ -105,9 +112,9 @@ It is deployed to GitHub Pages by `.github/workflows/docs.yml` on pushes to `mai
 
 ## Status
 
-Milestone M0–M6 complete: monorepo, `hijri-core` engine, `<hijri-datepicker>` (single/range/multiple
-+ time), React + Angular wrappers, a Docusaurus docs site, and a Changesets release pipeline (first
-`0.1.0` staged, publish via a dispatched workflow). See [`RELEASING.md`](./RELEASING.md).
+The workspace contains the Hijri engine, datepicker and calendar Web Components, the Lexical-based
+rich-text editor, React and Angular wrappers, Storybook, a Docusaurus docs site, and a Changesets
+release pipeline. See [`RELEASING.md`](./RELEASING.md).
 
 ## Releasing
 

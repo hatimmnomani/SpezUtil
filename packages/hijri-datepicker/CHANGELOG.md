@@ -1,5 +1,11 @@
 # @spezutil/hijri-datepicker
 
+## 0.1.3
+
+### Patch Changes
+
+- Regenerate the embedded Al-Kanz font module with typed exports for smaller declaration output.
+
 ## 0.1.0
 
 ### Minor Changes
