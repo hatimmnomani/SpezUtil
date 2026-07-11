@@ -12,6 +12,7 @@ import {
   UNDO_COMMAND,
   type ElementFormatType,
   type LexicalEditor,
+  type LexicalNode,
   type TextFormatType,
 } from "lexical";
 import {
@@ -36,6 +37,9 @@ import { $createAyatNode, $isAyatNode } from "./nodes/ayat-node";
 import {
   $createTranslitLineNode,
   $createTranslitPairNode,
+  $isTranslitPairNode,
+  $unwrapTranslitPair,
+  type TranslitPairNode,
 } from "./nodes/translit-nodes";
 import { INSERT_IMAGE_COMMAND } from "./nodes/image-node";
 import { SET_DIRECTION_COMMAND } from "./direction";
@@ -148,8 +152,28 @@ function textInputPopover(
   return wrap;
 }
 
+/**
+ * Translit pairs must be unwrapped before $setBlocksType: the selection's
+ * nearest block is the line inside the pair, so $setBlocksType would create
+ * the new block inside the pair and the normalizer would fold it right back.
+ */
+function $unwrapSelectedTranslitPairs(selection: ReturnType<typeof $getSelection>): void {
+  if (!$isRangeSelection(selection)) return;
+  const pairs = new Set<TranslitPairNode>();
+  const collect = (start: LexicalNode | null) => {
+    for (let node = start; node !== null; node = node.getParent()) {
+      if ($isTranslitPairNode(node)) pairs.add(node);
+    }
+  };
+  collect(selection.anchor.getNode());
+  collect(selection.focus.getNode());
+  for (const node of selection.getNodes()) collect(node);
+  pairs.forEach($unwrapTranslitPair);
+}
+
 function $setBlock(editor: LexicalEditor, type: BlockType): void {
   editor.update(() => {
+    $unwrapSelectedTranslitPairs($getSelection());
     const selection = $getSelection();
     if (!$isRangeSelection(selection)) return;
     switch (type) {

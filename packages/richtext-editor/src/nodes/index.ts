@@ -34,7 +34,9 @@ export {
   $createTranslitLineNode,
   $isTranslitPairNode,
   $isTranslitLineNode,
+  $unwrapTranslitPair,
   normalizeTranslitPair,
+  registerTranslitDeletion,
 } from "./translit-nodes";
 export type {
   SerializedTranslitPairNode,

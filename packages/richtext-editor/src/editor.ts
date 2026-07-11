@@ -12,7 +12,12 @@ import { createEmptyHistoryState, registerHistory } from "@lexical/history";
 import { registerTablePlugin, registerTableSelectionObserver } from "@lexical/table";
 import { $toggleLink, TOGGLE_LINK_COMMAND, type LinkAttributes } from "@lexical/link";
 import { mergeRegister } from "@lexical/utils";
-import { EDITOR_NODES, TranslitPairNode, normalizeTranslitPair } from "./nodes";
+import {
+  EDITOR_NODES,
+  TranslitPairNode,
+  normalizeTranslitPair,
+  registerTranslitDeletion,
+} from "./nodes";
 import { $createImageNode, INSERT_IMAGE_COMMAND } from "./nodes/image-node";
 import { registerAutoDirection, registerDirectionCommand } from "./direction";
 
@@ -95,6 +100,7 @@ export function createEditorInstance(rootElement: HTMLElement): EditorInstance {
     registerAutoDirection(editor),
     registerDirectionCommand(editor),
     editor.registerNodeTransform(TranslitPairNode, normalizeTranslitPair),
+    registerTranslitDeletion(editor),
     () => editor.setRootElement(null),
   );
   return { editor, dispose };

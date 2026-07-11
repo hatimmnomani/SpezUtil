@@ -34,6 +34,9 @@ export function openHijriDatePicker(
   const picker = document.createElement("hijri-datepicker");
   const close = openPopover(picker);
   picker.addEventListener("change", (event) => {
+    // Keep the picker's change event from bubbling through <spez-richtext>,
+    // where consumers listen for the editor's own change event.
+    event.stopPropagation();
     // SingleChangeDetail from @spezutil/hijri-datepicker (default mode).
     const detail = (event as CustomEvent<{ mode: string; hijri?: HijriDate }>).detail;
     if (detail?.mode === "single" && detail.hijri) {

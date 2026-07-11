@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { $getRoot, $selectAll } from "lexical";
+import { $createTextNode, $getRoot, $isParagraphNode, $selectAll } from "lexical";
 import { $isHeadingNode } from "@lexical/rich-text";
 import "./index";
 import { $isAyatNode } from "./nodes/ayat-node";
+import {
+  $createTranslitLineNode,
+  $createTranslitPairNode,
+  $isTranslitPairNode,
+} from "./nodes/translit-nodes";
 import type { SpezRichtext } from "./richtext-editor";
 
 function create(attrs: Record<string, string> = {}): SpezRichtext {
@@ -64,6 +69,66 @@ describe("toolbar", () => {
     clickButton(el, "Ayat block");
     el.editor.getEditorState().read(() => {
       expect($isAyatNode($getRoot().getFirstChild())).toBe(true);
+    });
+  });
+
+  it("block select converts an ayat block back to a paragraph", () => {
+    const el = create();
+    el.setHTML('<blockquote data-spez-type="ayat">بسم الله</blockquote>');
+    el.editor.update(() => $selectAll(), { discrete: true });
+    const select = el.querySelector<HTMLSelectElement>(".spez-rte-toolbar select")!;
+    select.value = "paragraph";
+    select.dispatchEvent(new Event("change"));
+    flush(el);
+    el.editor.getEditorState().read(() => {
+      const first = $getRoot().getFirstChild();
+      expect($isParagraphNode(first)).toBe(true);
+      expect(first!.getTextContent()).toBe("بسم الله");
+    });
+  });
+
+  function seedPairAndSelect(el: SpezRichtext): void {
+    el.editor.update(
+      () => {
+        const pair = $createTranslitPairNode();
+        const arabic = $createTranslitLineNode("arabic");
+        arabic.append($createTextNode("العلم نور"));
+        const latin = $createTranslitLineNode("latin");
+        latin.append($createTextNode("al-ilmu noor"));
+        pair.append(arabic, latin);
+        $getRoot().clear().append(pair);
+        arabic.selectStart();
+      },
+      { discrete: true },
+    );
+  }
+
+  it("block select converts a translit pair into paragraphs", () => {
+    const el = create();
+    seedPairAndSelect(el);
+    const select = el.querySelector<HTMLSelectElement>(".spez-rte-toolbar select")!;
+    select.value = "paragraph";
+    select.dispatchEvent(new Event("change"));
+    flush(el);
+    el.editor.getEditorState().read(() => {
+      const children = $getRoot().getChildren();
+      expect(children.some($isTranslitPairNode)).toBe(false);
+      expect(children.map((c) => c.getTextContent())).toEqual(["العلم نور", "al-ilmu noor"]);
+    });
+  });
+
+  it("block select converts a translit pair into headings", () => {
+    const el = create();
+    seedPairAndSelect(el);
+    const select = el.querySelector<HTMLSelectElement>(".spez-rte-toolbar select")!;
+    select.value = "h2";
+    select.dispatchEvent(new Event("change"));
+    flush(el);
+    el.editor.getEditorState().read(() => {
+      const children = $getRoot().getChildren();
+      expect(children.some($isTranslitPairNode)).toBe(false);
+      expect($isHeadingNode(children[0])).toBe(true);
+      expect(children[0]!.getTextContent()).toBe("العلم نور");
     });
   });
 

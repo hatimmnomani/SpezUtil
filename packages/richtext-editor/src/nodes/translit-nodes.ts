@@ -1,6 +1,10 @@
 import {
   $applyNodeReplacement,
   $createParagraphNode,
+  $getSelection,
+  $isRangeSelection,
+  COMMAND_PRIORITY_LOW,
+  DELETE_CHARACTER_COMMAND,
   ElementNode,
   type DOMConversionMap,
   type DOMConversionOutput,
@@ -11,6 +15,7 @@ import {
   type LexicalUpdateJSON,
   type NodeKey,
   type ParagraphNode,
+  type PointType,
   type RangeSelection,
   type SerializedElementNode,
   type Spread,
@@ -196,6 +201,117 @@ export function $isTranslitLineNode(
   node: LexicalNode | null | undefined,
 ): node is TranslitLineNode {
   return node instanceof TranslitLineNode;
+}
+
+/**
+ * Replaces a pair with plain paragraphs (one per line, content moved over).
+ * Returns the paragraphs in document order.
+ */
+export function $unwrapTranslitPair(pair: TranslitPairNode): ParagraphNode[] {
+  const paragraphs: ParagraphNode[] = [];
+  let anchor: LexicalNode = pair;
+  for (const line of pair.getChildren()) {
+    const paragraph = $createParagraphNode();
+    if (line instanceof ElementNode) {
+      line.getChildren().forEach((child) => paragraph.append(child));
+    } else {
+      paragraph.append(line);
+    }
+    anchor.insertAfter(paragraph);
+    anchor = paragraph;
+    paragraphs.push(paragraph);
+  }
+  pair.remove();
+  return paragraphs;
+}
+
+function $findTranslitLine(node: LexicalNode | null): TranslitLineNode | null {
+  for (let current = node; current !== null; current = current.getParent()) {
+    if ($isTranslitLineNode(current)) return current;
+  }
+  return null;
+}
+
+function $isAtElementStart(element: ElementNode, point: PointType): boolean {
+  if (point.offset !== 0) return false;
+  const node = point.getNode();
+  if (node.is(element)) return true;
+  const first = element.getFirstDescendant();
+  return first !== null && first.is(node);
+}
+
+function $isAtElementEnd(element: ElementNode, point: PointType): boolean {
+  const node = point.getNode();
+  if (node.is(element)) return point.offset === element.getChildrenSize();
+  const last = element.getLastDescendant();
+  if (last === null || !last.is(node)) return false;
+  return point.offset === node.getTextContentSize();
+}
+
+/**
+ * Deletion around translit pairs. Without this, `deleteCharacter` merges a
+ * line across the pair boundary and the normalizer immediately resurrects the
+ * emptied line, so the pair can never be removed:
+ * - backspace/forward-delete in an all-empty pair removes the whole pair
+ * - backspace at the start of the latin line (or forward delete at the end of
+ *   the arabic line) just moves the caret between lines instead of merging
+ * - backspace at the start of the arabic line unwraps the pair into paragraphs
+ * - forward delete at the end of the block before a pair steps into the pair
+ */
+export function registerTranslitDeletion(editor: LexicalEditor): () => void {
+  return editor.registerCommand<boolean>(
+    DELETE_CHARACTER_COMMAND,
+    (isBackward) => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection) || !selection.isCollapsed()) return false;
+      const anchor = selection.anchor;
+      const line = $findTranslitLine(anchor.getNode());
+
+      if (line !== null) {
+        const pair = line.getParent();
+        if (!$isTranslitPairNode(pair)) return false;
+        const atBoundary = isBackward
+          ? $isAtElementStart(line, anchor)
+          : $isAtElementEnd(line, anchor);
+        if (!atBoundary) return false;
+
+        if (pair.getTextContent().trim() === "") {
+          const paragraph = $createParagraphNode();
+          pair.replace(paragraph);
+          paragraph.select();
+          return true;
+        }
+        const sibling = isBackward ? line.getPreviousSibling() : line.getNextSibling();
+        if ($isTranslitLineNode(sibling)) {
+          if (isBackward) sibling.selectEnd();
+          else sibling.selectStart();
+          return true;
+        }
+        if (isBackward) {
+          const paragraphs = $unwrapTranslitPair(pair);
+          paragraphs[0]?.selectStart();
+          return true;
+        }
+        return false;
+      }
+
+      if (!isBackward) {
+        // Forward delete at the end of the block before a pair: step into the
+        // pair instead of merging its arabic line up into this block.
+        const top = anchor.getNode().getTopLevelElement();
+        if (top !== null && $isAtElementEnd(top, anchor)) {
+          const next = top.getNextSibling();
+          if ($isTranslitPairNode(next)) {
+            const first = next.getFirstChild();
+            if (first instanceof ElementNode) first.selectStart();
+            return true;
+          }
+        }
+      }
+      return false;
+    },
+    COMMAND_PRIORITY_LOW,
+  );
 }
 
 /**
