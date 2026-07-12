@@ -49,6 +49,19 @@ hijri-datepicker {
 hijri-datepicker::part(day) { font-weight: 600; }
 ```
 
+### Arabic font
+
+The [Amiri](https://github.com/aliftype/amiri) typeface is embedded (base64, no files to host) and used by default for Hijri numerals, weekday labels, and the title. Amiri is © its authors, redistributed under the [SIL Open Font License 1.1](https://openfontlicense.org/) — the license text ships in this repository at `assets/fonts/OFL-Amiri.txt`.
+
+Swap in any font by overriding the CSS custom properties (load the font yourself via `@font-face` or a font service):
+
+```css
+hijri-datepicker {
+  --dtp-font-family-arabic: "My Custom Arabic Font", serif; /* numerals, Arabic text */
+  --dtp-font-family: "Inter", system-ui, sans-serif;        /* everything else */
+}
+```
+
 ## Docs
 
 Full API, recipes, and live demos: https://hatimmnomani.github.io/SpezUtil/

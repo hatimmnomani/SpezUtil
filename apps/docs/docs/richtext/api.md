@@ -12,7 +12,8 @@ title: API reference
 | `placeholder` | string | Shown while empty. |
 | `dir` | `rtl` \| `ltr` \| `auto` | Base direction (default `auto`; paragraphs still auto-detect from their first strong character). |
 | `locale` | `en` \| `ar` | Toolbar language (default `en`). |
-| `toolbar` | comma-separated groups or `none` | Groups: `history`, `block`, `inline`, `list`, `align`, `direction`, `insert`. |
+| `toolbar` | comma-separated groups or `none` | Groups: `history`, `block`, `font`, `inline`, `list`, `align`, `direction`, `insert`. |
+| `fonts` | comma-separated font families | Simple form of the toolbar font list, e.g. `fonts="Amiri, Tahoma, Arial"`. Use the `fonts` *property* for labels and full font stacks. |
 
 ## Properties
 
@@ -20,6 +21,7 @@ title: API reference
 | --- | --- | --- |
 | `value` | `string \| null` | Serialized Lexical editor state JSON (get/set; canonical persistence format). |
 | `initialHtml` | `string \| null` | HTML applied on first init when no `value` was set. |
+| `fonts` | `FontOption[] \| null` | Toolbar font list (`{ label, family }[]`). Replaces the defaults; spread the exported `DEFAULT_FONTS` to extend them instead. `null` restores the defaults. |
 | `editor` | `LexicalEditor` | Escape hatch for advanced use (custom commands, transforms, …). Throws before first connect. |
 
 ## Methods
@@ -45,7 +47,7 @@ title: API reference
 
 ### Ayat block
 
-Toolbar **۞** button or the block dropdown. Renders centered, enlarged, RTL, in Al-Kanz. Exports as:
+Toolbar **۞** button or the block dropdown. Renders centered, enlarged, RTL, in the Arabic font. Exports as:
 
 ```html
 <blockquote data-spez-type="ayat" dir="rtl">…</blockquote>
@@ -89,6 +91,24 @@ editor.insertHijriDate({ year: 1446, month: 9, day: 17 }, "D MMMM YYYY");
 If `@spezutil/hijri-datepicker` is loaded on the page, the toolbar button opens a date-picker
 popover instead of inserting today's date directly.
 
+## Font selector
+
+The toolbar's `font` group applies a font to the selected text (stored as an inline `font-family`
+style; survives HTML export/import). The default list is the embedded Amiri plus safe
+cross-platform stacks. Configure it with the `fonts` property:
+
+```ts
+import { DEFAULT_FONTS } from "@spezutil/richtext-editor";
+
+editor.fonts = [
+  ...DEFAULT_FONTS,
+  { label: "Scheherazade", family: '"Scheherazade New", serif' },
+];
+```
+
+Custom fonts must be loaded on the page (your own `@font-face` or a font service) — the editor
+only applies the `font-family` value.
+
 ## Theming
 
 All styling hangs off CSS custom properties on the host element:
@@ -103,8 +123,8 @@ spez-richtext {
 
 | Property | Default | Applies to |
 | --- | --- | --- |
-| `--rte-font-family` | `"Al-Kanz", system-ui, sans-serif` | Base text (Al-Kanz only binds to Arabic codepoints). |
-| `--rte-font-family-arabic` | `"Al-Kanz", "Traditional Arabic", serif` | RTL blocks, ayat. |
+| `--rte-font-family` | `"Amiri", system-ui, sans-serif` | Base text (Amiri only binds to Arabic codepoints). |
+| `--rte-font-family-arabic` | `"Amiri", "Traditional Arabic", serif` | RTL blocks, ayat. |
 | `--rte-accent` | `#0b7d3e` | Buttons, links, focus states. |
 | `--rte-bg` / `--rte-fg` | `#ffffff` / `#1f2933` | Editor surface. |
 | `--rte-muted` | `#6b7280` | Placeholder, secondary text. |
@@ -121,9 +141,12 @@ spez-richtext {
   ([facebook/lexical#8125](https://github.com/facebook/lexical/issues/8125)). Styles are scoped
   under the `spez-rte-` class prefix and injected once per document, so they won't collide with
   your CSS.
-- **Bundle size.** The embedded Al-Kanz font adds ~520 KB (base64) to the bundle. In exchange the
+- **Bundle size.** The embedded Amiri font adds ~500 KB (base64) to the bundle. In exchange the
   component is fully self-contained — no font hosting, no asset-path configuration, no FOUT on
   Arabic text.
+- **Font license.** The embedded [Amiri](https://github.com/aliftype/amiri) typeface is © its
+  authors, redistributed under the [SIL Open Font License 1.1](https://openfontlicense.org/);
+  the license text ships in the repository at `assets/fonts/OFL-Amiri.txt`.
 - **Lexical versions.** `lexical` and all `@lexical/*` packages are regular dependencies,
   version-matched. If your app also uses Lexical directly, keep it deduped to a single copy — two
   copies break Lexical's node identity checks.

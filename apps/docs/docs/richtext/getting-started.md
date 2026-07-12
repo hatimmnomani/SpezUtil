@@ -5,7 +5,7 @@ title: Getting started
 # Getting started
 
 `<spez-richtext>` is a rich-text editor Web Component for **Arabic / Lisan-ud-Dawat** content,
-built on [Lexical](https://lexical.dev). It ships the Al-Kanz Arabic font embedded (applied
+built on [Lexical](https://lexical.dev). It ships the Amiri Arabic font embedded (applied
 automatically to Arabic codepoints), auto-detects paragraph direction, and adds Dawat content
 blocks: ayat blocks, transliteration pairs, and atomic Hijri date tokens.
 

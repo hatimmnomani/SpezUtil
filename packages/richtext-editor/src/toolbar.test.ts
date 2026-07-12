@@ -148,3 +148,85 @@ describe("toolbar", () => {
     expect(bold.title).toBe("غامق");
   });
 });
+
+describe("toolbar font selector", () => {
+  function fontSelect(el: SpezRichtext): HTMLSelectElement {
+    const select = el.querySelector<HTMLSelectElement>(
+      '.spez-rte-toolbar [data-group="font"] select',
+    );
+    expect(select, "font select").not.toBeNull();
+    return select!;
+  }
+
+  it("renders the default font list plus a default row", () => {
+    const el = create();
+    const options = [...fontSelect(el).options];
+    expect(options[0]!.value).toBe("");
+    expect(options.map((o) => o.textContent)).toContain("Amiri");
+    expect(options.length).toBeGreaterThan(3);
+  });
+
+  it("applies the chosen font-family to the selection", () => {
+    const el = create();
+    el.setHTML("<p>hello</p>");
+    el.editor.update(() => $selectAll(), { discrete: true });
+    const select = fontSelect(el);
+    select.value = "Tahoma, sans-serif";
+    select.dispatchEvent(new Event("change"));
+    flush(el);
+    const style = el.editor.getEditorState().read(() => {
+      return $getRoot().getAllTextNodes()[0]!.getStyle();
+    });
+    expect(style).toContain("font-family: Tahoma, sans-serif");
+  });
+
+  it("exports and re-imports the inline font-family via HTML", () => {
+    const el = create();
+    el.setHTML("<p>hello</p>");
+    el.editor.update(() => $selectAll(), { discrete: true });
+    const select = fontSelect(el);
+    select.value = "Georgia, serif";
+    select.dispatchEvent(new Event("change"));
+    flush(el);
+    const html = el.getHTML();
+    expect(html).toContain("font-family: Georgia, serif");
+    // Import into a fresh editor — a focused editor trips jsdom's missing
+    // layout APIs inside Lexical's scroll-into-view.
+    const el2 = create();
+    el2.setHTML(html);
+    const style = el2.editor.getEditorState().read(() => {
+      return $getRoot().getAllTextNodes()[0]!.getStyle();
+    });
+    expect(style).toContain("font-family: Georgia, serif");
+  });
+
+  it("fonts property replaces the default list", () => {
+    const el = create();
+    el.fonts = [{ label: "My Font", family: '"My Font", serif' }];
+    const options = [...fontSelect(el).options];
+    expect(options.map((o) => o.textContent)).toEqual(["Default", "My Font"]);
+  });
+
+  it("fonts attribute provides a simple comma-separated list", () => {
+    const el = create({ fonts: "Amiri, Tahoma" });
+    const options = [...fontSelect(el).options];
+    expect(options.map((o) => o.value)).toEqual(["", "Amiri", "Tahoma"]);
+  });
+
+  it("fonts property drops malformed entries", () => {
+    const el = create();
+    el.fonts = [
+      { label: "Good", family: "Georgia, serif" },
+      { label: "NoFamily", family: "" },
+      // deliberately malformed: consumers pass plain JS
+      { label: 3 } as unknown as { label: string; family: string },
+    ];
+    const options = [...fontSelect(el).options];
+    expect(options.map((o) => o.textContent)).toEqual(["Default", "Good"]);
+  });
+
+  it("uses Arabic label for the font control when locale=ar", () => {
+    const el = create({ locale: "ar" });
+    expect(fontSelect(el).title).toBe("الخط");
+  });
+});

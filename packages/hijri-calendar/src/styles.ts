@@ -1,7 +1,7 @@
-import { alKanzFontFace, ALKANZ_FONT_FAMILY } from "./font-al-kanz";
+import { arabicFontFace, ARABIC_FONT_FAMILY } from "./font-arabic";
 
 export const styles = `
-${alKanzFontFace}
+${arabicFontFace}
 :host {
   --hcal-bg: #fff;
   --hcal-fg: #1a1a1a;
@@ -12,7 +12,7 @@ ${alKanzFontFace}
   --hcal-radius: 8px;
   --hcal-today-bg: color-mix(in srgb, var(--hcal-accent) 10%, transparent);
   --hcal-event-fg: #fff;
-  --hcal-font-family-arabic: "${ALKANZ_FONT_FAMILY}", "Traditional Arabic", serif;
+  --hcal-font-family-arabic: "${ARABIC_FONT_FAMILY}", "Traditional Arabic", serif;
   display: block;
   font-family: system-ui, sans-serif;
   color: var(--hcal-fg);

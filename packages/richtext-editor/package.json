@@ -50,7 +50,7 @@
     "lexical": "^0.47.0"
   },
   "peerDependencies": {
-    "@spezutil/hijri-datepicker": "workspace:^"
+    "@spezutil/hijri-datepicker": ">=0.1.0 <2.0.0"
   },
   "peerDependenciesMeta": {
     "@spezutil/hijri-datepicker": {

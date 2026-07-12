@@ -7,7 +7,9 @@ import { insertHijriDate } from "./hijri-insert";
 import { injectGlobalStyles } from "./styles";
 import {
   ALL_TOOLBAR_GROUPS,
+  DEFAULT_FONTS,
   buildToolbar,
+  type FontOption,
   type ToolbarGroup,
   type ToolbarInstance,
 } from "./toolbar";
@@ -30,7 +32,7 @@ const CHANGE_DEBOUNCE_MS = 150;
  */
 export class SpezRichtext extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ["readonly", "placeholder", "dir", "locale", "toolbar"];
+    return ["readonly", "placeholder", "dir", "locale", "toolbar", "fonts"];
   }
 
   #editor: LexicalEditor | null = null;
@@ -41,6 +43,7 @@ export class SpezRichtext extends HTMLElement {
   #placeholderEl: HTMLElement | null = null;
   #pendingValue: string | null = null;
   #pendingHtml: string | null = null;
+  #fonts: FontOption[] | null = null;
   #changeTimer: ReturnType<typeof setTimeout> | undefined;
 
   /** Escape hatch for advanced consumers; throws before first connect. */
@@ -85,6 +88,26 @@ export class SpezRichtext extends HTMLElement {
 
   get locale(): EditorLocale {
     return this.getAttribute("locale") === "ar" ? "ar" : "en";
+  }
+
+  /**
+   * Toolbar font list. Set to replace the defaults entirely; spread
+   * `DEFAULT_FONTS` to extend them instead. `null` restores the defaults
+   * (or the `fonts` attribute, when present). Invalid entries are dropped.
+   */
+  get fonts(): readonly FontOption[] {
+    return this.#fontOptions();
+  }
+
+  set fonts(list: readonly FontOption[] | null) {
+    this.#fonts =
+      list === null
+        ? null
+        : list.filter(
+            (f): f is FontOption =>
+              typeof f?.label === "string" && typeof f?.family === "string" && f.family !== "",
+          );
+    this.#buildToolbar();
   }
 
   connectedCallback(): void {
@@ -178,6 +201,7 @@ export class SpezRichtext extends HTMLElement {
         break;
       case "locale":
       case "toolbar":
+      case "fonts":
         this.#buildToolbar();
         break;
     }
@@ -218,6 +242,18 @@ export class SpezRichtext extends HTMLElement {
     insertHijriDate(this.editor, date, format, this.locale);
   }
 
+  /** Property wins over the `fonts` attribute (comma-separated families). */
+  #fontOptions(): readonly FontOption[] {
+    if (this.#fonts !== null) return this.#fonts;
+    const attr = this.getAttribute("fonts");
+    if (attr === null || attr.trim() === "") return DEFAULT_FONTS;
+    return attr
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s !== "")
+      .map((family) => ({ label: family.replace(/["']/g, ""), family }));
+  }
+
   #toolbarGroups(): readonly ToolbarGroup[] {
     const attr = this.getAttribute("toolbar");
     if (attr === null || attr.trim() === "") return ALL_TOOLBAR_GROUPS;
@@ -233,7 +269,7 @@ export class SpezRichtext extends HTMLElement {
     this.#toolbar = null;
     const groups = this.#toolbarGroups();
     if (groups.length === 0) return;
-    this.#toolbar = buildToolbar(this.#editor, this, groups, this.locale);
+    this.#toolbar = buildToolbar(this.#editor, this, groups, this.locale, this.#fontOptions());
     this.prepend(this.#toolbar.element);
   }
 

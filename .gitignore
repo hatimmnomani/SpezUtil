@@ -8,3 +8,7 @@ storybook-static/
 build/
 .docusaurus/
 apps/docs/static/storybook/
+
+# Local dev-tool output — never commit
+.playwright-mcp/
+/*.png

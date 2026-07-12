@@ -6,7 +6,7 @@ import {
   Output,
 } from "@angular/core";
 import "@spezutil/richtext-editor";
-import type { ChangeDetail } from "@spezutil/richtext-editor";
+import type { ChangeDetail, FontOption } from "@spezutil/richtext-editor";
 
 @Component({
   selector: "spez-richtext-ng",
@@ -21,6 +21,7 @@ import type { ChangeDetail } from "@spezutil/richtext-editor";
       [attr.dir]="dir"
       [attr.locale]="locale"
       [attr.toolbar]="toolbar"
+      [fonts]="fonts"
       (change)="onChange($event)"
       (rte-ready)="onReady($event)"
     ></spez-richtext>
@@ -36,6 +37,8 @@ export class SpezRichtextComponent {
   @Input() dir: string | null = null;
   @Input() locale: string | null = null;
   @Input() toolbar: string | null = null;
+  /** Toolbar font list; replaces the defaults (spread DEFAULT_FONTS to extend). */
+  @Input() fonts: FontOption[] | null = null;
 
   @Output() change = new EventEmitter<ChangeDetail>();
   @Output() ready = new EventEmitter<void>();

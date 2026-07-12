@@ -1,7 +1,7 @@
-import { alKanzFontFace, ALKANZ_FONT_FAMILY } from "./font-al-kanz";
+import { arabicFontFace, ARABIC_FONT_FAMILY } from "./font-arabic";
 
 export const styles = `
-${alKanzFontFace}
+${arabicFontFace}
 :host {
   --dtp-bg: #fff;
   --dtp-fg: #1a1a1a;
@@ -9,7 +9,7 @@ ${alKanzFontFace}
   --dtp-accent: #0b7d3e;
   --dtp-accent-fg: #fff;
   --dtp-radius: 8px;
-  --dtp-font-family-arabic: "${ALKANZ_FONT_FAMILY}", "Traditional Arabic", serif;
+  --dtp-font-family-arabic: "${ARABIC_FONT_FAMILY}", "Traditional Arabic", serif;
   display: inline-block;
   font-family: system-ui, sans-serif;
   color: var(--dtp-fg);

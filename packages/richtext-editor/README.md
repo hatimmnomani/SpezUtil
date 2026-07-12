@@ -2,7 +2,8 @@
 
 `<spez-richtext>` — a rich-text editor Web Component for **Arabic / Lisan-ud-Dawat** content, built on [Lexical](https://lexical.dev). Framework-agnostic: works in plain HTML, React, Angular, Vue, or anything that renders DOM.
 
-- **Al-Kanz Arabic font embedded** — applied automatically to Arabic codepoints via `unicode-range`, no font files to host, no configuration
+- **Amiri Arabic font embedded** ([SIL OFL-1.1](https://openfontlicense.org/)) — applied automatically to Arabic codepoints via `unicode-range`, no font files to host, no configuration
+- **Font selector in the toolbar** — end users can switch fonts per selection; the list is fully configurable via the `fonts` property
 - **RTL-first** — per-paragraph direction auto-detected from the first strong character, logical (start/end) alignment, mirrored toolbar under `dir="rtl"`
 - **Dawat content blocks**
   - **Ayat block** — distinctly styled container for Quranic ayat / kalemat nooraniyah
@@ -52,7 +53,7 @@ npm install @spezutil/richtext-editor
 
 ### Ayat block
 
-Toolbar **۞** button or the block dropdown. Renders centered, enlarged, RTL, in Al-Kanz. Exports as:
+Toolbar **۞** button or the block dropdown. Renders centered, enlarged, RTL, in the Arabic font. Exports as:
 
 ```html
 <blockquote data-spez-type="ayat" dir="rtl">…</blockquote>
@@ -104,7 +105,8 @@ Programmatic insertion: `editor.insertHijriDate({ year: 1446, month: 9, day: 17 
 | `placeholder` | string | Shown while empty |
 | `dir` | `rtl` \| `ltr` \| `auto` | Base direction (default `auto`; paragraphs still auto-detect) |
 | `locale` | `en` \| `ar` | Toolbar language (default `en`) |
-| `toolbar` | comma-separated groups or `none` | Groups: `history,block,inline,list,align,direction,insert` |
+| `toolbar` | comma-separated groups or `none` | Groups: `history,block,font,inline,list,align,direction,insert` |
+| `fonts` | comma-separated font families | Simple form of the font list, e.g. `fonts="Amiri, Tahoma, Arial"` (use the `fonts` *property* for labels and full font stacks) |
 
 ### Properties
 
@@ -112,6 +114,7 @@ Programmatic insertion: `editor.insertHijriDate({ year: 1446, month: 9, day: 17 
 | --- | --- | --- |
 | `value` | `string \| null` | Serialized Lexical editor state JSON (get/set; canonical persistence format) |
 | `initialHtml` | `string \| null` | HTML applied on first init when no `value` was set |
+| `fonts` | `FontOption[] \| null` | Toolbar font list — see [Font selector](#font-selector) |
 | `editor` | `LexicalEditor` | Escape hatch for advanced use (custom commands, transforms, …) |
 
 ### Methods
@@ -133,6 +136,22 @@ Programmatic insertion: `editor.insertHijriDate({ year: 1446, month: 9, day: 17 
 | `change` | `{ json: string; isEmpty: boolean }` | Debounced ~150 ms. HTML is **not** included (exporting walks the whole document) — call `getHTML()` on save/blur instead |
 | `rte-ready` | — | Fired once after the editor initializes |
 
+## Font selector
+
+The toolbar's `font` group lets end users apply a font to the selected text (stored as an inline `font-family` style; survives HTML export/import). The default list is the embedded Amiri plus safe cross-platform stacks. Replace it via the `fonts` property, or spread `DEFAULT_FONTS` to extend it:
+
+```js
+import { DEFAULT_FONTS } from "@spezutil/richtext-editor";
+
+const editor = document.querySelector("spez-richtext");
+editor.fonts = [
+  ...DEFAULT_FONTS,
+  { label: "Scheherazade", family: '"Scheherazade New", serif' },
+];
+```
+
+Custom fonts must be loaded on the page (your own `@font-face` or a font service) — the editor only applies the `font-family` value. Setting `fonts = null` restores the defaults. The simple attribute form `fonts="Amiri, Tahoma"` is also supported for plain-HTML usage.
+
 ## Theming
 
 All styling hangs off CSS custom properties on the host element:
@@ -147,8 +166,8 @@ spez-richtext {
 
 | Property | Default | Applies to |
 | --- | --- | --- |
-| `--rte-font-family` | `"Al-Kanz", system-ui, sans-serif` | Base text (Al-Kanz only binds to Arabic codepoints) |
-| `--rte-font-family-arabic` | `"Al-Kanz", "Traditional Arabic", serif` | RTL blocks, ayat |
+| `--rte-font-family` | `"Amiri", system-ui, sans-serif` | Base text (Amiri only binds to Arabic codepoints) |
+| `--rte-font-family-arabic` | `"Amiri", "Traditional Arabic", serif` | RTL blocks, ayat |
 | `--rte-accent` | `#0b7d3e` | Buttons, links, focus states |
 | `--rte-bg` / `--rte-fg` | `#ffffff` / `#1f2933` | Editor surface |
 | `--rte-muted` | `#6b7280` | Placeholder, secondary text |
@@ -161,7 +180,8 @@ spez-richtext {
 ## Notes
 
 - **Light DOM.** Unlike typical Web Components, `<spez-richtext>` renders in light DOM: Lexical's selection handling relies on `window.getSelection()`, which does not work inside shadow roots ([facebook/lexical#8125](https://github.com/facebook/lexical/issues/8125)). Styles are scoped under the `spez-rte-` class prefix and injected once per document, so they won't collide with your CSS.
-- **Bundle size.** The embedded Al-Kanz font adds ~520 KB (base64) to the bundle. In exchange the component is fully self-contained — no font hosting, no asset-path configuration, no FOUT on Arabic text.
+- **Bundle size.** The embedded Amiri font adds ~500 KB (base64) to the bundle. In exchange the component is fully self-contained — no font hosting, no asset-path configuration, no FOUT on Arabic text.
+- **Font license.** The embedded [Amiri](https://github.com/aliftype/amiri) typeface is © its authors and redistributed under the [SIL Open Font License 1.1](https://openfontlicense.org/); the license text ships in this repository at `assets/fonts/OFL-Amiri.txt`.
 - **Lexical versions.** `lexical` and all `@lexical/*` packages are regular dependencies, version-matched. If your app also uses Lexical directly, keep it deduped to a single copy — two copies break Lexical's node identity checks.
 
 ## License

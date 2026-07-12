@@ -13,18 +13,20 @@ pnpm/turbo monorepo. Published scope: `@spezutil/*`. Hijri (Bohra/Misri) calenda
 
 Build: `tsup` per package (`pnpm --filter <pkg> build`). Test: `vitest` (`pnpm --filter <pkg> test`).
 
-## Arabic / Hijri numeral font (Al-Kanz)
+## Arabic / Hijri numeral font (Amiri)
 
-`hijri-calendar` and `hijri-datepicker` embed the **Al-Kanz** TrueType font (base64 `@font-face`, inlined into the compiled JS — no extra network request, no asset path to resolve) and use it **by default** for Arabic-locale text and Hijri day numerals: day-number spans (`.num-primary`/`.num-secondary`), weekday labels (`.dow`), and the Hijri month/year title (`.title`, but not `.title small`, which carries the Gregorian sub-label and stays on the base font).
+`hijri-calendar` and `hijri-datepicker` embed the **Amiri** TrueType font (SIL OFL-1.1; base64 `@font-face`, inlined into the compiled JS — no extra network request, no asset path to resolve) and use it **by default** for Arabic-locale text and Hijri day numerals: day-number spans (`.num-primary`/`.num-secondary`), weekday labels (`.dow`), and the Hijri month/year title (`.title`, but not `.title small`, which carries the Gregorian sub-label and stays on the base font).
 
-- Source font: `assets/fonts/Al-Kanz.ttf` (repo root, tracked in git).
-- Generated modules (do not hand-edit): `packages/hijri-calendar/src/font-al-kanz.ts`, `packages/hijri-datepicker/src/font-al-kanz.ts`, `packages/richtext-editor/src/font-al-kanz.ts`.
-- Regenerate after replacing the font file: `node scripts/generate-font-asset.mjs`.
-- The generated module exports `alKanzFontFace` (a full `@font-face` rule) and `alKanzFontDataUrl` (the raw data URL, used by `richtext-editor` to declare its own `@font-face` with `unicode-range` so Al-Kanz applies only to Arabic codepoints). Exports are annotated `: string` — without that, TypeScript inlines the ~520 KB literal into every consumer's `.d.ts`.
-- CSS custom properties (per-component, override on the host element to configure):
-  - `hijri-calendar`: `--hcal-font-family-arabic` (default `"Al-Kanz", "Traditional Arabic", serif`), `--hcal-font-family` (default `system-ui, sans-serif`, used for non-Arabic text).
-  - `hijri-datepicker`: `--dtp-font-family-arabic` (default `"Al-Kanz", "Traditional Arabic", serif`), `--dtp-font-family` (default `system-ui, sans-serif`).
-  - `richtext-editor`: `--rte-font-family-arabic` (default `"Al-Kanz", "Traditional Arabic", serif`), `--rte-font-family` (default `"Al-Kanz", system-ui, sans-serif` — Al-Kanz first is safe because its `@font-face` is restricted to Arabic `unicode-range`).
+> Previously this slot was filled by **Al-Kanz**, which was removed (2026-07) because the team had no redistribution license for it — see git history. Amiri is licensed under the SIL Open Font License 1.1, which permits embedding/redistribution; the license text ships at `assets/fonts/OFL-Amiri.txt` and each consuming package's README carries an attribution note, both required by the OFL. If written permission for Al-Kanz is obtained later, swapping back is a config change — see below.
+
+- Source font: `assets/fonts/Amiri-Regular.ttf` (repo root, tracked in git). License: `assets/fonts/OFL-Amiri.txt` (must accompany redistribution per OFL §1).
+- Generated modules (do not hand-edit): `packages/hijri-calendar/src/font-arabic.ts`, `packages/hijri-datepicker/src/font-arabic.ts`, `packages/richtext-editor/src/font-arabic.ts`. The filename (`font-arabic.ts`) and export names are font-agnostic on purpose, so swapping the embedded font never requires touching a package's `styles.ts`.
+- To swap fonts: drop the new TTF (+ its license file) into `assets/fonts/`, update the `AMIRI` config object (file + family) in `scripts/generate-font-asset.mjs`, then regenerate: `node scripts/generate-font-asset.mjs`.
+- The generated module exports `arabicFontFace` (a full `@font-face` rule) and `arabicFontDataUrl` (the raw data URL, used by `richtext-editor` to declare its own `@font-face` with `unicode-range` so the embedded font applies only to Arabic codepoints), plus `ARABIC_FONT_FAMILY`. Exports are annotated `: string` — without that, TypeScript inlines the ~500 KB literal into every consumer's `.d.ts`.
+- CSS custom properties (per-component, override on the host element to configure — this is the supported way to use a different Arabic font without forking the package):
+  - `hijri-calendar`: `--hcal-font-family-arabic` (default `"Amiri", "Traditional Arabic", serif`), `--hcal-font-family` (default `system-ui, sans-serif`, used for non-Arabic text).
+  - `hijri-datepicker`: `--dtp-font-family-arabic` (default `"Amiri", "Traditional Arabic", serif`), `--dtp-font-family` (default `system-ui, sans-serif`).
+  - `richtext-editor`: `--rte-font-family-arabic` (default `"Amiri", "Traditional Arabic", serif`), `--rte-font-family` (default `"Amiri", system-ui, sans-serif` — Amiri first is safe because its `@font-face` is restricted to Arabic `unicode-range`). `richtext-editor` additionally exposes a user-facing font-family picker in the toolbar (`fonts` property/attribute on `<spez-richtext>`, see `packages/richtext-editor/src/toolbar.ts`) that applies inline `font-family` styles to selected text via `$patchStyleText` — independent of the CSS custom properties, which only set the *default* font.
 
 Example override:
 
@@ -34,4 +36,4 @@ hijri-calendar {
 }
 ```
 
-Each font adds ~520 KB (base64) to that package's `dist`. This is a known, accepted tradeoff for a self-contained Web Component (no runtime asset resolution needed by consumers). If a new component package needs the same treatment, extend `scripts/generate-font-asset.mjs`'s `targets` list rather than duplicating the encoding logic.
+Each font adds ~500 KB (base64) to that package's `dist`. This is a known, accepted tradeoff for a self-contained Web Component (no runtime asset resolution needed by consumers). If a new component package needs the same treatment, extend `scripts/generate-font-asset.mjs`'s `targets` list rather than duplicating the encoding logic.

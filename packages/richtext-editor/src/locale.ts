@@ -8,6 +8,8 @@ export interface LocaleStrings {
   heading2: string;
   heading3: string;
   quote: string;
+  font: string;
+  fontDefault: string;
   bold: string;
   italic: string;
   underline: string;
@@ -45,6 +47,8 @@ const en: LocaleStrings = {
   heading2: "Heading 2",
   heading3: "Heading 3",
   quote: "Quote",
+  font: "Font",
+  fontDefault: "Default",
   bold: "Bold",
   italic: "Italic",
   underline: "Underline",
@@ -82,6 +86,8 @@ const ar: LocaleStrings = {
   heading2: "عنوان ٢",
   heading3: "عنوان ٣",
   quote: "اقتباس",
+  font: "الخط",
+  fontDefault: "افتراضي",
   bold: "غامق",
   italic: "مائل",
   underline: "تسطير",

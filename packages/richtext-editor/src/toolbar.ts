@@ -22,7 +22,11 @@ import {
   $isQuoteNode,
   type HeadingTagType,
 } from "@lexical/rich-text";
-import { $setBlocksType } from "@lexical/selection";
+import {
+  $getSelectionStyleValueForProperty,
+  $patchStyleText,
+  $setBlocksType,
+} from "@lexical/selection";
 import {
   $isListNode,
   INSERT_ORDERED_LIST_COMMAND,
@@ -45,10 +49,12 @@ import { INSERT_IMAGE_COMMAND } from "./nodes/image-node";
 import { SET_DIRECTION_COMMAND } from "./direction";
 import { openHijriDatePicker } from "./hijri-insert";
 import { getLocaleStrings, type EditorLocale, type LocaleStrings } from "./locale";
+import { ARABIC_FONT_FAMILY } from "./font-arabic";
 
 export const ALL_TOOLBAR_GROUPS = [
   "history",
   "block",
+  "font",
   "inline",
   "list",
   "align",
@@ -58,11 +64,31 @@ export const ALL_TOOLBAR_GROUPS = [
 
 export type ToolbarGroup = (typeof ALL_TOOLBAR_GROUPS)[number];
 
+/** One entry in the toolbar font selector. `family` is a CSS font-family value. */
+export interface FontOption {
+  label: string;
+  family: string;
+}
+
+/**
+ * Default font list: the embedded Arabic font first, then stacks that are
+ * safe cross-platform with good Arabic coverage, then Latin/system choices.
+ */
+export const DEFAULT_FONTS: readonly FontOption[] = [
+  { label: ARABIC_FONT_FAMILY, family: `"${ARABIC_FONT_FAMILY}", serif` },
+  { label: "Traditional Arabic", family: '"Traditional Arabic", serif' },
+  { label: "Tahoma", family: "Tahoma, sans-serif" },
+  { label: "Arial", family: "Arial, sans-serif" },
+  { label: "Georgia", family: "Georgia, serif" },
+  { label: "Monospace", family: "monospace" },
+];
+
 type BlockType = "paragraph" | "h1" | "h2" | "h3" | "quote" | "ayat";
 
 interface ToolbarRefs {
   buttons: Map<string, HTMLButtonElement>;
   blockSelect: HTMLSelectElement | null;
+  fontSelect: HTMLSelectElement | null;
 }
 
 function button(
@@ -218,9 +244,10 @@ export function buildToolbar(
   host: HTMLElement,
   groups: readonly ToolbarGroup[],
   locale: EditorLocale,
+  fonts: readonly FontOption[] = DEFAULT_FONTS,
 ): ToolbarInstance {
   const t: LocaleStrings = getLocaleStrings(locale);
-  const refs: ToolbarRefs = { buttons: new Map(), blockSelect: null };
+  const refs: ToolbarRefs = { buttons: new Map(), blockSelect: null, fontSelect: null };
   const toolbar = document.createElement("div");
   toolbar.className = "spez-rte-toolbar";
   toolbar.setAttribute("role", "toolbar");
@@ -262,6 +289,35 @@ export function buildToolbar(
         }
         select.addEventListener("change", () => $setBlock(editor, select.value as BlockType));
         refs.blockSelect = select;
+        toolbar.append(group(name, select));
+        break;
+      }
+      case "font": {
+        if (fonts.length === 0) break;
+        const select = document.createElement("select");
+        select.title = t.font;
+        select.setAttribute("aria-label", t.font);
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = t.fontDefault;
+        select.append(defaultOption);
+        for (const { label, family } of fonts) {
+          const option = document.createElement("option");
+          option.value = family;
+          option.textContent = label;
+          option.style.fontFamily = family;
+          select.append(option);
+        }
+        select.addEventListener("change", () => {
+          const family = select.value;
+          editor.update(() => {
+            const selection = $getSelection();
+            if (!$isRangeSelection(selection)) return;
+            $patchStyleText(selection, { "font-family": family === "" ? null : family });
+          });
+          editor.focus();
+        });
+        refs.fontSelect = select;
         toolbar.append(group(name, select));
         break;
       }
@@ -407,6 +463,13 @@ export function buildToolbar(
         listType = type === "number" ? "number" : "bullet";
       }
       if (refs.blockSelect) refs.blockSelect.value = blockType;
+
+      if (refs.fontSelect) {
+        const family = $getSelectionStyleValueForProperty(selection, "font-family", "");
+        // Unknown families (e.g. pasted content) fall back to the default row.
+        refs.fontSelect.value = family;
+        if (refs.fontSelect.value !== family) refs.fontSelect.value = "";
+      }
       setPressed("bullet", listType === "bullet");
       setPressed("number", listType === "number");
 

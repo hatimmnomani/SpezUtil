@@ -20,7 +20,7 @@
   "peerDependencies": {
     "@angular/core": ">=17",
     "@angular/common": ">=17",
-    "@spezutil/richtext-editor": "workspace:^"
+    "@spezutil/richtext-editor": ">=0.1.0 <2.0.0"
   },
   "dependencies": {
     "tslib": "^2.6.0"

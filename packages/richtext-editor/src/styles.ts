@@ -1,4 +1,4 @@
-import { alKanzFontDataUrl, ALKANZ_FONT_FAMILY } from "./font-al-kanz";
+import { arabicFontDataUrl, ARABIC_FONT_FAMILY } from "./font-arabic";
 
 const STYLE_ID = "spez-rte-styles";
 
@@ -7,8 +7,8 @@ const STYLE_ID = "spez-rte-styles";
 // the stylesheet is injected once per document.
 export const styles: string = `
 @font-face {
-  font-family: "${ALKANZ_FONT_FAMILY}";
-  src: url(${alKanzFontDataUrl}) format("truetype");
+  font-family: "${ARABIC_FONT_FAMILY}";
+  src: url(${arabicFontDataUrl}) format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -16,8 +16,8 @@ export const styles: string = `
 }
 
 .spez-rte {
-  --rte-font-family: "${ALKANZ_FONT_FAMILY}", system-ui, sans-serif;
-  --rte-font-family-arabic: "${ALKANZ_FONT_FAMILY}", "Traditional Arabic", serif;
+  --rte-font-family: "${ARABIC_FONT_FAMILY}", system-ui, sans-serif;
+  --rte-font-family-arabic: "${ARABIC_FONT_FAMILY}", "Traditional Arabic", serif;
   --rte-bg: #ffffff;
   --rte-fg: #1f2933;
   --rte-muted: #6b7280;
