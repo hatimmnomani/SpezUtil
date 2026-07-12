@@ -1,0 +1,663 @@
+- generic [ref=f4e2]:
+  - region "Skip to main content":
+    - link "Skip to main content" [ref=f4e3] [cursor=pointer]:
+      - /url: "#__docusaurus_skipToContent_fallback"
+  - navigation "Main" [ref=f4e4]:
+    - generic [ref=f4e5]:
+      - generic [ref=f4e6]:
+        - link "Digital Takeoff UI" [ref=f4e7] [cursor=pointer]:
+          - /url: /SpezUtil/
+        - link "Docs" [ref=f4e9] [cursor=pointer]:
+          - /url: /SpezUtil/
+        - link [ref=f4e10] [cursor=pointer]:
+          - /url: /SpezUtil/storybook/
+          - text: Storybook
+          - img "(opens in new tab)" [ref=f4e11]
+      - button "Switch between dark and light mode (currently light mode)" [ref=f4e15] [cursor=pointer]
+  - generic [ref=f4e20]:
+    - complementary [ref=f4e21]:
+      - navigation "Docs sidebar" [ref=f4e24]:
+        - list [ref=f4e25]:
+          - listitem [ref=f4e26]:
+            - link "Digital Takeoff UI" [ref=f4e27] [cursor=pointer]:
+              - /url: /SpezUtil/
+          - listitem [ref=f4e29]:
+            - button "Datepicker" [ref=f4e31] [cursor=pointer]
+          - listitem [ref=f4e33]:
+            - button "Calendar" [expanded] [ref=f4e35] [cursor=pointer]
+            - list [ref=f4e37]:
+              - listitem [ref=f4e38]:
+                - link "Getting started" [ref=f4e39] [cursor=pointer]:
+                  - /url: /SpezUtil/calendar/getting-started
+              - listitem [ref=f4e41]:
+                - link "API reference" [ref=f4e42] [cursor=pointer]:
+                  - /url: /SpezUtil/calendar/api
+              - listitem [ref=f4e44]:
+                - link "Recipes" [ref=f4e45] [cursor=pointer]:
+                  - /url: /SpezUtil/calendar/recipes
+          - listitem [ref=f4e47]:
+            - button "Rich Text Editor" [ref=f4e49] [cursor=pointer]
+          - listitem [ref=f4e51]:
+            - button "Engine" [ref=f4e53] [cursor=pointer]
+    - main [ref=f4e55]:
+      - generic [ref=f4e57]:
+        - generic [ref=f4e59]:
+          - article [ref=f4e60]:
+            - navigation "Breadcrumbs" [ref=f4e61]:
+              - list [ref=f4e62]:
+                - listitem [ref=f4e63]:
+                  - link "Home page" [ref=f4e64] [cursor=pointer]:
+                    - /url: /SpezUtil/
+                - listitem [ref=f4e67]:
+                  - generic [ref=f4e68]: Calendar
+                - listitem [ref=f4e69]:
+                  - generic [ref=f4e70]: Recipes
+            - generic [ref=f4e71]:
+              - heading "Recipes" [level=1] [ref=f4e73]
+              - paragraph [ref=f4e74]:
+                - text: Every demo below is the real Web Component with sample meeting data. Interactions log the emitted
+                - code [ref=f4e75]: detail
+                - text: underneath.
+              - heading [level=2] [ref=f4e76]:
+                - text: Month view
+                - link "Direct link to Month view" [ref=f4e77] [cursor=pointer]:
+                  - /url: "#month-view"
+                  - text: "#"
+              - generic [ref=f4e78]:
+                - application "Hijri calendar" [ref=f4e80]:
+                  - generic [ref=f4e81]:
+                    - button "Today" [ref=f4e82] [cursor=pointer]
+                    - generic [ref=f4e83]:
+                      - button "Previous" [ref=f4e84] [cursor=pointer]: ‹
+                      - button "Next" [ref=f4e85] [cursor=pointer]: ›
+                    - generic [ref=f4e86]:
+                      - text: Moharram al-Haraam 1448
+                      - generic [ref=f4e87]: Jun 2026 – Jul 2026
+                    - generic [ref=f4e88]:
+                      - button "Month" [pressed] [ref=f4e89] [cursor=pointer]
+                      - button "Week" [ref=f4e90] [cursor=pointer]
+                      - button "Day" [ref=f4e91] [cursor=pointer]
+                      - button "Agenda" [ref=f4e92] [cursor=pointer]
+                  - grid "Moharram al-Haraam 1448" [ref=f4e93]:
+                    - row [ref=f4e94]:
+                      - columnheader "Sun" [ref=f4e95]
+                      - columnheader "Mon" [ref=f4e96]
+                      - columnheader "Tue" [ref=f4e97]
+                      - columnheader "Wed" [ref=f4e98]
+                      - columnheader "Thu" [ref=f4e99]
+                      - columnheader "Fri" [ref=f4e100]
+                      - columnheader "Sat" [ref=f4e101]
+                    - row [ref=f4e102]:
+                      - gridcell "29 Zilhaj al-Haraam 1447 (2026-06-14)" [ref=f4e103] [cursor=pointer]:
+                        - generic [ref=f4e104]: "29"
+                        - generic [ref=f4e105]: "14"
+                      - gridcell "1 Moharram al-Haraam 1448 (2026-06-15)" [ref=f4e106] [cursor=pointer]:
+                        - generic [ref=f4e107]: "1"
+                        - generic [ref=f4e108]: "15"
+                      - gridcell "2 Moharram al-Haraam 1448 (2026-06-16)" [ref=f4e109] [cursor=pointer]:
+                        - generic [ref=f4e110]: "2"
+                        - generic [ref=f4e111]: "16"
+                      - gridcell "3 Moharram al-Haraam 1448 (2026-06-17)" [ref=f4e112] [cursor=pointer]:
+                        - generic [ref=f4e113]: "3"
+                        - generic [ref=f4e114]: "17"
+                      - gridcell "4 Moharram al-Haraam 1448 (2026-06-18)" [ref=f4e115] [cursor=pointer]:
+                        - generic [ref=f4e116]: "4"
+                        - generic [ref=f4e117]: "18"
+                      - gridcell "5 Moharram al-Haraam 1448 (2026-06-19)" [ref=f4e118] [cursor=pointer]:
+                        - generic [ref=f4e119]: "5"
+                        - generic [ref=f4e120]: "19"
+                      - gridcell "6 Moharram al-Haraam 1448 (2026-06-20)" [ref=f4e121] [cursor=pointer]:
+                        - generic [ref=f4e122]: "6"
+                        - generic [ref=f4e123]: "20"
+                    - row [ref=f4e124]:
+                      - gridcell "7 Moharram al-Haraam 1448 (2026-06-21)" [ref=f4e125] [cursor=pointer]:
+                        - generic [ref=f4e126]: "7"
+                        - generic [ref=f4e127]: "21"
+                      - gridcell "8 Moharram al-Haraam 1448 (2026-06-22)" [ref=f4e128] [cursor=pointer]:
+                        - generic [ref=f4e129]: "8"
+                        - generic [ref=f4e130]: "22"
+                      - gridcell "9 Moharram al-Haraam 1448 (2026-06-23)" [ref=f4e131] [cursor=pointer]:
+                        - generic [ref=f4e132]: "9"
+                        - generic [ref=f4e133]: "23"
+                      - gridcell "10 Moharram al-Haraam 1448 (2026-06-24)" [ref=f4e134] [cursor=pointer]:
+                        - generic [ref=f4e135]: "10"
+                        - generic [ref=f4e136]: "24"
+                      - gridcell "11 Moharram al-Haraam 1448 (2026-06-25)" [ref=f4e137] [cursor=pointer]:
+                        - generic [ref=f4e138]: "11"
+                        - generic [ref=f4e139]: "25"
+                      - gridcell "12 Moharram al-Haraam 1448 (2026-06-26)" [ref=f4e140] [cursor=pointer]:
+                        - generic [ref=f4e141]: "12"
+                        - generic [ref=f4e142]: "26"
+                      - gridcell "13 Moharram al-Haraam 1448 (2026-06-27)" [ref=f4e143] [cursor=pointer]:
+                        - generic [ref=f4e144]: "13"
+                        - generic [ref=f4e145]: "27"
+                    - row [ref=f4e146]:
+                      - gridcell "14 Moharram al-Haraam 1448 (2026-06-28)" [ref=f4e147] [cursor=pointer]:
+                        - generic [ref=f4e148]: "14"
+                        - generic [ref=f4e149]: "28"
+                      - gridcell "15 Moharram al-Haraam 1448 (2026-06-29)" [ref=f4e150] [cursor=pointer]:
+                        - generic [ref=f4e151]: "15"
+                        - generic [ref=f4e152]: "29"
+                      - gridcell "16 Moharram al-Haraam 1448 (2026-06-30)" [ref=f4e153] [cursor=pointer]:
+                        - generic [ref=f4e154]: "16"
+                        - generic [ref=f4e155]: "30"
+                      - gridcell "17 Moharram al-Haraam 1448 (2026-07-01)" [ref=f4e156] [cursor=pointer]:
+                        - generic [ref=f4e157]: "17"
+                        - generic [ref=f4e158]: 1 Jul
+                      - gridcell "18 Moharram al-Haraam 1448 (2026-07-02)" [ref=f4e159] [cursor=pointer]:
+                        - generic [ref=f4e160]: "18"
+                        - generic [ref=f4e161]: "2"
+                      - gridcell "19 Moharram al-Haraam 1448 (2026-07-03)" [ref=f4e162] [cursor=pointer]:
+                        - generic [ref=f4e163]: "19"
+                        - generic [ref=f4e164]: "3"
+                      - gridcell "20 Moharram al-Haraam 1448 (2026-07-04)" [ref=f4e165] [cursor=pointer]:
+                        - generic [ref=f4e166]: "20"
+                        - generic [ref=f4e167]: "4"
+                    - row [ref=f4e168]:
+                      - gridcell "21 Moharram al-Haraam 1448 (2026-07-05)" [ref=f4e169] [cursor=pointer]:
+                        - generic [ref=f4e170]: "21"
+                        - generic [ref=f4e171]: "5"
+                      - gridcell "22 Moharram al-Haraam 1448 (2026-07-06)" [ref=f4e172] [cursor=pointer]:
+                        - generic [ref=f4e173]: "22"
+                        - generic [ref=f4e174]: "6"
+                      - gridcell "23 Moharram al-Haraam 1448 (2026-07-07)" [ref=f4e175] [cursor=pointer]:
+                        - generic [ref=f4e176]: "23"
+                        - generic [ref=f4e177]: "7"
+                      - gridcell "24 Moharram al-Haraam 1448 (2026-07-08)" [ref=f4e178] [cursor=pointer]:
+                        - generic [ref=f4e179]: "24"
+                        - generic [ref=f4e180]: "8"
+                      - gridcell "25 Moharram al-Haraam 1448 (2026-07-09)" [ref=f4e181] [cursor=pointer]:
+                        - generic [ref=f4e182]: "25"
+                        - generic [ref=f4e183]: "9"
+                      - gridcell "26 Moharram al-Haraam 1448 (2026-07-10)" [ref=f4e184] [cursor=pointer]:
+                        - generic [ref=f4e185]: "26"
+                        - generic [ref=f4e186]: "10"
+                      - gridcell "27 Moharram al-Haraam 1448 (2026-07-11)" [ref=f4e187] [cursor=pointer]:
+                        - generic [ref=f4e188]: "27"
+                        - generic [ref=f4e189]: "11"
+                      - button "Conference, All day" [ref=f4e190] [cursor=pointer]: Conference
+                      - button "Standup, 9:30 AM" [ref=f4e191] [cursor=pointer]: Standup
+                      - button "Sprint planning, 2 PM" [ref=f4e192] [cursor=pointer]: Sprint planning
+                      - button "Majlis, 6 PM" [ref=f4e193] [cursor=pointer]: Majlis
+                      - button "Design review, 10 AM" [ref=f4e194] [cursor=pointer]: Design review
+                      - button "+1 more" [ref=f4e195] [cursor=pointer]
+                    - row [ref=f4e196]:
+                      - gridcell "28 Moharram al-Haraam 1448 (2026-07-12)" [ref=f4e197] [cursor=pointer]:
+                        - generic [ref=f4e198]: "28"
+                        - generic [ref=f4e199]: "12"
+                      - gridcell "29 Moharram al-Haraam 1448 (2026-07-13)" [ref=f4e200] [cursor=pointer]:
+                        - generic [ref=f4e201]: "29"
+                        - generic [ref=f4e202]: "13"
+                      - gridcell "30 Moharram al-Haraam 1448 (2026-07-14)" [ref=f4e203] [cursor=pointer]:
+                        - generic [ref=f4e204]: "30"
+                        - generic [ref=f4e205]: "14"
+                      - gridcell "1 Safar al-Muzaffar 1448 (2026-07-15)" [ref=f4e206] [cursor=pointer]:
+                        - generic [ref=f4e207]: "1"
+                        - generic [ref=f4e208]: "15"
+                      - gridcell "2 Safar al-Muzaffar 1448 (2026-07-16)" [ref=f4e209] [cursor=pointer]:
+                        - generic [ref=f4e210]: "2"
+                        - generic [ref=f4e211]: "16"
+                      - gridcell "3 Safar al-Muzaffar 1448 (2026-07-17)" [ref=f4e212] [cursor=pointer]:
+                        - generic [ref=f4e213]: "3"
+                        - generic [ref=f4e214]: "17"
+                      - gridcell "4 Safar al-Muzaffar 1448 (2026-07-18)" [ref=f4e215] [cursor=pointer]:
+                        - generic [ref=f4e216]: "4"
+                        - generic [ref=f4e217]: "18"
+                      - button "Urs, All day" [ref=f4e218] [cursor=pointer]: Urs
+                    - row [ref=f4e219]:
+                      - gridcell "5 Safar al-Muzaffar 1448 (2026-07-19)" [ref=f4e220] [cursor=pointer]:
+                        - generic [ref=f4e221]: "5"
+                        - generic [ref=f4e222]: "19"
+                      - gridcell "6 Safar al-Muzaffar 1448 (2026-07-20)" [ref=f4e223] [cursor=pointer]:
+                        - generic [ref=f4e224]: "6"
+                        - generic [ref=f4e225]: "20"
+                      - gridcell "7 Safar al-Muzaffar 1448 (2026-07-21)" [ref=f4e226] [cursor=pointer]:
+                        - generic [ref=f4e227]: "7"
+                        - generic [ref=f4e228]: "21"
+                      - gridcell "8 Safar al-Muzaffar 1448 (2026-07-22)" [ref=f4e229] [cursor=pointer]:
+                        - generic [ref=f4e230]: "8"
+                        - generic [ref=f4e231]: "22"
+                      - gridcell "9 Safar al-Muzaffar 1448 (2026-07-23)" [ref=f4e232] [cursor=pointer]:
+                        - generic [ref=f4e233]: "9"
+                        - generic [ref=f4e234]: "23"
+                      - gridcell "10 Safar al-Muzaffar 1448 (2026-07-24)" [ref=f4e235] [cursor=pointer]:
+                        - generic [ref=f4e236]: "10"
+                        - generic [ref=f4e237]: "24"
+                      - gridcell "11 Safar al-Muzaffar 1448 (2026-07-25)" [ref=f4e238] [cursor=pointer]:
+                        - generic [ref=f4e239]: "11"
+                        - generic [ref=f4e240]: "25"
+                - generic [ref=f4e241]: (interact with the calendar)
+              - heading [level=2] [ref=f4e242]:
+                - text: Week view (working hours)
+                - link "Direct link to Week view (working hours)" [ref=f4e243] [cursor=pointer]:
+                  - /url: "#week-view-working-hours"
+                  - text: "#"
+              - generic [ref=f4e244]:
+                - application "Hijri calendar" [ref=f4e246]:
+                  - generic [ref=f4e247]:
+                    - button "Today" [ref=f4e248] [cursor=pointer]
+                    - generic [ref=f4e249]:
+                      - button "Previous" [ref=f4e250] [cursor=pointer]: ‹
+                      - button "Next" [ref=f4e251] [cursor=pointer]: ›
+                    - generic [ref=f4e252]:
+                      - text: Moharram al-Haraam 1448
+                      - generic [ref=f4e253]: Jul 2026
+                    - generic [ref=f4e254]:
+                      - button "Month" [ref=f4e255] [cursor=pointer]
+                      - button "Week" [pressed] [ref=f4e256] [cursor=pointer]
+                      - button "Day" [ref=f4e257] [cursor=pointer]
+                      - button "Agenda" [ref=f4e258] [cursor=pointer]
+                  - generic [ref=f4e259]:
+                    - generic [ref=f4e260]:
+                      - generic [ref=f4e262]:
+                        - generic [ref=f4e263]: Sun
+                        - generic [ref=f4e264]: "21"
+                        - generic [ref=f4e265]: "5"
+                      - generic [ref=f4e266]:
+                        - generic [ref=f4e267]: Mon
+                        - generic [ref=f4e268]: "22"
+                        - generic [ref=f4e269]: "6"
+                      - generic [ref=f4e270]:
+                        - generic [ref=f4e271]: Tue
+                        - generic [ref=f4e272]: "23"
+                        - generic [ref=f4e273]: "7"
+                      - generic [ref=f4e274]:
+                        - generic [ref=f4e275]: Wed
+                        - generic [ref=f4e276]: "24"
+                        - generic [ref=f4e277]: "8"
+                      - generic [ref=f4e278]:
+                        - generic [ref=f4e279]: Thu
+                        - generic [ref=f4e280]: "25"
+                        - generic [ref=f4e281]: "9"
+                      - generic [ref=f4e282]:
+                        - generic [ref=f4e283]: Fri
+                        - generic [ref=f4e284]: "26"
+                        - generic [ref=f4e285]: "10"
+                      - generic [ref=f4e286]:
+                        - generic [ref=f4e287]: Sat
+                        - generic [ref=f4e288]: "27"
+                        - generic [ref=f4e289]: "11"
+                    - generic [ref=f4e290]:
+                      - generic [ref=f4e291]: All day
+                      - button "Conference, All day" [ref=f4e296] [cursor=pointer]: Conference
+                      - button "Conference, All day" [ref=f4e298] [cursor=pointer]: Conference
+                      - button "Conference, All day" [ref=f4e300] [cursor=pointer]: Conference
+                    - generic [ref=f4e302]:
+                      - generic [ref=f4e303]:
+                        - generic [ref=f4e304]: 7 AM
+                        - generic [ref=f4e307]: 8 AM
+                        - generic [ref=f4e310]: 9 AM
+                        - generic [ref=f4e313]: 10 AM
+                        - generic [ref=f4e316]: 11 AM
+                        - generic [ref=f4e319]: 12 PM
+                        - generic [ref=f4e322]: 1 PM
+                        - generic [ref=f4e325]: 2 PM
+                        - generic [ref=f4e328]: 3 PM
+                        - generic [ref=f4e331]: 4 PM
+                        - generic [ref=f4e334]: 5 PM
+                        - generic [ref=f4e337]: 6 PM
+                        - generic [ref=f4e340]: 7 PM
+                        - generic [ref=f4e343]: 8 PM
+                      - generic [ref=f4e375]:
+                        - button "Standup, 9:30 AM" [ref=f4e404] [cursor=pointer]:
+                          - text: Standup
+                          - generic [ref=f4e405]: 9:30 AM
+                        - button "Design review, 10 AM" [ref=f4e406] [cursor=pointer]:
+                          - text: Design review
+                          - generic [ref=f4e407]: 10 AM
+                        - button "Lunch with Ali, 12:30 PM" [ref=f4e408] [cursor=pointer]:
+                          - text: Lunch with Ali
+                          - generic [ref=f4e409]: 12:30 PM
+                      - button "Sprint planning, 2 PM" [ref=f4e439] [cursor=pointer]:
+                        - text: Sprint planning
+                        - generic [ref=f4e440]: 2 PM
+                      - button "Majlis, 6 PM" [ref=f4e499] [cursor=pointer]:
+                        - text: Majlis
+                        - generic [ref=f4e500]: 6 PM
+                - generic [ref=f4e559]: (interact with the calendar)
+              - heading [level=2] [ref=f4e560]:
+                - text: Day view
+                - link "Direct link to Day view" [ref=f4e561] [cursor=pointer]:
+                  - /url: "#day-view"
+                  - text: "#"
+              - generic [ref=f4e562]:
+                - application "Hijri calendar" [ref=f4e564]:
+                  - generic [ref=f4e565]:
+                    - button "Today" [ref=f4e566] [cursor=pointer]
+                    - generic [ref=f4e567]:
+                      - button "Previous" [ref=f4e568] [cursor=pointer]: ‹
+                      - button "Next" [ref=f4e569] [cursor=pointer]: ›
+                    - generic [ref=f4e570]:
+                      - text: 22 Moharram al-Haraam 1448
+                      - generic [ref=f4e571]: Jul 2026
+                    - generic [ref=f4e572]:
+                      - button "Month" [ref=f4e573] [cursor=pointer]
+                      - button "Week" [ref=f4e574] [cursor=pointer]
+                      - button "Day" [pressed] [ref=f4e575] [cursor=pointer]
+                      - button "Agenda" [ref=f4e576] [cursor=pointer]
+                  - generic [ref=f4e577]:
+                    - generic [ref=f4e580]:
+                      - generic [ref=f4e581]: Mon
+                      - generic [ref=f4e582]: "22"
+                      - generic [ref=f4e583]: "6"
+                    - generic [ref=f4e584]: All day
+                    - generic [ref=f4e587]:
+                      - generic [ref=f4e588]:
+                        - generic [ref=f4e589]: 7 AM
+                        - generic [ref=f4e592]: 8 AM
+                        - generic [ref=f4e595]: 9 AM
+                        - generic [ref=f4e598]: 10 AM
+                        - generic [ref=f4e601]: 11 AM
+                        - generic [ref=f4e604]: 12 PM
+                        - generic [ref=f4e607]: 1 PM
+                        - generic [ref=f4e610]: 2 PM
+                        - generic [ref=f4e613]: 3 PM
+                        - generic [ref=f4e616]: 4 PM
+                        - generic [ref=f4e619]: 5 PM
+                        - generic [ref=f4e622]: 6 PM
+                        - generic [ref=f4e625]: 7 PM
+                        - generic [ref=f4e628]: 8 PM
+                      - generic [ref=f4e631]:
+                        - button "Standup, 9:30 AM" [ref=f4e660] [cursor=pointer]:
+                          - text: Standup
+                          - generic [ref=f4e661]: 9:30 AM
+                        - button "Design review, 10 AM" [ref=f4e662] [cursor=pointer]:
+                          - text: Design review
+                          - generic [ref=f4e663]: 10 AM
+                        - button "Lunch with Ali, 12:30 PM" [ref=f4e664] [cursor=pointer]:
+                          - text: Lunch with Ali
+                          - generic [ref=f4e665]: 12:30 PM
+                - generic [ref=f4e666]: (interact with the calendar)
+              - heading [level=2] [ref=f4e667]:
+                - text: Agenda
+                - link "Direct link to Agenda" [ref=f4e668] [cursor=pointer]:
+                  - /url: "#agenda"
+                  - text: "#"
+              - generic [ref=f4e669]:
+                - application "Hijri calendar" [ref=f4e671]:
+                  - generic [ref=f4e672]:
+                    - button "Today" [ref=f4e673] [cursor=pointer]
+                    - generic [ref=f4e674]:
+                      - button "Previous" [ref=f4e675] [cursor=pointer]: ‹
+                      - button "Next" [ref=f4e676] [cursor=pointer]: ›
+                    - generic [ref=f4e677]:
+                      - text: Moharram al-Haraam – Safar al-Muzaffar 1448
+                      - generic [ref=f4e678]: Jul 2026 – Aug 2026
+                    - generic [ref=f4e679]:
+                      - button "Month" [ref=f4e680] [cursor=pointer]
+                      - button "Week" [ref=f4e681] [cursor=pointer]
+                      - button "Day" [ref=f4e682] [cursor=pointer]
+                      - button "Agenda" [pressed] [ref=f4e683] [cursor=pointer]
+                  - generic [ref=f4e684]:
+                    - generic [ref=f4e685]:
+                      - generic [ref=f4e686]:
+                        - generic [ref=f4e687]: 22 Moharram al-Haraam 1448
+                        - generic [ref=f4e688]: Mon, Jul 6
+                      - generic [ref=f4e689]:
+                        - button "9:30 AM Standup" [ref=f4e690] [cursor=pointer]:
+                          - generic [ref=f4e692]: 9:30 AM
+                          - generic [ref=f4e693]: Standup
+                        - button "10 AM Design review" [ref=f4e694] [cursor=pointer]:
+                          - generic [ref=f4e696]: 10 AM
+                          - generic [ref=f4e697]: Design review
+                        - button "12:30 PM Lunch with Ali" [ref=f4e698] [cursor=pointer]:
+                          - generic [ref=f4e700]: 12:30 PM
+                          - generic [ref=f4e701]: Lunch with Ali
+                    - generic [ref=f4e702]:
+                      - generic [ref=f4e703]:
+                        - generic [ref=f4e704]: 23 Moharram al-Haraam 1448
+                        - generic [ref=f4e705]: Tue, Jul 7
+                      - button "2 PM Sprint planning" [ref=f4e707] [cursor=pointer]:
+                        - generic [ref=f4e709]: 2 PM
+                        - generic [ref=f4e710]: Sprint planning
+                    - generic [ref=f4e711]:
+                      - generic [ref=f4e712]:
+                        - generic [ref=f4e713]: 24 Moharram al-Haraam 1448
+                        - generic [ref=f4e714]: Wed, Jul 8
+                      - button "All day Conference" [ref=f4e716] [cursor=pointer]:
+                        - generic [ref=f4e718]: All day
+                        - generic [ref=f4e719]: Conference
+                    - generic [ref=f4e720]:
+                      - generic [ref=f4e721]:
+                        - generic [ref=f4e722]: 25 Moharram al-Haraam 1448
+                        - generic [ref=f4e723]: Thu, Jul 9
+                      - generic [ref=f4e724]:
+                        - button "All day Conference" [ref=f4e725] [cursor=pointer]:
+                          - generic [ref=f4e727]: All day
+                          - generic [ref=f4e728]: Conference
+                        - button "6 PM Majlis" [ref=f4e729] [cursor=pointer]:
+                          - generic [ref=f4e731]: 6 PM
+                          - generic [ref=f4e732]: Majlis
+                    - generic [ref=f4e733]:
+                      - generic [ref=f4e734]:
+                        - generic [ref=f4e735]: 26 Moharram al-Haraam 1448
+                        - generic [ref=f4e736]: Fri, Jul 10
+                      - button "All day Conference" [ref=f4e738] [cursor=pointer]:
+                        - generic [ref=f4e740]: All day
+                        - generic [ref=f4e741]: Conference
+                    - generic [ref=f4e742]:
+                      - generic [ref=f4e743]:
+                        - generic [ref=f4e744]: 1 Safar al-Muzaffar 1448
+                        - generic [ref=f4e745]: Wed, Jul 15
+                      - button "All day Urs" [ref=f4e747] [cursor=pointer]:
+                        - generic [ref=f4e749]: All day
+                        - generic [ref=f4e750]: Urs
+                - generic [ref=f4e751]: (interact with the calendar)
+              - heading [level=2] [ref=f4e752]:
+                - text: Arabic, right-to-left
+                - link "Direct link to Arabic, right-to-left" [ref=f4e753] [cursor=pointer]:
+                  - /url: "#arabic-right-to-left"
+                  - text: "#"
+              - generic [ref=f4e754]:
+                - application "Hijri calendar" [ref=f4e756]:
+                  - generic [ref=f4e757]:
+                    - button "اليوم" [ref=f4e758] [cursor=pointer]
+                    - generic [ref=f4e759]:
+                      - button "Previous" [ref=f4e760] [cursor=pointer]: ‹
+                      - button "Next" [ref=f4e761] [cursor=pointer]: ›
+                    - generic [ref=f4e762]:
+                      - text: محرم الحرام 1448
+                      - generic [ref=f4e763]: Jun 2026 – Jul 2026
+                    - generic [ref=f4e764]:
+                      - button "شهر" [pressed] [ref=f4e765] [cursor=pointer]
+                      - button "أسبوع" [ref=f4e766] [cursor=pointer]
+                      - button "يوم" [ref=f4e767] [cursor=pointer]
+                      - button "جدول" [ref=f4e768] [cursor=pointer]
+                  - grid "محرم الحرام 1448" [ref=f4e769]:
+                    - row [ref=f4e770]:
+                      - columnheader "الأ" [ref=f4e771]
+                      - columnheader "الا" [ref=f4e772]
+                      - columnheader "الث" [ref=f4e773]
+                      - columnheader "الأ" [ref=f4e774]
+                      - columnheader "الخ" [ref=f4e775]
+                      - columnheader "الج" [ref=f4e776]
+                      - columnheader "الس" [ref=f4e777]
+                    - row [ref=f4e778]:
+                      - gridcell "29 Zilhaj al-Haraam 1447 (2026-06-14)" [ref=f4e779] [cursor=pointer]:
+                        - generic [ref=f4e780]: "29"
+                        - generic [ref=f4e781]: "14"
+                      - gridcell "1 Moharram al-Haraam 1448 (2026-06-15)" [ref=f4e782] [cursor=pointer]:
+                        - generic [ref=f4e783]: "1"
+                        - generic [ref=f4e784]: "15"
+                      - gridcell "2 Moharram al-Haraam 1448 (2026-06-16)" [ref=f4e785] [cursor=pointer]:
+                        - generic [ref=f4e786]: "2"
+                        - generic [ref=f4e787]: "16"
+                      - gridcell "3 Moharram al-Haraam 1448 (2026-06-17)" [ref=f4e788] [cursor=pointer]:
+                        - generic [ref=f4e789]: "3"
+                        - generic [ref=f4e790]: "17"
+                      - gridcell "4 Moharram al-Haraam 1448 (2026-06-18)" [ref=f4e791] [cursor=pointer]:
+                        - generic [ref=f4e792]: "4"
+                        - generic [ref=f4e793]: "18"
+                      - gridcell "5 Moharram al-Haraam 1448 (2026-06-19)" [ref=f4e794] [cursor=pointer]:
+                        - generic [ref=f4e795]: "5"
+                        - generic [ref=f4e796]: "19"
+                      - gridcell "6 Moharram al-Haraam 1448 (2026-06-20)" [ref=f4e797] [cursor=pointer]:
+                        - generic [ref=f4e798]: "6"
+                        - generic [ref=f4e799]: "20"
+                    - row [ref=f4e800]:
+                      - gridcell "7 Moharram al-Haraam 1448 (2026-06-21)" [ref=f4e801] [cursor=pointer]:
+                        - generic [ref=f4e802]: "7"
+                        - generic [ref=f4e803]: "21"
+                      - gridcell "8 Moharram al-Haraam 1448 (2026-06-22)" [ref=f4e804] [cursor=pointer]:
+                        - generic [ref=f4e805]: "8"
+                        - generic [ref=f4e806]: "22"
+                      - gridcell "9 Moharram al-Haraam 1448 (2026-06-23)" [ref=f4e807] [cursor=pointer]:
+                        - generic [ref=f4e808]: "9"
+                        - generic [ref=f4e809]: "23"
+                      - gridcell "10 Moharram al-Haraam 1448 (2026-06-24)" [ref=f4e810] [cursor=pointer]:
+                        - generic [ref=f4e811]: "10"
+                        - generic [ref=f4e812]: "24"
+                      - gridcell "11 Moharram al-Haraam 1448 (2026-06-25)" [ref=f4e813] [cursor=pointer]:
+                        - generic [ref=f4e814]: "11"
+                        - generic [ref=f4e815]: "25"
+                      - gridcell "12 Moharram al-Haraam 1448 (2026-06-26)" [ref=f4e816] [cursor=pointer]:
+                        - generic [ref=f4e817]: "12"
+                        - generic [ref=f4e818]: "26"
+                      - gridcell "13 Moharram al-Haraam 1448 (2026-06-27)" [ref=f4e819] [cursor=pointer]:
+                        - generic [ref=f4e820]: "13"
+                        - generic [ref=f4e821]: "27"
+                    - row [ref=f4e822]:
+                      - gridcell "14 Moharram al-Haraam 1448 (2026-06-28)" [ref=f4e823] [cursor=pointer]:
+                        - generic [ref=f4e824]: "14"
+                        - generic [ref=f4e825]: "28"
+                      - gridcell "15 Moharram al-Haraam 1448 (2026-06-29)" [ref=f4e826] [cursor=pointer]:
+                        - generic [ref=f4e827]: "15"
+                        - generic [ref=f4e828]: "29"
+                      - gridcell "16 Moharram al-Haraam 1448 (2026-06-30)" [ref=f4e829] [cursor=pointer]:
+                        - generic [ref=f4e830]: "16"
+                        - generic [ref=f4e831]: "30"
+                      - gridcell "17 Moharram al-Haraam 1448 (2026-07-01)" [ref=f4e832] [cursor=pointer]:
+                        - generic [ref=f4e833]: "17"
+                        - generic [ref=f4e834]: 1 Jul
+                      - gridcell "18 Moharram al-Haraam 1448 (2026-07-02)" [ref=f4e835] [cursor=pointer]:
+                        - generic [ref=f4e836]: "18"
+                        - generic [ref=f4e837]: "2"
+                      - gridcell "19 Moharram al-Haraam 1448 (2026-07-03)" [ref=f4e838] [cursor=pointer]:
+                        - generic [ref=f4e839]: "19"
+                        - generic [ref=f4e840]: "3"
+                      - gridcell "20 Moharram al-Haraam 1448 (2026-07-04)" [ref=f4e841] [cursor=pointer]:
+                        - generic [ref=f4e842]: "20"
+                        - generic [ref=f4e843]: "4"
+                    - row [ref=f4e844]:
+                      - gridcell "21 Moharram al-Haraam 1448 (2026-07-05)" [ref=f4e845] [cursor=pointer]:
+                        - generic [ref=f4e846]: "21"
+                        - generic [ref=f4e847]: "5"
+                      - gridcell "22 Moharram al-Haraam 1448 (2026-07-06)" [ref=f4e848] [cursor=pointer]:
+                        - generic [ref=f4e849]: "22"
+                        - generic [ref=f4e850]: "6"
+                      - gridcell "23 Moharram al-Haraam 1448 (2026-07-07)" [ref=f4e851] [cursor=pointer]:
+                        - generic [ref=f4e852]: "23"
+                        - generic [ref=f4e853]: "7"
+                      - gridcell "24 Moharram al-Haraam 1448 (2026-07-08)" [ref=f4e854] [cursor=pointer]:
+                        - generic [ref=f4e855]: "24"
+                        - generic [ref=f4e856]: "8"
+                      - gridcell "25 Moharram al-Haraam 1448 (2026-07-09)" [ref=f4e857] [cursor=pointer]:
+                        - generic [ref=f4e858]: "25"
+                        - generic [ref=f4e859]: "9"
+                      - gridcell "26 Moharram al-Haraam 1448 (2026-07-10)" [ref=f4e860] [cursor=pointer]:
+                        - generic [ref=f4e861]: "26"
+                        - generic [ref=f4e862]: "10"
+                      - gridcell "27 Moharram al-Haraam 1448 (2026-07-11)" [ref=f4e863] [cursor=pointer]:
+                        - generic [ref=f4e864]: "27"
+                        - generic [ref=f4e865]: "11"
+                      - button "Conference, طوال اليوم" [ref=f4e866] [cursor=pointer]: Conference
+                      - button "Standup, 9:30 AM" [ref=f4e867] [cursor=pointer]: Standup
+                      - button "Sprint planning, 2 PM" [ref=f4e868] [cursor=pointer]: Sprint planning
+                      - button "Majlis, 6 PM" [ref=f4e869] [cursor=pointer]: Majlis
+                      - button "Design review, 10 AM" [ref=f4e870] [cursor=pointer]: Design review
+                      - button "+1 أخرى" [ref=f4e871] [cursor=pointer]
+                    - row [ref=f4e872]:
+                      - gridcell "28 Moharram al-Haraam 1448 (2026-07-12)" [ref=f4e873] [cursor=pointer]:
+                        - generic [ref=f4e874]: "28"
+                        - generic [ref=f4e875]: "12"
+                      - gridcell "29 Moharram al-Haraam 1448 (2026-07-13)" [ref=f4e876] [cursor=pointer]:
+                        - generic [ref=f4e877]: "29"
+                        - generic [ref=f4e878]: "13"
+                      - gridcell "30 Moharram al-Haraam 1448 (2026-07-14)" [ref=f4e879] [cursor=pointer]:
+                        - generic [ref=f4e880]: "30"
+                        - generic [ref=f4e881]: "14"
+                      - gridcell "1 Safar al-Muzaffar 1448 (2026-07-15)" [ref=f4e882] [cursor=pointer]:
+                        - generic [ref=f4e883]: "1"
+                        - generic [ref=f4e884]: "15"
+                      - gridcell "2 Safar al-Muzaffar 1448 (2026-07-16)" [ref=f4e885] [cursor=pointer]:
+                        - generic [ref=f4e886]: "2"
+                        - generic [ref=f4e887]: "16"
+                      - gridcell "3 Safar al-Muzaffar 1448 (2026-07-17)" [ref=f4e888] [cursor=pointer]:
+                        - generic [ref=f4e889]: "3"
+                        - generic [ref=f4e890]: "17"
+                      - gridcell "4 Safar al-Muzaffar 1448 (2026-07-18)" [ref=f4e891] [cursor=pointer]:
+                        - generic [ref=f4e892]: "4"
+                        - generic [ref=f4e893]: "18"
+                      - button "Urs, طوال اليوم" [ref=f4e894] [cursor=pointer]: Urs
+                    - row [ref=f4e895]:
+                      - gridcell "5 Safar al-Muzaffar 1448 (2026-07-19)" [ref=f4e896] [cursor=pointer]:
+                        - generic [ref=f4e897]: "5"
+                        - generic [ref=f4e898]: "19"
+                      - gridcell "6 Safar al-Muzaffar 1448 (2026-07-20)" [ref=f4e899] [cursor=pointer]:
+                        - generic [ref=f4e900]: "6"
+                        - generic [ref=f4e901]: "20"
+                      - gridcell "7 Safar al-Muzaffar 1448 (2026-07-21)" [ref=f4e902] [cursor=pointer]:
+                        - generic [ref=f4e903]: "7"
+                        - generic [ref=f4e904]: "21"
+                      - gridcell "8 Safar al-Muzaffar 1448 (2026-07-22)" [ref=f4e905] [cursor=pointer]:
+                        - generic [ref=f4e906]: "8"
+                        - generic [ref=f4e907]: "22"
+                      - gridcell "9 Safar al-Muzaffar 1448 (2026-07-23)" [ref=f4e908] [cursor=pointer]:
+                        - generic [ref=f4e909]: "9"
+                        - generic [ref=f4e910]: "23"
+                      - gridcell "10 Safar al-Muzaffar 1448 (2026-07-24)" [ref=f4e911] [cursor=pointer]:
+                        - generic [ref=f4e912]: "10"
+                        - generic [ref=f4e913]: "24"
+                      - gridcell "11 Safar al-Muzaffar 1448 (2026-07-25)" [ref=f4e914] [cursor=pointer]:
+                        - generic [ref=f4e915]: "11"
+                        - generic [ref=f4e916]: "25"
+                - generic [ref=f4e917]: (interact with the calendar)
+              - heading [level=2] [ref=f4e918]:
+                - text: Handling clicks to build scheduling UI
+                - link "Direct link to Handling clicks to build scheduling UI" [ref=f4e919] [cursor=pointer]:
+                  - /url: "#handling-clicks-to-build-scheduling-ui"
+                  - text: "#"
+              - paragraph [ref=f4e920]:
+                - code [ref=f4e921]: slot-click
+                - text: gives you the exact 30-minute slot the user clicked — open your create-meeting dialog with it.
+                - code [ref=f4e922]: event-click
+                - text: returns the full event object including your
+                - code [ref=f4e923]: data
+                - text: "payload:"
+              - generic [ref=f4e925]:
+                - code [ref=f4e927]:
+                  - generic [ref=f4e928]: <HijriCalendar
+                  - generic [ref=f4e929]: view="week"
+                  - generic [ref=f4e930]: "events={meetings}"
+                  - generic [ref=f4e931]: "onSlotClick={(e) => openCreateDialog(e.detail.gregorian)}"
+                  - generic [ref=f4e932]: "onEventClick={(e) => openMeeting(e.detail.event.data as Meeting)}"
+                  - generic [ref=f4e933]: />
+                - button "Copy code to clipboard" [ref=f4e935] [cursor=pointer]
+          - navigation "Docs pages" [ref=f4e941]:
+            - link "Previous « API reference" [ref=f4e942] [cursor=pointer]:
+              - /url: /SpezUtil/calendar/api
+              - generic [ref=f4e943]: Previous
+              - generic [ref=f4e944]: « API reference
+            - link "Next Getting started »" [ref=f4e945] [cursor=pointer]:
+              - /url: /SpezUtil/richtext/getting-started
+              - generic [ref=f4e946]: Next
+              - generic [ref=f4e947]: Getting started »
+        - list [ref=f4e950]:
+          - listitem [ref=f4e951]:
+            - link "Month view" [ref=f4e952] [cursor=pointer]:
+              - /url: "#month-view"
+          - listitem [ref=f4e953]:
+            - link "Week view (working hours)" [ref=f4e954] [cursor=pointer]:
+              - /url: "#week-view-working-hours"
+          - listitem [ref=f4e955]:
+            - link "Day view" [ref=f4e956] [cursor=pointer]:
+              - /url: "#day-view"
+          - listitem [ref=f4e957]:
+            - link "Agenda" [ref=f4e958] [cursor=pointer]:
+              - /url: "#agenda"
+          - listitem [ref=f4e959]:
+            - link "Arabic, right-to-left" [ref=f4e960] [cursor=pointer]:
+              - /url: "#arabic-right-to-left"
+          - listitem [ref=f4e961]:
+            - link "Handling clicks to build scheduling UI" [ref=f4e962] [cursor=pointer]:
+              - /url: "#handling-clicks-to-build-scheduling-ui"

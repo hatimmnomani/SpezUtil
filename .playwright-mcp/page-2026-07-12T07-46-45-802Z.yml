@@ -1,0 +1,1023 @@
+- generic [ref=f1e2]:
+  - region "Skip to main content":
+    - link "Skip to main content" [ref=f1e3] [cursor=pointer]:
+      - /url: "#__docusaurus_skipToContent_fallback"
+  - navigation "Main" [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - generic [ref=f1e6]:
+        - link "Digital Takeoff UI" [ref=f1e7] [cursor=pointer]:
+          - /url: /SpezUtil/
+        - link "Docs" [ref=f1e9] [cursor=pointer]:
+          - /url: /SpezUtil/
+        - link [ref=f1e10] [cursor=pointer]:
+          - /url: /SpezUtil/storybook/
+          - text: Storybook
+          - img "(opens in new tab)" [ref=f1e11]
+      - button "Switch between dark and light mode (currently light mode)" [ref=f1e15] [cursor=pointer]
+  - generic [ref=f1e20]:
+    - complementary [ref=f1e21]:
+      - navigation "Docs sidebar" [ref=f1e24]:
+        - list [ref=f1e25]:
+          - listitem [ref=f1e26]:
+            - link "Digital Takeoff UI" [ref=f1e27] [cursor=pointer]:
+              - /url: /SpezUtil/
+          - listitem [ref=f1e29]:
+            - button "Datepicker" [expanded] [ref=f1e31] [cursor=pointer]
+            - list [ref=f1e33]:
+              - listitem [ref=f1e34]:
+                - link "Getting started" [ref=f1e35] [cursor=pointer]:
+                  - /url: /SpezUtil/datepicker/getting-started
+              - listitem [ref=f1e37]:
+                - link "API reference" [ref=f1e38] [cursor=pointer]:
+                  - /url: /SpezUtil/datepicker/api
+              - listitem [ref=f1e40]:
+                - link "Recipes" [ref=f1e41] [cursor=pointer]:
+                  - /url: /SpezUtil/datepicker/recipes
+          - listitem [ref=f1e43]:
+            - button "Calendar" [ref=f1e45] [cursor=pointer]
+          - listitem [ref=f1e47]:
+            - button "Rich Text Editor" [ref=f1e49] [cursor=pointer]
+          - listitem [ref=f1e51]:
+            - button "Engine" [ref=f1e53] [cursor=pointer]
+    - main [ref=f1e55]:
+      - generic [ref=f1e57]:
+        - generic [ref=f1e59]:
+          - article [ref=f1e60]:
+            - navigation "Breadcrumbs" [ref=f1e61]:
+              - list [ref=f1e62]:
+                - listitem [ref=f1e63]:
+                  - link "Home page" [ref=f1e64] [cursor=pointer]:
+                    - /url: /SpezUtil/
+                - listitem [ref=f1e67]:
+                  - generic [ref=f1e68]: Datepicker
+                - listitem [ref=f1e69]:
+                  - generic [ref=f1e70]: Recipes
+            - generic [ref=f1e71]:
+              - heading "Recipes" [level=1] [ref=f1e73]
+              - paragraph [ref=f1e74]:
+                - text: Every demo below is the real Web Component. Selecting a date logs the emitted
+                - code [ref=f1e75]: ChangeDetail
+                - text: .
+              - heading [level=2] [ref=f1e76]:
+                - text: Single date
+                - link "Direct link to Single date" [ref=f1e77] [cursor=pointer]:
+                  - /url: "#single-date"
+                  - text: "#"
+              - generic [ref=f1e78]:
+                - application "Hijri date picker" [ref=f1e80]:
+                  - generic [ref=f1e81]:
+                    - button "Previous month" [ref=f1e82] [cursor=pointer]: ‹
+                    - generic [ref=f1e83]:
+                      - text: Ramadan al-Moazzam 1445
+                      - generic [ref=f1e84]: March 2024
+                    - button "Next month" [ref=f1e85] [cursor=pointer]: ›
+                  - grid [ref=f1e86]:
+                    - row [ref=f1e87]:
+                      - columnheader "Su" [ref=f1e88]
+                      - columnheader "Mo" [ref=f1e89]
+                      - columnheader "Tu" [ref=f1e90]
+                      - columnheader "We" [ref=f1e91]
+                      - columnheader "Th" [ref=f1e92]
+                      - columnheader "Fr" [ref=f1e93]
+                      - columnheader "Sa" [ref=f1e94]
+                    - row [ref=f1e95]:
+                      - gridcell "1 Ramadan al-Moazzam 1445 (2024-03-10)" [ref=f1e96] [cursor=pointer]:
+                        - generic [ref=f1e97]: "1"
+                        - generic [ref=f1e98]: "10"
+                      - gridcell "2 Ramadan al-Moazzam 1445 (2024-03-11)" [ref=f1e99] [cursor=pointer]:
+                        - generic [ref=f1e100]: "2"
+                        - generic [ref=f1e101]: "11"
+                      - gridcell "3 Ramadan al-Moazzam 1445 (2024-03-12)" [ref=f1e102] [cursor=pointer]:
+                        - generic [ref=f1e103]: "3"
+                        - generic [ref=f1e104]: "12"
+                      - gridcell "4 Ramadan al-Moazzam 1445 (2024-03-13)" [ref=f1e105] [cursor=pointer]:
+                        - generic [ref=f1e106]: "4"
+                        - generic [ref=f1e107]: "13"
+                      - gridcell "5 Ramadan al-Moazzam 1445 (2024-03-14)" [ref=f1e108] [cursor=pointer]:
+                        - generic [ref=f1e109]: "5"
+                        - generic [ref=f1e110]: "14"
+                      - gridcell "6 Ramadan al-Moazzam 1445 (2024-03-15)" [selected] [ref=f1e111] [cursor=pointer]:
+                        - generic [ref=f1e112]: "6"
+                        - generic [ref=f1e113]: "15"
+                      - gridcell "7 Ramadan al-Moazzam 1445 (2024-03-16)" [ref=f1e114] [cursor=pointer]:
+                        - generic [ref=f1e115]: "7"
+                        - generic [ref=f1e116]: "16"
+                    - row [ref=f1e117]:
+                      - gridcell "8 Ramadan al-Moazzam 1445 (2024-03-17)" [ref=f1e118] [cursor=pointer]:
+                        - generic [ref=f1e119]: "8"
+                        - generic [ref=f1e120]: "17"
+                      - gridcell "9 Ramadan al-Moazzam 1445 (2024-03-18)" [ref=f1e121] [cursor=pointer]:
+                        - generic [ref=f1e122]: "9"
+                        - generic [ref=f1e123]: "18"
+                      - gridcell "10 Ramadan al-Moazzam 1445 (2024-03-19)" [ref=f1e124] [cursor=pointer]:
+                        - generic [ref=f1e125]: "10"
+                        - generic [ref=f1e126]: "19"
+                      - gridcell "11 Ramadan al-Moazzam 1445 (2024-03-20)" [ref=f1e127] [cursor=pointer]:
+                        - generic [ref=f1e128]: "11"
+                        - generic [ref=f1e129]: "20"
+                      - gridcell "12 Ramadan al-Moazzam 1445 (2024-03-21)" [ref=f1e130] [cursor=pointer]:
+                        - generic [ref=f1e131]: "12"
+                        - generic [ref=f1e132]: "21"
+                      - gridcell "13 Ramadan al-Moazzam 1445 (2024-03-22)" [ref=f1e133] [cursor=pointer]:
+                        - generic [ref=f1e134]: "13"
+                        - generic [ref=f1e135]: "22"
+                      - gridcell "14 Ramadan al-Moazzam 1445 (2024-03-23)" [ref=f1e136] [cursor=pointer]:
+                        - generic [ref=f1e137]: "14"
+                        - generic [ref=f1e138]: "23"
+                    - row [ref=f1e139]:
+                      - gridcell "15 Ramadan al-Moazzam 1445 (2024-03-24)" [ref=f1e140] [cursor=pointer]:
+                        - generic [ref=f1e141]: "15"
+                        - generic [ref=f1e142]: "24"
+                      - gridcell "16 Ramadan al-Moazzam 1445 (2024-03-25)" [ref=f1e143] [cursor=pointer]:
+                        - generic [ref=f1e144]: "16"
+                        - generic [ref=f1e145]: "25"
+                      - gridcell "17 Ramadan al-Moazzam 1445 (2024-03-26)" [ref=f1e146] [cursor=pointer]:
+                        - generic [ref=f1e147]: "17"
+                        - generic [ref=f1e148]: "26"
+                      - gridcell "18 Ramadan al-Moazzam 1445 (2024-03-27)" [ref=f1e149] [cursor=pointer]:
+                        - generic [ref=f1e150]: "18"
+                        - generic [ref=f1e151]: "27"
+                      - gridcell "19 Ramadan al-Moazzam 1445 (2024-03-28)" [ref=f1e152] [cursor=pointer]:
+                        - generic [ref=f1e153]: "19"
+                        - generic [ref=f1e154]: "28"
+                      - gridcell "20 Ramadan al-Moazzam 1445 (2024-03-29)" [ref=f1e155] [cursor=pointer]:
+                        - generic [ref=f1e156]: "20"
+                        - generic [ref=f1e157]: "29"
+                      - gridcell "21 Ramadan al-Moazzam 1445 (2024-03-30)" [ref=f1e158] [cursor=pointer]:
+                        - generic [ref=f1e159]: "21"
+                        - generic [ref=f1e160]: "30"
+                    - row [ref=f1e161]:
+                      - gridcell "22 Ramadan al-Moazzam 1445 (2024-03-31)" [ref=f1e162] [cursor=pointer]:
+                        - generic [ref=f1e163]: "22"
+                        - generic [ref=f1e164]: "31"
+                      - gridcell "23 Ramadan al-Moazzam 1445 (2024-04-01)" [ref=f1e165] [cursor=pointer]:
+                        - generic [ref=f1e166]: "23"
+                        - generic [ref=f1e167]: 1 Apr
+                      - gridcell "24 Ramadan al-Moazzam 1445 (2024-04-02)" [ref=f1e168] [cursor=pointer]:
+                        - generic [ref=f1e169]: "24"
+                        - generic [ref=f1e170]: "2"
+                      - gridcell "25 Ramadan al-Moazzam 1445 (2024-04-03)" [ref=f1e171] [cursor=pointer]:
+                        - generic [ref=f1e172]: "25"
+                        - generic [ref=f1e173]: "3"
+                      - gridcell "26 Ramadan al-Moazzam 1445 (2024-04-04)" [ref=f1e174] [cursor=pointer]:
+                        - generic [ref=f1e175]: "26"
+                        - generic [ref=f1e176]: "4"
+                      - gridcell "27 Ramadan al-Moazzam 1445 (2024-04-05)" [ref=f1e177] [cursor=pointer]:
+                        - generic [ref=f1e178]: "27"
+                        - generic [ref=f1e179]: "5"
+                      - gridcell "28 Ramadan al-Moazzam 1445 (2024-04-06)" [ref=f1e180] [cursor=pointer]:
+                        - generic [ref=f1e181]: "28"
+                        - generic [ref=f1e182]: "6"
+                    - row [ref=f1e183]:
+                      - gridcell "29 Ramadan al-Moazzam 1445 (2024-04-07)" [ref=f1e184] [cursor=pointer]:
+                        - generic [ref=f1e185]: "29"
+                        - generic [ref=f1e186]: "7"
+                      - gridcell "30 Ramadan al-Moazzam 1445 (2024-04-08)" [ref=f1e187] [cursor=pointer]:
+                        - generic [ref=f1e188]: "30"
+                        - generic [ref=f1e189]: "8"
+                      - gridcell "1 Shawwal al-Mukarram 1445 (2024-04-09)" [ref=f1e190] [cursor=pointer]:
+                        - generic [ref=f1e191]: "1"
+                        - generic [ref=f1e192]: "9"
+                      - gridcell "2 Shawwal al-Mukarram 1445 (2024-04-10)" [ref=f1e193] [cursor=pointer]:
+                        - generic [ref=f1e194]: "2"
+                        - generic [ref=f1e195]: "10"
+                      - gridcell "3 Shawwal al-Mukarram 1445 (2024-04-11)" [ref=f1e196] [cursor=pointer]:
+                        - generic [ref=f1e197]: "3"
+                        - generic [ref=f1e198]: "11"
+                      - gridcell "4 Shawwal al-Mukarram 1445 (2024-04-12)" [ref=f1e199] [cursor=pointer]:
+                        - generic [ref=f1e200]: "4"
+                        - generic [ref=f1e201]: "12"
+                      - gridcell "5 Shawwal al-Mukarram 1445 (2024-04-13)" [ref=f1e202] [cursor=pointer]:
+                        - generic [ref=f1e203]: "5"
+                        - generic [ref=f1e204]: "13"
+                    - row [ref=f1e205]:
+                      - gridcell "6 Shawwal al-Mukarram 1445 (2024-04-14)" [ref=f1e206] [cursor=pointer]:
+                        - generic [ref=f1e207]: "6"
+                        - generic [ref=f1e208]: "14"
+                      - gridcell "7 Shawwal al-Mukarram 1445 (2024-04-15)" [ref=f1e209] [cursor=pointer]:
+                        - generic [ref=f1e210]: "7"
+                        - generic [ref=f1e211]: "15"
+                      - gridcell "8 Shawwal al-Mukarram 1445 (2024-04-16)" [ref=f1e212] [cursor=pointer]:
+                        - generic [ref=f1e213]: "8"
+                        - generic [ref=f1e214]: "16"
+                      - gridcell "9 Shawwal al-Mukarram 1445 (2024-04-17)" [ref=f1e215] [cursor=pointer]:
+                        - generic [ref=f1e216]: "9"
+                        - generic [ref=f1e217]: "17"
+                      - gridcell "10 Shawwal al-Mukarram 1445 (2024-04-18)" [ref=f1e218] [cursor=pointer]:
+                        - generic [ref=f1e219]: "10"
+                        - generic [ref=f1e220]: "18"
+                      - gridcell "11 Shawwal al-Mukarram 1445 (2024-04-19)" [ref=f1e221] [cursor=pointer]:
+                        - generic [ref=f1e222]: "11"
+                        - generic [ref=f1e223]: "19"
+                      - gridcell "12 Shawwal al-Mukarram 1445 (2024-04-20)" [ref=f1e224] [cursor=pointer]:
+                        - generic [ref=f1e225]: "12"
+                        - generic [ref=f1e226]: "20"
+                - generic [ref=f1e227]: (no selection yet)
+              - heading [level=2] [ref=f1e228]:
+                - text: Range
+                - link "Direct link to Range" [ref=f1e229] [cursor=pointer]:
+                  - /url: "#range"
+                  - text: "#"
+              - generic [ref=f1e230]:
+                - application "Hijri date picker" [ref=f1e232]:
+                  - generic [ref=f1e233]:
+                    - button "Previous month" [ref=f1e234] [cursor=pointer]: ‹
+                    - generic [ref=f1e235]:
+                      - text: Ramadan al-Moazzam 1445
+                      - generic [ref=f1e236]: March 2024
+                    - button "Next month" [ref=f1e237] [cursor=pointer]: ›
+                  - grid [ref=f1e238]:
+                    - row [ref=f1e239]:
+                      - columnheader "Su" [ref=f1e240]
+                      - columnheader "Mo" [ref=f1e241]
+                      - columnheader "Tu" [ref=f1e242]
+                      - columnheader "We" [ref=f1e243]
+                      - columnheader "Th" [ref=f1e244]
+                      - columnheader "Fr" [ref=f1e245]
+                      - columnheader "Sa" [ref=f1e246]
+                    - row [ref=f1e247]:
+                      - gridcell "1 Ramadan al-Moazzam 1445 (2024-03-10)" [selected] [ref=f1e248] [cursor=pointer]:
+                        - generic [ref=f1e249]: "1"
+                        - generic [ref=f1e250]: "10"
+                      - gridcell "2 Ramadan al-Moazzam 1445 (2024-03-11)" [ref=f1e251] [cursor=pointer]:
+                        - generic [ref=f1e252]: "2"
+                        - generic [ref=f1e253]: "11"
+                      - gridcell "3 Ramadan al-Moazzam 1445 (2024-03-12)" [ref=f1e254] [cursor=pointer]:
+                        - generic [ref=f1e255]: "3"
+                        - generic [ref=f1e256]: "12"
+                      - gridcell "4 Ramadan al-Moazzam 1445 (2024-03-13)" [ref=f1e257] [cursor=pointer]:
+                        - generic [ref=f1e258]: "4"
+                        - generic [ref=f1e259]: "13"
+                      - gridcell "5 Ramadan al-Moazzam 1445 (2024-03-14)" [ref=f1e260] [cursor=pointer]:
+                        - generic [ref=f1e261]: "5"
+                        - generic [ref=f1e262]: "14"
+                      - gridcell "6 Ramadan al-Moazzam 1445 (2024-03-15)" [ref=f1e263] [cursor=pointer]:
+                        - generic [ref=f1e264]: "6"
+                        - generic [ref=f1e265]: "15"
+                      - gridcell "7 Ramadan al-Moazzam 1445 (2024-03-16)" [ref=f1e266] [cursor=pointer]:
+                        - generic [ref=f1e267]: "7"
+                        - generic [ref=f1e268]: "16"
+                    - row [ref=f1e269]:
+                      - gridcell "8 Ramadan al-Moazzam 1445 (2024-03-17)" [ref=f1e270] [cursor=pointer]:
+                        - generic [ref=f1e271]: "8"
+                        - generic [ref=f1e272]: "17"
+                      - gridcell "9 Ramadan al-Moazzam 1445 (2024-03-18)" [selected] [ref=f1e273] [cursor=pointer]:
+                        - generic [ref=f1e274]: "9"
+                        - generic [ref=f1e275]: "18"
+                      - gridcell "10 Ramadan al-Moazzam 1445 (2024-03-19)" [ref=f1e276] [cursor=pointer]:
+                        - generic [ref=f1e277]: "10"
+                        - generic [ref=f1e278]: "19"
+                      - gridcell "11 Ramadan al-Moazzam 1445 (2024-03-20)" [ref=f1e279] [cursor=pointer]:
+                        - generic [ref=f1e280]: "11"
+                        - generic [ref=f1e281]: "20"
+                      - gridcell "12 Ramadan al-Moazzam 1445 (2024-03-21)" [ref=f1e282] [cursor=pointer]:
+                        - generic [ref=f1e283]: "12"
+                        - generic [ref=f1e284]: "21"
+                      - gridcell "13 Ramadan al-Moazzam 1445 (2024-03-22)" [ref=f1e285] [cursor=pointer]:
+                        - generic [ref=f1e286]: "13"
+                        - generic [ref=f1e287]: "22"
+                      - gridcell "14 Ramadan al-Moazzam 1445 (2024-03-23)" [ref=f1e288] [cursor=pointer]:
+                        - generic [ref=f1e289]: "14"
+                        - generic [ref=f1e290]: "23"
+                    - row [ref=f1e291]:
+                      - gridcell "15 Ramadan al-Moazzam 1445 (2024-03-24)" [ref=f1e292] [cursor=pointer]:
+                        - generic [ref=f1e293]: "15"
+                        - generic [ref=f1e294]: "24"
+                      - gridcell "16 Ramadan al-Moazzam 1445 (2024-03-25)" [ref=f1e295] [cursor=pointer]:
+                        - generic [ref=f1e296]: "16"
+                        - generic [ref=f1e297]: "25"
+                      - gridcell "17 Ramadan al-Moazzam 1445 (2024-03-26)" [ref=f1e298] [cursor=pointer]:
+                        - generic [ref=f1e299]: "17"
+                        - generic [ref=f1e300]: "26"
+                      - gridcell "18 Ramadan al-Moazzam 1445 (2024-03-27)" [ref=f1e301] [cursor=pointer]:
+                        - generic [ref=f1e302]: "18"
+                        - generic [ref=f1e303]: "27"
+                      - gridcell "19 Ramadan al-Moazzam 1445 (2024-03-28)" [ref=f1e304] [cursor=pointer]:
+                        - generic [ref=f1e305]: "19"
+                        - generic [ref=f1e306]: "28"
+                      - gridcell "20 Ramadan al-Moazzam 1445 (2024-03-29)" [ref=f1e307] [cursor=pointer]:
+                        - generic [ref=f1e308]: "20"
+                        - generic [ref=f1e309]: "29"
+                      - gridcell "21 Ramadan al-Moazzam 1445 (2024-03-30)" [ref=f1e310] [cursor=pointer]:
+                        - generic [ref=f1e311]: "21"
+                        - generic [ref=f1e312]: "30"
+                    - row [ref=f1e313]:
+                      - gridcell "22 Ramadan al-Moazzam 1445 (2024-03-31)" [ref=f1e314] [cursor=pointer]:
+                        - generic [ref=f1e315]: "22"
+                        - generic [ref=f1e316]: "31"
+                      - gridcell "23 Ramadan al-Moazzam 1445 (2024-04-01)" [ref=f1e317] [cursor=pointer]:
+                        - generic [ref=f1e318]: "23"
+                        - generic [ref=f1e319]: 1 Apr
+                      - gridcell "24 Ramadan al-Moazzam 1445 (2024-04-02)" [ref=f1e320] [cursor=pointer]:
+                        - generic [ref=f1e321]: "24"
+                        - generic [ref=f1e322]: "2"
+                      - gridcell "25 Ramadan al-Moazzam 1445 (2024-04-03)" [ref=f1e323] [cursor=pointer]:
+                        - generic [ref=f1e324]: "25"
+                        - generic [ref=f1e325]: "3"
+                      - gridcell "26 Ramadan al-Moazzam 1445 (2024-04-04)" [ref=f1e326] [cursor=pointer]:
+                        - generic [ref=f1e327]: "26"
+                        - generic [ref=f1e328]: "4"
+                      - gridcell "27 Ramadan al-Moazzam 1445 (2024-04-05)" [ref=f1e329] [cursor=pointer]:
+                        - generic [ref=f1e330]: "27"
+                        - generic [ref=f1e331]: "5"
+                      - gridcell "28 Ramadan al-Moazzam 1445 (2024-04-06)" [ref=f1e332] [cursor=pointer]:
+                        - generic [ref=f1e333]: "28"
+                        - generic [ref=f1e334]: "6"
+                    - row [ref=f1e335]:
+                      - gridcell "29 Ramadan al-Moazzam 1445 (2024-04-07)" [ref=f1e336] [cursor=pointer]:
+                        - generic [ref=f1e337]: "29"
+                        - generic [ref=f1e338]: "7"
+                      - gridcell "30 Ramadan al-Moazzam 1445 (2024-04-08)" [ref=f1e339] [cursor=pointer]:
+                        - generic [ref=f1e340]: "30"
+                        - generic [ref=f1e341]: "8"
+                      - gridcell "1 Shawwal al-Mukarram 1445 (2024-04-09)" [ref=f1e342] [cursor=pointer]:
+                        - generic [ref=f1e343]: "1"
+                        - generic [ref=f1e344]: "9"
+                      - gridcell "2 Shawwal al-Mukarram 1445 (2024-04-10)" [ref=f1e345] [cursor=pointer]:
+                        - generic [ref=f1e346]: "2"
+                        - generic [ref=f1e347]: "10"
+                      - gridcell "3 Shawwal al-Mukarram 1445 (2024-04-11)" [ref=f1e348] [cursor=pointer]:
+                        - generic [ref=f1e349]: "3"
+                        - generic [ref=f1e350]: "11"
+                      - gridcell "4 Shawwal al-Mukarram 1445 (2024-04-12)" [ref=f1e351] [cursor=pointer]:
+                        - generic [ref=f1e352]: "4"
+                        - generic [ref=f1e353]: "12"
+                      - gridcell "5 Shawwal al-Mukarram 1445 (2024-04-13)" [ref=f1e354] [cursor=pointer]:
+                        - generic [ref=f1e355]: "5"
+                        - generic [ref=f1e356]: "13"
+                    - row [ref=f1e357]:
+                      - gridcell "6 Shawwal al-Mukarram 1445 (2024-04-14)" [ref=f1e358] [cursor=pointer]:
+                        - generic [ref=f1e359]: "6"
+                        - generic [ref=f1e360]: "14"
+                      - gridcell "7 Shawwal al-Mukarram 1445 (2024-04-15)" [ref=f1e361] [cursor=pointer]:
+                        - generic [ref=f1e362]: "7"
+                        - generic [ref=f1e363]: "15"
+                      - gridcell "8 Shawwal al-Mukarram 1445 (2024-04-16)" [ref=f1e364] [cursor=pointer]:
+                        - generic [ref=f1e365]: "8"
+                        - generic [ref=f1e366]: "16"
+                      - gridcell "9 Shawwal al-Mukarram 1445 (2024-04-17)" [ref=f1e367] [cursor=pointer]:
+                        - generic [ref=f1e368]: "9"
+                        - generic [ref=f1e369]: "17"
+                      - gridcell "10 Shawwal al-Mukarram 1445 (2024-04-18)" [ref=f1e370] [cursor=pointer]:
+                        - generic [ref=f1e371]: "10"
+                        - generic [ref=f1e372]: "18"
+                      - gridcell "11 Shawwal al-Mukarram 1445 (2024-04-19)" [ref=f1e373] [cursor=pointer]:
+                        - generic [ref=f1e374]: "11"
+                        - generic [ref=f1e375]: "19"
+                      - gridcell "12 Shawwal al-Mukarram 1445 (2024-04-20)" [ref=f1e376] [cursor=pointer]:
+                        - generic [ref=f1e377]: "12"
+                        - generic [ref=f1e378]: "20"
+                - generic [ref=f1e379]: (no selection yet)
+              - heading [level=2] [ref=f1e380]:
+                - text: Multiple dates
+                - link "Direct link to Multiple dates" [ref=f1e381] [cursor=pointer]:
+                  - /url: "#multiple-dates"
+                  - text: "#"
+              - generic [ref=f1e382]:
+                - application "Hijri date picker" [ref=f1e384]:
+                  - generic [ref=f1e385]:
+                    - button "Previous month" [ref=f1e386] [cursor=pointer]: ‹
+                    - generic [ref=f1e387]:
+                      - text: Shaban al-Karim 1445
+                      - generic [ref=f1e388]: February 2024
+                    - button "Next month" [ref=f1e389] [cursor=pointer]: ›
+                  - grid [ref=f1e390]:
+                    - row [ref=f1e391]:
+                      - columnheader "Su" [ref=f1e392]
+                      - columnheader "Mo" [ref=f1e393]
+                      - columnheader "Tu" [ref=f1e394]
+                      - columnheader "We" [ref=f1e395]
+                      - columnheader "Th" [ref=f1e396]
+                      - columnheader "Fr" [ref=f1e397]
+                      - columnheader "Sa" [ref=f1e398]
+                    - row [ref=f1e399]:
+                      - gridcell "25 Rajab al-Asab 1445 (2024-02-04)" [ref=f1e400] [cursor=pointer]:
+                        - generic [ref=f1e401]: "25"
+                        - generic [ref=f1e402]: "4"
+                      - gridcell "26 Rajab al-Asab 1445 (2024-02-05)" [ref=f1e403] [cursor=pointer]:
+                        - generic [ref=f1e404]: "26"
+                        - generic [ref=f1e405]: "5"
+                      - gridcell "27 Rajab al-Asab 1445 (2024-02-06)" [ref=f1e406] [cursor=pointer]:
+                        - generic [ref=f1e407]: "27"
+                        - generic [ref=f1e408]: "6"
+                      - gridcell "28 Rajab al-Asab 1445 (2024-02-07)" [ref=f1e409] [cursor=pointer]:
+                        - generic [ref=f1e410]: "28"
+                        - generic [ref=f1e411]: "7"
+                      - gridcell "29 Rajab al-Asab 1445 (2024-02-08)" [ref=f1e412] [cursor=pointer]:
+                        - generic [ref=f1e413]: "29"
+                        - generic [ref=f1e414]: "8"
+                      - gridcell "30 Rajab al-Asab 1445 (2024-02-09)" [ref=f1e415] [cursor=pointer]:
+                        - generic [ref=f1e416]: "30"
+                        - generic [ref=f1e417]: "9"
+                      - gridcell "1 Shaban al-Karim 1445 (2024-02-10)" [ref=f1e418] [cursor=pointer]:
+                        - generic [ref=f1e419]: "1"
+                        - generic [ref=f1e420]: "10"
+                    - row [ref=f1e421]:
+                      - gridcell "2 Shaban al-Karim 1445 (2024-02-11)" [ref=f1e422] [cursor=pointer]:
+                        - generic [ref=f1e423]: "2"
+                        - generic [ref=f1e424]: "11"
+                      - gridcell "3 Shaban al-Karim 1445 (2024-02-12)" [ref=f1e425] [cursor=pointer]:
+                        - generic [ref=f1e426]: "3"
+                        - generic [ref=f1e427]: "12"
+                      - gridcell "4 Shaban al-Karim 1445 (2024-02-13)" [ref=f1e428] [cursor=pointer]:
+                        - generic [ref=f1e429]: "4"
+                        - generic [ref=f1e430]: "13"
+                      - gridcell "5 Shaban al-Karim 1445 (2024-02-14)" [ref=f1e431] [cursor=pointer]:
+                        - generic [ref=f1e432]: "5"
+                        - generic [ref=f1e433]: "14"
+                      - gridcell "6 Shaban al-Karim 1445 (2024-02-15)" [ref=f1e434] [cursor=pointer]:
+                        - generic [ref=f1e435]: "6"
+                        - generic [ref=f1e436]: "15"
+                      - gridcell "7 Shaban al-Karim 1445 (2024-02-16)" [ref=f1e437] [cursor=pointer]:
+                        - generic [ref=f1e438]: "7"
+                        - generic [ref=f1e439]: "16"
+                      - gridcell "8 Shaban al-Karim 1445 (2024-02-17)" [ref=f1e440] [cursor=pointer]:
+                        - generic [ref=f1e441]: "8"
+                        - generic [ref=f1e442]: "17"
+                    - row [ref=f1e443]:
+                      - gridcell "9 Shaban al-Karim 1445 (2024-02-18)" [ref=f1e444] [cursor=pointer]:
+                        - generic [ref=f1e445]: "9"
+                        - generic [ref=f1e446]: "18"
+                      - gridcell "10 Shaban al-Karim 1445 (2024-02-19)" [ref=f1e447] [cursor=pointer]:
+                        - generic [ref=f1e448]: "10"
+                        - generic [ref=f1e449]: "19"
+                      - gridcell "11 Shaban al-Karim 1445 (2024-02-20)" [ref=f1e450] [cursor=pointer]:
+                        - generic [ref=f1e451]: "11"
+                        - generic [ref=f1e452]: "20"
+                      - gridcell "12 Shaban al-Karim 1445 (2024-02-21)" [ref=f1e453] [cursor=pointer]:
+                        - generic [ref=f1e454]: "12"
+                        - generic [ref=f1e455]: "21"
+                      - gridcell "13 Shaban al-Karim 1445 (2024-02-22)" [ref=f1e456] [cursor=pointer]:
+                        - generic [ref=f1e457]: "13"
+                        - generic [ref=f1e458]: "22"
+                      - gridcell "14 Shaban al-Karim 1445 (2024-02-23)" [ref=f1e459] [cursor=pointer]:
+                        - generic [ref=f1e460]: "14"
+                        - generic [ref=f1e461]: "23"
+                      - gridcell "15 Shaban al-Karim 1445 (2024-02-24)" [ref=f1e462] [cursor=pointer]:
+                        - generic [ref=f1e463]: "15"
+                        - generic [ref=f1e464]: "24"
+                    - row [ref=f1e465]:
+                      - gridcell "16 Shaban al-Karim 1445 (2024-02-25)" [ref=f1e466] [cursor=pointer]:
+                        - generic [ref=f1e467]: "16"
+                        - generic [ref=f1e468]: "25"
+                      - gridcell "17 Shaban al-Karim 1445 (2024-02-26)" [ref=f1e469] [cursor=pointer]:
+                        - generic [ref=f1e470]: "17"
+                        - generic [ref=f1e471]: "26"
+                      - gridcell "18 Shaban al-Karim 1445 (2024-02-27)" [ref=f1e472] [cursor=pointer]:
+                        - generic [ref=f1e473]: "18"
+                        - generic [ref=f1e474]: "27"
+                      - gridcell "19 Shaban al-Karim 1445 (2024-02-28)" [ref=f1e475] [cursor=pointer]:
+                        - generic [ref=f1e476]: "19"
+                        - generic [ref=f1e477]: "28"
+                      - gridcell "20 Shaban al-Karim 1445 (2024-02-29)" [ref=f1e478] [cursor=pointer]:
+                        - generic [ref=f1e479]: "20"
+                        - generic [ref=f1e480]: "29"
+                      - gridcell "21 Shaban al-Karim 1445 (2024-03-01)" [ref=f1e481] [cursor=pointer]:
+                        - generic [ref=f1e482]: "21"
+                        - generic [ref=f1e483]: 1 Mar
+                      - gridcell "22 Shaban al-Karim 1445 (2024-03-02)" [ref=f1e484] [cursor=pointer]:
+                        - generic [ref=f1e485]: "22"
+                        - generic [ref=f1e486]: "2"
+                    - row [ref=f1e487]:
+                      - gridcell "23 Shaban al-Karim 1445 (2024-03-03)" [ref=f1e488] [cursor=pointer]:
+                        - generic [ref=f1e489]: "23"
+                        - generic [ref=f1e490]: "3"
+                      - gridcell "24 Shaban al-Karim 1445 (2024-03-04)" [ref=f1e491] [cursor=pointer]:
+                        - generic [ref=f1e492]: "24"
+                        - generic [ref=f1e493]: "4"
+                      - gridcell "25 Shaban al-Karim 1445 (2024-03-05)" [selected] [ref=f1e494] [cursor=pointer]:
+                        - generic [ref=f1e495]: "25"
+                        - generic [ref=f1e496]: "5"
+                      - gridcell "26 Shaban al-Karim 1445 (2024-03-06)" [ref=f1e497] [cursor=pointer]:
+                        - generic [ref=f1e498]: "26"
+                        - generic [ref=f1e499]: "6"
+                      - gridcell "27 Shaban al-Karim 1445 (2024-03-07)" [ref=f1e500] [cursor=pointer]:
+                        - generic [ref=f1e501]: "27"
+                        - generic [ref=f1e502]: "7"
+                      - gridcell "28 Shaban al-Karim 1445 (2024-03-08)" [ref=f1e503] [cursor=pointer]:
+                        - generic [ref=f1e504]: "28"
+                        - generic [ref=f1e505]: "8"
+                      - gridcell "29 Shaban al-Karim 1445 (2024-03-09)" [ref=f1e506] [cursor=pointer]:
+                        - generic [ref=f1e507]: "29"
+                        - generic [ref=f1e508]: "9"
+                    - row [ref=f1e509]:
+                      - gridcell "1 Ramadan al-Moazzam 1445 (2024-03-10)" [ref=f1e510] [cursor=pointer]:
+                        - generic [ref=f1e511]: "1"
+                        - generic [ref=f1e512]: "10"
+                      - gridcell "2 Ramadan al-Moazzam 1445 (2024-03-11)" [ref=f1e513] [cursor=pointer]:
+                        - generic [ref=f1e514]: "2"
+                        - generic [ref=f1e515]: "11"
+                      - gridcell "3 Ramadan al-Moazzam 1445 (2024-03-12)" [selected] [ref=f1e516] [cursor=pointer]:
+                        - generic [ref=f1e517]: "3"
+                        - generic [ref=f1e518]: "12"
+                      - gridcell "4 Ramadan al-Moazzam 1445 (2024-03-13)" [ref=f1e519] [cursor=pointer]:
+                        - generic [ref=f1e520]: "4"
+                        - generic [ref=f1e521]: "13"
+                      - gridcell "5 Ramadan al-Moazzam 1445 (2024-03-14)" [ref=f1e522] [cursor=pointer]:
+                        - generic [ref=f1e523]: "5"
+                        - generic [ref=f1e524]: "14"
+                      - gridcell "6 Ramadan al-Moazzam 1445 (2024-03-15)" [ref=f1e525] [cursor=pointer]:
+                        - generic [ref=f1e526]: "6"
+                        - generic [ref=f1e527]: "15"
+                      - gridcell "7 Ramadan al-Moazzam 1445 (2024-03-16)" [ref=f1e528] [cursor=pointer]:
+                        - generic [ref=f1e529]: "7"
+                        - generic [ref=f1e530]: "16"
+                - generic [ref=f1e531]: (no selection yet)
+              - heading [level=2] [ref=f1e532]:
+                - text: Time picker (12-hour)
+                - link "Direct link to Time picker (12-hour)" [ref=f1e533] [cursor=pointer]:
+                  - /url: "#time-picker-12-hour"
+                  - text: "#"
+              - generic [ref=f1e534]:
+                - application "Hijri date picker" [ref=f1e536]:
+                  - generic [ref=f1e537]:
+                    - button "Previous month" [ref=f1e538] [cursor=pointer]: ‹
+                    - generic [ref=f1e539]:
+                      - text: Ramadan al-Moazzam 1445
+                      - generic [ref=f1e540]: March 2024
+                    - button "Next month" [ref=f1e541] [cursor=pointer]: ›
+                  - grid [ref=f1e542]:
+                    - row [ref=f1e543]:
+                      - columnheader "Su" [ref=f1e544]
+                      - columnheader "Mo" [ref=f1e545]
+                      - columnheader "Tu" [ref=f1e546]
+                      - columnheader "We" [ref=f1e547]
+                      - columnheader "Th" [ref=f1e548]
+                      - columnheader "Fr" [ref=f1e549]
+                      - columnheader "Sa" [ref=f1e550]
+                    - row [ref=f1e551]:
+                      - gridcell "1 Ramadan al-Moazzam 1445 (2024-03-10)" [ref=f1e552] [cursor=pointer]:
+                        - generic [ref=f1e553]: "1"
+                        - generic [ref=f1e554]: "10"
+                      - gridcell "2 Ramadan al-Moazzam 1445 (2024-03-11)" [ref=f1e555] [cursor=pointer]:
+                        - generic [ref=f1e556]: "2"
+                        - generic [ref=f1e557]: "11"
+                      - gridcell "3 Ramadan al-Moazzam 1445 (2024-03-12)" [ref=f1e558] [cursor=pointer]:
+                        - generic [ref=f1e559]: "3"
+                        - generic [ref=f1e560]: "12"
+                      - gridcell "4 Ramadan al-Moazzam 1445 (2024-03-13)" [ref=f1e561] [cursor=pointer]:
+                        - generic [ref=f1e562]: "4"
+                        - generic [ref=f1e563]: "13"
+                      - gridcell "5 Ramadan al-Moazzam 1445 (2024-03-14)" [ref=f1e564] [cursor=pointer]:
+                        - generic [ref=f1e565]: "5"
+                        - generic [ref=f1e566]: "14"
+                      - gridcell "6 Ramadan al-Moazzam 1445 (2024-03-15)" [selected] [ref=f1e567] [cursor=pointer]:
+                        - generic [ref=f1e568]: "6"
+                        - generic [ref=f1e569]: "15"
+                      - gridcell "7 Ramadan al-Moazzam 1445 (2024-03-16)" [ref=f1e570] [cursor=pointer]:
+                        - generic [ref=f1e571]: "7"
+                        - generic [ref=f1e572]: "16"
+                    - row [ref=f1e573]:
+                      - gridcell "8 Ramadan al-Moazzam 1445 (2024-03-17)" [ref=f1e574] [cursor=pointer]:
+                        - generic [ref=f1e575]: "8"
+                        - generic [ref=f1e576]: "17"
+                      - gridcell "9 Ramadan al-Moazzam 1445 (2024-03-18)" [ref=f1e577] [cursor=pointer]:
+                        - generic [ref=f1e578]: "9"
+                        - generic [ref=f1e579]: "18"
+                      - gridcell "10 Ramadan al-Moazzam 1445 (2024-03-19)" [ref=f1e580] [cursor=pointer]:
+                        - generic [ref=f1e581]: "10"
+                        - generic [ref=f1e582]: "19"
+                      - gridcell "11 Ramadan al-Moazzam 1445 (2024-03-20)" [ref=f1e583] [cursor=pointer]:
+                        - generic [ref=f1e584]: "11"
+                        - generic [ref=f1e585]: "20"
+                      - gridcell "12 Ramadan al-Moazzam 1445 (2024-03-21)" [ref=f1e586] [cursor=pointer]:
+                        - generic [ref=f1e587]: "12"
+                        - generic [ref=f1e588]: "21"
+                      - gridcell "13 Ramadan al-Moazzam 1445 (2024-03-22)" [ref=f1e589] [cursor=pointer]:
+                        - generic [ref=f1e590]: "13"
+                        - generic [ref=f1e591]: "22"
+                      - gridcell "14 Ramadan al-Moazzam 1445 (2024-03-23)" [ref=f1e592] [cursor=pointer]:
+                        - generic [ref=f1e593]: "14"
+                        - generic [ref=f1e594]: "23"
+                    - row [ref=f1e595]:
+                      - gridcell "15 Ramadan al-Moazzam 1445 (2024-03-24)" [ref=f1e596] [cursor=pointer]:
+                        - generic [ref=f1e597]: "15"
+                        - generic [ref=f1e598]: "24"
+                      - gridcell "16 Ramadan al-Moazzam 1445 (2024-03-25)" [ref=f1e599] [cursor=pointer]:
+                        - generic [ref=f1e600]: "16"
+                        - generic [ref=f1e601]: "25"
+                      - gridcell "17 Ramadan al-Moazzam 1445 (2024-03-26)" [ref=f1e602] [cursor=pointer]:
+                        - generic [ref=f1e603]: "17"
+                        - generic [ref=f1e604]: "26"
+                      - gridcell "18 Ramadan al-Moazzam 1445 (2024-03-27)" [ref=f1e605] [cursor=pointer]:
+                        - generic [ref=f1e606]: "18"
+                        - generic [ref=f1e607]: "27"
+                      - gridcell "19 Ramadan al-Moazzam 1445 (2024-03-28)" [ref=f1e608] [cursor=pointer]:
+                        - generic [ref=f1e609]: "19"
+                        - generic [ref=f1e610]: "28"
+                      - gridcell "20 Ramadan al-Moazzam 1445 (2024-03-29)" [ref=f1e611] [cursor=pointer]:
+                        - generic [ref=f1e612]: "20"
+                        - generic [ref=f1e613]: "29"
+                      - gridcell "21 Ramadan al-Moazzam 1445 (2024-03-30)" [ref=f1e614] [cursor=pointer]:
+                        - generic [ref=f1e615]: "21"
+                        - generic [ref=f1e616]: "30"
+                    - row [ref=f1e617]:
+                      - gridcell "22 Ramadan al-Moazzam 1445 (2024-03-31)" [ref=f1e618] [cursor=pointer]:
+                        - generic [ref=f1e619]: "22"
+                        - generic [ref=f1e620]: "31"
+                      - gridcell "23 Ramadan al-Moazzam 1445 (2024-04-01)" [ref=f1e621] [cursor=pointer]:
+                        - generic [ref=f1e622]: "23"
+                        - generic [ref=f1e623]: 1 Apr
+                      - gridcell "24 Ramadan al-Moazzam 1445 (2024-04-02)" [ref=f1e624] [cursor=pointer]:
+                        - generic [ref=f1e625]: "24"
+                        - generic [ref=f1e626]: "2"
+                      - gridcell "25 Ramadan al-Moazzam 1445 (2024-04-03)" [ref=f1e627] [cursor=pointer]:
+                        - generic [ref=f1e628]: "25"
+                        - generic [ref=f1e629]: "3"
+                      - gridcell "26 Ramadan al-Moazzam 1445 (2024-04-04)" [ref=f1e630] [cursor=pointer]:
+                        - generic [ref=f1e631]: "26"
+                        - generic [ref=f1e632]: "4"
+                      - gridcell "27 Ramadan al-Moazzam 1445 (2024-04-05)" [ref=f1e633] [cursor=pointer]:
+                        - generic [ref=f1e634]: "27"
+                        - generic [ref=f1e635]: "5"
+                      - gridcell "28 Ramadan al-Moazzam 1445 (2024-04-06)" [ref=f1e636] [cursor=pointer]:
+                        - generic [ref=f1e637]: "28"
+                        - generic [ref=f1e638]: "6"
+                    - row [ref=f1e639]:
+                      - gridcell "29 Ramadan al-Moazzam 1445 (2024-04-07)" [ref=f1e640] [cursor=pointer]:
+                        - generic [ref=f1e641]: "29"
+                        - generic [ref=f1e642]: "7"
+                      - gridcell "30 Ramadan al-Moazzam 1445 (2024-04-08)" [ref=f1e643] [cursor=pointer]:
+                        - generic [ref=f1e644]: "30"
+                        - generic [ref=f1e645]: "8"
+                      - gridcell "1 Shawwal al-Mukarram 1445 (2024-04-09)" [ref=f1e646] [cursor=pointer]:
+                        - generic [ref=f1e647]: "1"
+                        - generic [ref=f1e648]: "9"
+                      - gridcell "2 Shawwal al-Mukarram 1445 (2024-04-10)" [ref=f1e649] [cursor=pointer]:
+                        - generic [ref=f1e650]: "2"
+                        - generic [ref=f1e651]: "10"
+                      - gridcell "3 Shawwal al-Mukarram 1445 (2024-04-11)" [ref=f1e652] [cursor=pointer]:
+                        - generic [ref=f1e653]: "3"
+                        - generic [ref=f1e654]: "11"
+                      - gridcell "4 Shawwal al-Mukarram 1445 (2024-04-12)" [ref=f1e655] [cursor=pointer]:
+                        - generic [ref=f1e656]: "4"
+                        - generic [ref=f1e657]: "12"
+                      - gridcell "5 Shawwal al-Mukarram 1445 (2024-04-13)" [ref=f1e658] [cursor=pointer]:
+                        - generic [ref=f1e659]: "5"
+                        - generic [ref=f1e660]: "13"
+                    - row [ref=f1e661]:
+                      - gridcell "6 Shawwal al-Mukarram 1445 (2024-04-14)" [ref=f1e662] [cursor=pointer]:
+                        - generic [ref=f1e663]: "6"
+                        - generic [ref=f1e664]: "14"
+                      - gridcell "7 Shawwal al-Mukarram 1445 (2024-04-15)" [ref=f1e665] [cursor=pointer]:
+                        - generic [ref=f1e666]: "7"
+                        - generic [ref=f1e667]: "15"
+                      - gridcell "8 Shawwal al-Mukarram 1445 (2024-04-16)" [ref=f1e668] [cursor=pointer]:
+                        - generic [ref=f1e669]: "8"
+                        - generic [ref=f1e670]: "16"
+                      - gridcell "9 Shawwal al-Mukarram 1445 (2024-04-17)" [ref=f1e671] [cursor=pointer]:
+                        - generic [ref=f1e672]: "9"
+                        - generic [ref=f1e673]: "17"
+                      - gridcell "10 Shawwal al-Mukarram 1445 (2024-04-18)" [ref=f1e674] [cursor=pointer]:
+                        - generic [ref=f1e675]: "10"
+                        - generic [ref=f1e676]: "18"
+                      - gridcell "11 Shawwal al-Mukarram 1445 (2024-04-19)" [ref=f1e677] [cursor=pointer]:
+                        - generic [ref=f1e678]: "11"
+                        - generic [ref=f1e679]: "19"
+                      - gridcell "12 Shawwal al-Mukarram 1445 (2024-04-20)" [ref=f1e680] [cursor=pointer]:
+                        - generic [ref=f1e681]: "12"
+                        - generic [ref=f1e682]: "20"
+                  - generic [ref=f1e683]:
+                    - spinbutton "Hour" [ref=f1e684]: "12"
+                    - generic [ref=f1e685]: ":"
+                    - spinbutton "Minute" [ref=f1e686]: "00"
+                    - button "Toggle AM/PM" [ref=f1e687] [cursor=pointer]: AM
+                - generic [ref=f1e688]: (no selection yet)
+              - heading [level=2] [ref=f1e689]:
+                - text: Min / max constraints
+                - link "Direct link to Min / max constraints" [ref=f1e690] [cursor=pointer]:
+                  - /url: "#min--max-constraints"
+                  - text: "#"
+              - generic [ref=f1e691]:
+                - application "Hijri date picker" [ref=f1e693]:
+                  - generic [ref=f1e694]:
+                    - button "Previous month" [ref=f1e695] [cursor=pointer]: ‹
+                    - generic [ref=f1e696]:
+                      - text: Ramadan al-Moazzam 1445
+                      - generic [ref=f1e697]: March 2024
+                    - button "Next month" [ref=f1e698] [cursor=pointer]: ›
+                  - grid [ref=f1e699]:
+                    - row [ref=f1e700]:
+                      - columnheader "Su" [ref=f1e701]
+                      - columnheader "Mo" [ref=f1e702]
+                      - columnheader "Tu" [ref=f1e703]
+                      - columnheader "We" [ref=f1e704]
+                      - columnheader "Th" [ref=f1e705]
+                      - columnheader "Fr" [ref=f1e706]
+                      - columnheader "Sa" [ref=f1e707]
+                    - row [ref=f1e708]:
+                      - gridcell "1 Ramadan al-Moazzam 1445 (2024-03-10)" [ref=f1e709] [cursor=pointer]:
+                        - generic [ref=f1e710]: "1"
+                        - generic [ref=f1e711]: "10"
+                      - gridcell "2 Ramadan al-Moazzam 1445 (2024-03-11)" [ref=f1e712] [cursor=pointer]:
+                        - generic [ref=f1e713]: "2"
+                        - generic [ref=f1e714]: "11"
+                      - gridcell "3 Ramadan al-Moazzam 1445 (2024-03-12)" [ref=f1e715] [cursor=pointer]:
+                        - generic [ref=f1e716]: "3"
+                        - generic [ref=f1e717]: "12"
+                      - gridcell "4 Ramadan al-Moazzam 1445 (2024-03-13)" [ref=f1e718] [cursor=pointer]:
+                        - generic [ref=f1e719]: "4"
+                        - generic [ref=f1e720]: "13"
+                      - gridcell "5 Ramadan al-Moazzam 1445 (2024-03-14)" [ref=f1e721] [cursor=pointer]:
+                        - generic [ref=f1e722]: "5"
+                        - generic [ref=f1e723]: "14"
+                      - gridcell "6 Ramadan al-Moazzam 1445 (2024-03-15)" [selected] [ref=f1e724] [cursor=pointer]:
+                        - generic [ref=f1e725]: "6"
+                        - generic [ref=f1e726]: "15"
+                      - gridcell "7 Ramadan al-Moazzam 1445 (2024-03-16)" [ref=f1e727] [cursor=pointer]:
+                        - generic [ref=f1e728]: "7"
+                        - generic [ref=f1e729]: "16"
+                    - row [ref=f1e730]:
+                      - gridcell "8 Ramadan al-Moazzam 1445 (2024-03-17)" [ref=f1e731] [cursor=pointer]:
+                        - generic [ref=f1e732]: "8"
+                        - generic [ref=f1e733]: "17"
+                      - gridcell "9 Ramadan al-Moazzam 1445 (2024-03-18)" [ref=f1e734] [cursor=pointer]:
+                        - generic [ref=f1e735]: "9"
+                        - generic [ref=f1e736]: "18"
+                      - gridcell "10 Ramadan al-Moazzam 1445 (2024-03-19)" [ref=f1e737] [cursor=pointer]:
+                        - generic [ref=f1e738]: "10"
+                        - generic [ref=f1e739]: "19"
+                      - gridcell "11 Ramadan al-Moazzam 1445 (2024-03-20)" [ref=f1e740] [cursor=pointer]:
+                        - generic [ref=f1e741]: "11"
+                        - generic [ref=f1e742]: "20"
+                      - gridcell "12 Ramadan al-Moazzam 1445 (2024-03-21)" [ref=f1e743] [cursor=pointer]:
+                        - generic [ref=f1e744]: "12"
+                        - generic [ref=f1e745]: "21"
+                      - gridcell "13 Ramadan al-Moazzam 1445 (2024-03-22)" [ref=f1e746] [cursor=pointer]:
+                        - generic [ref=f1e747]: "13"
+                        - generic [ref=f1e748]: "22"
+                      - gridcell "14 Ramadan al-Moazzam 1445 (2024-03-23)" [ref=f1e749] [cursor=pointer]:
+                        - generic [ref=f1e750]: "14"
+                        - generic [ref=f1e751]: "23"
+                    - row [ref=f1e752]:
+                      - gridcell "15 Ramadan al-Moazzam 1445 (2024-03-24)" [ref=f1e753] [cursor=pointer]:
+                        - generic [ref=f1e754]: "15"
+                        - generic [ref=f1e755]: "24"
+                      - gridcell "16 Ramadan al-Moazzam 1445 (2024-03-25)" [ref=f1e756] [cursor=pointer]:
+                        - generic [ref=f1e757]: "16"
+                        - generic [ref=f1e758]: "25"
+                      - gridcell "17 Ramadan al-Moazzam 1445 (2024-03-26)" [disabled] [ref=f1e759]:
+                        - generic [ref=f1e760]: "17"
+                        - generic [ref=f1e761]: "26"
+                      - gridcell "18 Ramadan al-Moazzam 1445 (2024-03-27)" [disabled] [ref=f1e762]:
+                        - generic [ref=f1e763]: "18"
+                        - generic [ref=f1e764]: "27"
+                      - gridcell "19 Ramadan al-Moazzam 1445 (2024-03-28)" [disabled] [ref=f1e765]:
+                        - generic [ref=f1e766]: "19"
+                        - generic [ref=f1e767]: "28"
+                      - gridcell "20 Ramadan al-Moazzam 1445 (2024-03-29)" [disabled] [ref=f1e768]:
+                        - generic [ref=f1e769]: "20"
+                        - generic [ref=f1e770]: "29"
+                      - gridcell "21 Ramadan al-Moazzam 1445 (2024-03-30)" [disabled] [ref=f1e771]:
+                        - generic [ref=f1e772]: "21"
+                        - generic [ref=f1e773]: "30"
+                    - row [ref=f1e774]:
+                      - gridcell "22 Ramadan al-Moazzam 1445 (2024-03-31)" [disabled] [ref=f1e775]:
+                        - generic [ref=f1e776]: "22"
+                        - generic [ref=f1e777]: "31"
+                      - gridcell "23 Ramadan al-Moazzam 1445 (2024-04-01)" [disabled] [ref=f1e778]:
+                        - generic [ref=f1e779]: "23"
+                        - generic [ref=f1e780]: 1 Apr
+                      - gridcell "24 Ramadan al-Moazzam 1445 (2024-04-02)" [disabled] [ref=f1e781]:
+                        - generic [ref=f1e782]: "24"
+                        - generic [ref=f1e783]: "2"
+                      - gridcell "25 Ramadan al-Moazzam 1445 (2024-04-03)" [disabled] [ref=f1e784]:
+                        - generic [ref=f1e785]: "25"
+                        - generic [ref=f1e786]: "3"
+                      - gridcell "26 Ramadan al-Moazzam 1445 (2024-04-04)" [disabled] [ref=f1e787]:
+                        - generic [ref=f1e788]: "26"
+                        - generic [ref=f1e789]: "4"
+                      - gridcell "27 Ramadan al-Moazzam 1445 (2024-04-05)" [disabled] [ref=f1e790]:
+                        - generic [ref=f1e791]: "27"
+                        - generic [ref=f1e792]: "5"
+                      - gridcell "28 Ramadan al-Moazzam 1445 (2024-04-06)" [disabled] [ref=f1e793]:
+                        - generic [ref=f1e794]: "28"
+                        - generic [ref=f1e795]: "6"
+                    - row [ref=f1e796]:
+                      - gridcell "29 Ramadan al-Moazzam 1445 (2024-04-07)" [disabled] [ref=f1e797]:
+                        - generic [ref=f1e798]: "29"
+                        - generic [ref=f1e799]: "7"
+                      - gridcell "30 Ramadan al-Moazzam 1445 (2024-04-08)" [disabled] [ref=f1e800]:
+                        - generic [ref=f1e801]: "30"
+                        - generic [ref=f1e802]: "8"
+                      - gridcell "1 Shawwal al-Mukarram 1445 (2024-04-09)" [disabled] [ref=f1e803]:
+                        - generic [ref=f1e804]: "1"
+                        - generic [ref=f1e805]: "9"
+                      - gridcell "2 Shawwal al-Mukarram 1445 (2024-04-10)" [disabled] [ref=f1e806]:
+                        - generic [ref=f1e807]: "2"
+                        - generic [ref=f1e808]: "10"
+                      - gridcell "3 Shawwal al-Mukarram 1445 (2024-04-11)" [disabled] [ref=f1e809]:
+                        - generic [ref=f1e810]: "3"
+                        - generic [ref=f1e811]: "11"
+                      - gridcell "4 Shawwal al-Mukarram 1445 (2024-04-12)" [disabled] [ref=f1e812]:
+                        - generic [ref=f1e813]: "4"
+                        - generic [ref=f1e814]: "12"
+                      - gridcell "5 Shawwal al-Mukarram 1445 (2024-04-13)" [disabled] [ref=f1e815]:
+                        - generic [ref=f1e816]: "5"
+                        - generic [ref=f1e817]: "13"
+                    - row [ref=f1e818]:
+                      - gridcell "6 Shawwal al-Mukarram 1445 (2024-04-14)" [disabled] [ref=f1e819]:
+                        - generic [ref=f1e820]: "6"
+                        - generic [ref=f1e821]: "14"
+                      - gridcell "7 Shawwal al-Mukarram 1445 (2024-04-15)" [disabled] [ref=f1e822]:
+                        - generic [ref=f1e823]: "7"
+                        - generic [ref=f1e824]: "15"
+                      - gridcell "8 Shawwal al-Mukarram 1445 (2024-04-16)" [disabled] [ref=f1e825]:
+                        - generic [ref=f1e826]: "8"
+                        - generic [ref=f1e827]: "16"
+                      - gridcell "9 Shawwal al-Mukarram 1445 (2024-04-17)" [disabled] [ref=f1e828]:
+                        - generic [ref=f1e829]: "9"
+                        - generic [ref=f1e830]: "17"
+                      - gridcell "10 Shawwal al-Mukarram 1445 (2024-04-18)" [disabled] [ref=f1e831]:
+                        - generic [ref=f1e832]: "10"
+                        - generic [ref=f1e833]: "18"
+                      - gridcell "11 Shawwal al-Mukarram 1445 (2024-04-19)" [disabled] [ref=f1e834]:
+                        - generic [ref=f1e835]: "11"
+                        - generic [ref=f1e836]: "19"
+                      - gridcell "12 Shawwal al-Mukarram 1445 (2024-04-20)" [disabled] [ref=f1e837]:
+                        - generic [ref=f1e838]: "12"
+                        - generic [ref=f1e839]: "20"
+                - generic [ref=f1e840]: (no selection yet)
+              - heading [level=2] [ref=f1e841]:
+                - text: Right-to-left
+                - link "Direct link to Right-to-left" [ref=f1e842] [cursor=pointer]:
+                  - /url: "#right-to-left"
+                  - text: "#"
+              - generic [ref=f1e843]:
+                - application "Hijri date picker" [ref=f1e845]:
+                  - generic [ref=f1e846]:
+                    - button "Previous month" [ref=f1e847] [cursor=pointer]: ‹
+                    - generic [ref=f1e848]:
+                      - text: Ramadan al-Moazzam 1445
+                      - generic [ref=f1e849]: March 2024
+                    - button "Next month" [ref=f1e850] [cursor=pointer]: ›
+                  - grid [ref=f1e851]:
+                    - row [ref=f1e852]:
+                      - columnheader "Su" [ref=f1e853]
+                      - columnheader "Mo" [ref=f1e854]
+                      - columnheader "Tu" [ref=f1e855]
+                      - columnheader "We" [ref=f1e856]
+                      - columnheader "Th" [ref=f1e857]
+                      - columnheader "Fr" [ref=f1e858]
+                      - columnheader "Sa" [ref=f1e859]
+                    - row [ref=f1e860]:
+                      - gridcell "1 Ramadan al-Moazzam 1445 (2024-03-10)" [ref=f1e861] [cursor=pointer]:
+                        - generic [ref=f1e862]: "1"
+                        - generic [ref=f1e863]: "10"
+                      - gridcell "2 Ramadan al-Moazzam 1445 (2024-03-11)" [ref=f1e864] [cursor=pointer]:
+                        - generic [ref=f1e865]: "2"
+                        - generic [ref=f1e866]: "11"
+                      - gridcell "3 Ramadan al-Moazzam 1445 (2024-03-12)" [ref=f1e867] [cursor=pointer]:
+                        - generic [ref=f1e868]: "3"
+                        - generic [ref=f1e869]: "12"
+                      - gridcell "4 Ramadan al-Moazzam 1445 (2024-03-13)" [ref=f1e870] [cursor=pointer]:
+                        - generic [ref=f1e871]: "4"
+                        - generic [ref=f1e872]: "13"
+                      - gridcell "5 Ramadan al-Moazzam 1445 (2024-03-14)" [ref=f1e873] [cursor=pointer]:
+                        - generic [ref=f1e874]: "5"
+                        - generic [ref=f1e875]: "14"
+                      - gridcell "6 Ramadan al-Moazzam 1445 (2024-03-15)" [selected] [ref=f1e876] [cursor=pointer]:
+                        - generic [ref=f1e877]: "6"
+                        - generic [ref=f1e878]: "15"
+                      - gridcell "7 Ramadan al-Moazzam 1445 (2024-03-16)" [ref=f1e879] [cursor=pointer]:
+                        - generic [ref=f1e880]: "7"
+                        - generic [ref=f1e881]: "16"
+                    - row [ref=f1e882]:
+                      - gridcell "8 Ramadan al-Moazzam 1445 (2024-03-17)" [ref=f1e883] [cursor=pointer]:
+                        - generic [ref=f1e884]: "8"
+                        - generic [ref=f1e885]: "17"
+                      - gridcell "9 Ramadan al-Moazzam 1445 (2024-03-18)" [ref=f1e886] [cursor=pointer]:
+                        - generic [ref=f1e887]: "9"
+                        - generic [ref=f1e888]: "18"
+                      - gridcell "10 Ramadan al-Moazzam 1445 (2024-03-19)" [ref=f1e889] [cursor=pointer]:
+                        - generic [ref=f1e890]: "10"
+                        - generic [ref=f1e891]: "19"
+                      - gridcell "11 Ramadan al-Moazzam 1445 (2024-03-20)" [ref=f1e892] [cursor=pointer]:
+                        - generic [ref=f1e893]: "11"
+                        - generic [ref=f1e894]: "20"
+                      - gridcell "12 Ramadan al-Moazzam 1445 (2024-03-21)" [ref=f1e895] [cursor=pointer]:
+                        - generic [ref=f1e896]: "12"
+                        - generic [ref=f1e897]: "21"
+                      - gridcell "13 Ramadan al-Moazzam 1445 (2024-03-22)" [ref=f1e898] [cursor=pointer]:
+                        - generic [ref=f1e899]: "13"
+                        - generic [ref=f1e900]: "22"
+                      - gridcell "14 Ramadan al-Moazzam 1445 (2024-03-23)" [ref=f1e901] [cursor=pointer]:
+                        - generic [ref=f1e902]: "14"
+                        - generic [ref=f1e903]: "23"
+                    - row [ref=f1e904]:
+                      - gridcell "15 Ramadan al-Moazzam 1445 (2024-03-24)" [ref=f1e905] [cursor=pointer]:
+                        - generic [ref=f1e906]: "15"
+                        - generic [ref=f1e907]: "24"
+                      - gridcell "16 Ramadan al-Moazzam 1445 (2024-03-25)" [ref=f1e908] [cursor=pointer]:
+                        - generic [ref=f1e909]: "16"
+                        - generic [ref=f1e910]: "25"
+                      - gridcell "17 Ramadan al-Moazzam 1445 (2024-03-26)" [ref=f1e911] [cursor=pointer]:
+                        - generic [ref=f1e912]: "17"
+                        - generic [ref=f1e913]: "26"
+                      - gridcell "18 Ramadan al-Moazzam 1445 (2024-03-27)" [ref=f1e914] [cursor=pointer]:
+                        - generic [ref=f1e915]: "18"
+                        - generic [ref=f1e916]: "27"
+                      - gridcell "19 Ramadan al-Moazzam 1445 (2024-03-28)" [ref=f1e917] [cursor=pointer]:
+                        - generic [ref=f1e918]: "19"
+                        - generic [ref=f1e919]: "28"
+                      - gridcell "20 Ramadan al-Moazzam 1445 (2024-03-29)" [ref=f1e920] [cursor=pointer]:
+                        - generic [ref=f1e921]: "20"
+                        - generic [ref=f1e922]: "29"
+                      - gridcell "21 Ramadan al-Moazzam 1445 (2024-03-30)" [ref=f1e923] [cursor=pointer]:
+                        - generic [ref=f1e924]: "21"
+                        - generic [ref=f1e925]: "30"
+                    - row [ref=f1e926]:
+                      - gridcell "22 Ramadan al-Moazzam 1445 (2024-03-31)" [ref=f1e927] [cursor=pointer]:
+                        - generic [ref=f1e928]: "22"
+                        - generic [ref=f1e929]: "31"
+                      - gridcell "23 Ramadan al-Moazzam 1445 (2024-04-01)" [ref=f1e930] [cursor=pointer]:
+                        - generic [ref=f1e931]: "23"
+                        - generic [ref=f1e932]: 1 Apr
+                      - gridcell "24 Ramadan al-Moazzam 1445 (2024-04-02)" [ref=f1e933] [cursor=pointer]:
+                        - generic [ref=f1e934]: "24"
+                        - generic [ref=f1e935]: "2"
+                      - gridcell "25 Ramadan al-Moazzam 1445 (2024-04-03)" [ref=f1e936] [cursor=pointer]:
+                        - generic [ref=f1e937]: "25"
+                        - generic [ref=f1e938]: "3"
+                      - gridcell "26 Ramadan al-Moazzam 1445 (2024-04-04)" [ref=f1e939] [cursor=pointer]:
+                        - generic [ref=f1e940]: "26"
+                        - generic [ref=f1e941]: "4"
+                      - gridcell "27 Ramadan al-Moazzam 1445 (2024-04-05)" [ref=f1e942] [cursor=pointer]:
+                        - generic [ref=f1e943]: "27"
+                        - generic [ref=f1e944]: "5"
+                      - gridcell "28 Ramadan al-Moazzam 1445 (2024-04-06)" [ref=f1e945] [cursor=pointer]:
+                        - generic [ref=f1e946]: "28"
+                        - generic [ref=f1e947]: "6"
+                    - row [ref=f1e948]:
+                      - gridcell "29 Ramadan al-Moazzam 1445 (2024-04-07)" [ref=f1e949] [cursor=pointer]:
+                        - generic [ref=f1e950]: "29"
+                        - generic [ref=f1e951]: "7"
+                      - gridcell "30 Ramadan al-Moazzam 1445 (2024-04-08)" [ref=f1e952] [cursor=pointer]:
+                        - generic [ref=f1e953]: "30"
+                        - generic [ref=f1e954]: "8"
+                      - gridcell "1 Shawwal al-Mukarram 1445 (2024-04-09)" [ref=f1e955] [cursor=pointer]:
+                        - generic [ref=f1e956]: "1"
+                        - generic [ref=f1e957]: "9"
+                      - gridcell "2 Shawwal al-Mukarram 1445 (2024-04-10)" [ref=f1e958] [cursor=pointer]:
+                        - generic [ref=f1e959]: "2"
+                        - generic [ref=f1e960]: "10"
+                      - gridcell "3 Shawwal al-Mukarram 1445 (2024-04-11)" [ref=f1e961] [cursor=pointer]:
+                        - generic [ref=f1e962]: "3"
+                        - generic [ref=f1e963]: "11"
+                      - gridcell "4 Shawwal al-Mukarram 1445 (2024-04-12)" [ref=f1e964] [cursor=pointer]:
+                        - generic [ref=f1e965]: "4"
+                        - generic [ref=f1e966]: "12"
+                      - gridcell "5 Shawwal al-Mukarram 1445 (2024-04-13)" [ref=f1e967] [cursor=pointer]:
+                        - generic [ref=f1e968]: "5"
+                        - generic [ref=f1e969]: "13"
+                    - row [ref=f1e970]:
+                      - gridcell "6 Shawwal al-Mukarram 1445 (2024-04-14)" [ref=f1e971] [cursor=pointer]:
+                        - generic [ref=f1e972]: "6"
+                        - generic [ref=f1e973]: "14"
+                      - gridcell "7 Shawwal al-Mukarram 1445 (2024-04-15)" [ref=f1e974] [cursor=pointer]:
+                        - generic [ref=f1e975]: "7"
+                        - generic [ref=f1e976]: "15"
+                      - gridcell "8 Shawwal al-Mukarram 1445 (2024-04-16)" [ref=f1e977] [cursor=pointer]:
+                        - generic [ref=f1e978]: "8"
+                        - generic [ref=f1e979]: "16"
+                      - gridcell "9 Shawwal al-Mukarram 1445 (2024-04-17)" [ref=f1e980] [cursor=pointer]:
+                        - generic [ref=f1e981]: "9"
+                        - generic [ref=f1e982]: "17"
+                      - gridcell "10 Shawwal al-Mukarram 1445 (2024-04-18)" [ref=f1e983] [cursor=pointer]:
+                        - generic [ref=f1e984]: "10"
+                        - generic [ref=f1e985]: "18"
+                      - gridcell "11 Shawwal al-Mukarram 1445 (2024-04-19)" [ref=f1e986] [cursor=pointer]:
+                        - generic [ref=f1e987]: "11"
+                        - generic [ref=f1e988]: "19"
+                      - gridcell "12 Shawwal al-Mukarram 1445 (2024-04-20)" [ref=f1e989] [cursor=pointer]:
+                        - generic [ref=f1e990]: "12"
+                        - generic [ref=f1e991]: "20"
+                - generic [ref=f1e992]: (no selection yet)
+          - navigation "Docs pages" [ref=f1e993]:
+            - link "Previous « API reference" [ref=f1e994] [cursor=pointer]:
+              - /url: /SpezUtil/datepicker/api
+              - generic [ref=f1e995]: Previous
+              - generic [ref=f1e996]: « API reference
+            - link "Next Getting started »" [ref=f1e997] [cursor=pointer]:
+              - /url: /SpezUtil/calendar/getting-started
+              - generic [ref=f1e998]: Next
+              - generic [ref=f1e999]: Getting started »
+        - list [ref=f1e1002]:
+          - listitem [ref=f1e1003]:
+            - link "Single date" [ref=f1e1004] [cursor=pointer]:
+              - /url: "#single-date"
+          - listitem [ref=f1e1005]:
+            - link "Range" [ref=f1e1006] [cursor=pointer]:
+              - /url: "#range"
+          - listitem [ref=f1e1007]:
+            - link "Multiple dates" [ref=f1e1008] [cursor=pointer]:
+              - /url: "#multiple-dates"
+          - listitem [ref=f1e1009]:
+            - link "Time picker (12-hour)" [ref=f1e1010] [cursor=pointer]:
+              - /url: "#time-picker-12-hour"
+          - listitem [ref=f1e1011]:
+            - link "Min / max constraints" [ref=f1e1012] [cursor=pointer]:
+              - /url: "#min--max-constraints"
+          - listitem [ref=f1e1013]:
+            - link "Right-to-left" [ref=f1e1014] [cursor=pointer]:
+              - /url: "#right-to-left"

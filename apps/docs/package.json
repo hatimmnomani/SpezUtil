@@ -22,6 +22,14 @@
     "@spezutil/hijri-calendar-react": "workspace:*",
     "@spezutil/richtext-editor": "workspace:*"
   },
+  "browserslist": {
+    "production": [">0.5%", "not dead", "not op_mini all"],
+    "development": [
+      "last 3 chrome version",
+      "last 3 firefox version",
+      "last 5 safari version"
+    ]
+  },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "^3.6.0",
     "@docusaurus/tsconfig": "^3.6.0",

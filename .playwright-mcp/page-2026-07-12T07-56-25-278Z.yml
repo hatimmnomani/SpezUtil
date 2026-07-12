@@ -1,0 +1,276 @@
+- generic [ref=f2e2]:
+  - region "Skip to main content":
+    - link "Skip to main content" [ref=f2e3] [cursor=pointer]:
+      - /url: "#__docusaurus_skipToContent_fallback"
+  - navigation "Main" [ref=f2e4]:
+    - generic [ref=f2e5]:
+      - generic [ref=f2e6]:
+        - link "Digital Takeoff UI" [ref=f2e7] [cursor=pointer]:
+          - /url: /SpezUtil/
+        - link "Docs" [ref=f2e9] [cursor=pointer]:
+          - /url: /SpezUtil/
+        - link [ref=f2e10] [cursor=pointer]:
+          - /url: /SpezUtil/storybook/
+          - text: Storybook
+          - img "(opens in new tab)" [ref=f2e11]
+      - button "Switch between dark and light mode (currently light mode)" [ref=f2e15] [cursor=pointer]
+  - generic [ref=f2e20]:
+    - complementary [ref=f2e21]:
+      - navigation "Docs sidebar" [ref=f2e24]:
+        - list [ref=f2e25]:
+          - listitem [ref=f2e26]:
+            - link "Digital Takeoff UI" [ref=f2e27] [cursor=pointer]:
+              - /url: /SpezUtil/
+          - listitem [ref=f2e29]:
+            - button "Datepicker" [ref=f2e31] [cursor=pointer]
+          - listitem [ref=f2e33]:
+            - button "Calendar" [ref=f2e35] [cursor=pointer]
+          - listitem [ref=f2e37]:
+            - button "Rich Text Editor" [expanded] [ref=f2e39] [cursor=pointer]
+            - list [ref=f2e41]:
+              - listitem [ref=f2e42]:
+                - link "Getting started" [ref=f2e43] [cursor=pointer]:
+                  - /url: /SpezUtil/richtext/getting-started
+              - listitem [ref=f2e45]:
+                - link "API reference" [ref=f2e46] [cursor=pointer]:
+                  - /url: /SpezUtil/richtext/api
+              - listitem [ref=f2e48]:
+                - link "Recipes" [ref=f2e49] [cursor=pointer]:
+                  - /url: /SpezUtil/richtext/recipes
+          - listitem [ref=f2e51]:
+            - button "Engine" [ref=f2e53] [cursor=pointer]
+    - main [ref=f2e55]:
+      - generic [ref=f2e57]:
+        - generic [ref=f2e59]:
+          - article [ref=f2e60]:
+            - navigation "Breadcrumbs" [ref=f2e61]:
+              - list [ref=f2e62]:
+                - listitem [ref=f2e63]:
+                  - link "Home page" [ref=f2e64] [cursor=pointer]:
+                    - /url: /SpezUtil/
+                - listitem [ref=f2e67]:
+                  - generic [ref=f2e68]: Rich Text Editor
+                - listitem [ref=f2e69]:
+                  - generic [ref=f2e70]: Recipes
+            - generic [ref=f2e71]:
+              - heading "Recipes" [level=1] [ref=f2e73]
+              - paragraph [ref=f2e74]:
+                - text: Every demo below is the real Web Component. Editing logs the emitted
+                - code [ref=f2e75]: change
+                - text: detail (
+                - code [ref=f2e76]: "{ json, isEmpty }"
+                - text: ). The Hijri date-picker popover is enabled because
+                - code [ref=f2e77]: "@spezutil/hijri-datepicker"
+                - text: is loaded on this page.
+              - heading [level=2] [ref=f2e78]:
+                - text: Default editor
+                - link "Direct link to Default editor" [ref=f2e79] [cursor=pointer]:
+                  - /url: "#default-editor"
+                  - text: "#"
+              - paragraph [ref=f2e80]: Full toolbar, direction auto-detected per paragraph — type Arabic and Latin text to see it switch.
+              - generic [ref=f2e81]:
+                - generic [ref=f2e82]:
+                  - toolbar [ref=f2e83]:
+                    - generic [ref=f2e84]:
+                      - button "Undo" [disabled] [ref=f2e85]: ↶
+                      - button "Redo" [disabled] [ref=f2e86]: ↷
+                    - combobox "Paragraph" [ref=f2e88]:
+                      - option "Paragraph" [selected]
+                      - option "Heading 1"
+                      - option "Heading 2"
+                      - option "Heading 3"
+                      - option "Quote"
+                      - option "Ayat block"
+                    - generic [ref=f2e89]:
+                      - button "Bold" [ref=f2e90] [cursor=pointer]: B
+                      - button "Italic" [ref=f2e91] [cursor=pointer]: I
+                      - button "Underline" [ref=f2e92] [cursor=pointer]: U
+                      - button "Strikethrough" [ref=f2e93] [cursor=pointer]: S
+                    - generic [ref=f2e94]:
+                      - button "Bulleted list" [ref=f2e95] [cursor=pointer]: •
+                      - button "Numbered list" [ref=f2e96] [cursor=pointer]: "1."
+                    - generic [ref=f2e97]:
+                      - button "Align start" [ref=f2e98] [cursor=pointer]: ⇤
+                      - button "Align center" [ref=f2e99] [cursor=pointer]: ↔
+                      - button "Align end" [ref=f2e100] [cursor=pointer]: ⇥
+                      - button "Justify" [ref=f2e101] [cursor=pointer]: ⟺
+                    - generic [ref=f2e102]:
+                      - button "Right-to-left" [ref=f2e103] [cursor=pointer]: RTL
+                      - button "Left-to-right" [ref=f2e104] [cursor=pointer]: LTR
+                      - button "Auto direction" [ref=f2e105] [cursor=pointer]: A↔
+                    - generic [ref=f2e106]:
+                      - button "Link" [ref=f2e107] [cursor=pointer]: 🔗
+                      - button "Image" [ref=f2e108] [cursor=pointer]: 🖼
+                      - button "Table" [ref=f2e109] [cursor=pointer]: ⊞
+                      - button "Hijri date" [ref=f2e110] [cursor=pointer]: 📅
+                      - button "Ayat block" [ref=f2e111] [cursor=pointer]: ۞
+                      - button "Transliteration pair" [ref=f2e112] [cursor=pointer]: ت/t
+                  - generic [ref=f2e113]: Start writing…
+                - generic [ref=f2e115]: (type in the editor)
+              - heading [level=2] [ref=f2e116]:
+                - text: Arabic toolbar, RTL
+                - link "Direct link to Arabic toolbar, RTL" [ref=f2e117] [cursor=pointer]:
+                  - /url: "#arabic-toolbar-rtl"
+                  - text: "#"
+              - paragraph [ref=f2e118]:
+                - code [ref=f2e119]: locale="ar"
+                - text: localizes the toolbar;
+                - code [ref=f2e120]: dir="rtl"
+                - text: mirrors it and sets the base direction.
+              - generic [ref=f2e121]:
+                - generic [ref=f2e122]:
+                  - toolbar [ref=f2e123]:
+                    - generic [ref=f2e124]:
+                      - button "تراجع" [disabled] [ref=f2e125]: ↶
+                      - button "إعادة" [disabled] [ref=f2e126]: ↷
+                    - combobox "فقرة" [ref=f2e128]:
+                      - option "فقرة" [selected]
+                      - option "عنوان ١"
+                      - option "عنوان ٢"
+                      - option "عنوان ٣"
+                      - option "اقتباس"
+                      - option "آية"
+                    - generic [ref=f2e129]:
+                      - button "غامق" [ref=f2e130] [cursor=pointer]: B
+                      - button "مائل" [ref=f2e131] [cursor=pointer]: I
+                      - button "تسطير" [ref=f2e132] [cursor=pointer]: U
+                      - button "يتوسطه خط" [ref=f2e133] [cursor=pointer]: S
+                    - generic [ref=f2e134]:
+                      - button "قائمة نقطية" [ref=f2e135] [cursor=pointer]: •
+                      - button "قائمة مرقمة" [ref=f2e136] [cursor=pointer]: "1."
+                    - generic [ref=f2e137]:
+                      - button "محاذاة البداية" [ref=f2e138] [cursor=pointer]: ⇤
+                      - button "توسيط" [ref=f2e139] [cursor=pointer]: ↔
+                      - button "محاذاة النهاية" [ref=f2e140] [cursor=pointer]: ⇥
+                      - button "ضبط" [ref=f2e141] [cursor=pointer]: ⟺
+                    - generic [ref=f2e142]:
+                      - button "من اليمين إلى اليسار" [ref=f2e143] [cursor=pointer]: RTL
+                      - button "من اليسار إلى اليمين" [ref=f2e144] [cursor=pointer]: LTR
+                      - button "اتجاه تلقائي" [ref=f2e145] [cursor=pointer]: A↔
+                    - generic [ref=f2e146]:
+                      - button "رابط" [ref=f2e147] [cursor=pointer]: 🔗
+                      - button "صورة" [ref=f2e148] [cursor=pointer]: 🖼
+                      - button "جدول" [ref=f2e149] [cursor=pointer]: ⊞
+                      - button "تاريخ هجري" [ref=f2e150] [cursor=pointer]: 📅
+                      - button "آية" [ref=f2e151] [cursor=pointer]: ۞
+                      - button "نص مع النقل الحرفي" [ref=f2e152] [cursor=pointer]: ت/t
+                  - generic [ref=f2e153]: اكتب هنا…
+                - generic [ref=f2e155]: (type in the editor)
+              - heading [level=2] [ref=f2e156]:
+                - text: Dawat content blocks
+                - link "Direct link to Dawat content blocks" [ref=f2e157] [cursor=pointer]:
+                  - /url: "#dawat-content-blocks"
+                  - text: "#"
+              - paragraph [ref=f2e158]:
+                - text: Pre-loaded via
+                - code [ref=f2e159]: initialHtml
+                - text: with an ayat block, a transliteration pair, and a Hijri date token. Try the toolbar
+                - strong [ref=f2e160]: ۞
+                - text: ","
+                - strong [ref=f2e161]: ت/t
+                - text: ", and"
+                - strong [ref=f2e162]: 📅
+                - text: buttons to insert more.
+              - generic [ref=f2e163]:
+                - generic [ref=f2e164]:
+                  - toolbar [ref=f2e165]:
+                    - generic [ref=f2e166]:
+                      - button "Undo" [disabled] [ref=f2e167]: ↶
+                      - button "Redo" [disabled] [ref=f2e168]: ↷
+                    - combobox "Paragraph" [ref=f2e170]:
+                      - option "Paragraph" [selected]
+                      - option "Heading 1"
+                      - option "Heading 2"
+                      - option "Heading 3"
+                      - option "Quote"
+                      - option "Ayat block"
+                    - generic [ref=f2e171]:
+                      - button "Bold" [ref=f2e172] [cursor=pointer]: B
+                      - button "Italic" [ref=f2e173] [cursor=pointer]: I
+                      - button "Underline" [ref=f2e174] [cursor=pointer]: U
+                      - button "Strikethrough" [ref=f2e175] [cursor=pointer]: S
+                    - generic [ref=f2e176]:
+                      - button "Bulleted list" [ref=f2e177] [cursor=pointer]: •
+                      - button "Numbered list" [ref=f2e178] [cursor=pointer]: "1."
+                    - generic [ref=f2e179]:
+                      - button "Align start" [ref=f2e180] [cursor=pointer]: ⇤
+                      - button "Align center" [ref=f2e181] [cursor=pointer]: ↔
+                      - button "Align end" [ref=f2e182] [cursor=pointer]: ⇥
+                      - button "Justify" [ref=f2e183] [cursor=pointer]: ⟺
+                    - generic [ref=f2e184]:
+                      - button "Right-to-left" [ref=f2e185] [cursor=pointer]: RTL
+                      - button "Left-to-right" [pressed] [ref=f2e186] [cursor=pointer]: LTR
+                      - button "Auto direction" [ref=f2e187] [cursor=pointer]: A↔
+                    - generic [ref=f2e188]:
+                      - button "Link" [ref=f2e189] [cursor=pointer]: 🔗
+                      - button "Image" [ref=f2e190] [cursor=pointer]: 🖼
+                      - button "Table" [ref=f2e191] [cursor=pointer]: ⊞
+                      - button "Hijri date" [ref=f2e192] [cursor=pointer]: 📅
+                      - button "Ayat block" [ref=f2e193] [cursor=pointer]: ۞
+                      - button "Transliteration pair" [ref=f2e194] [cursor=pointer]: ت/t
+                  - generic [active] [ref=f2e196]:
+                    - generic [ref=f2e197]: بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                    - generic [ref=f2e198]:
+                      - paragraph [ref=f2e199]: العلم نور
+                      - paragraph [ref=f2e200]: al-ilmu noor
+                    - paragraph [ref=f2e201]: Written on 17 Ramadan al-Moazzam 1446.
+                - generic [ref=f2e202]: (type in the editor)
+              - heading [level=2] [ref=f2e203]:
+                - text: Minimal toolbar
+                - link "Direct link to Minimal toolbar" [ref=f2e204] [cursor=pointer]:
+                  - /url: "#minimal-toolbar"
+                  - text: "#"
+              - paragraph [ref=f2e205]:
+                - code [ref=f2e206]: toolbar="history,inline"
+                - text: keeps only undo/redo and inline formatting.
+              - generic [ref=f2e207]:
+                - generic [ref=f2e208]:
+                  - toolbar [ref=f2e209]:
+                    - generic [ref=f2e210]:
+                      - button "Undo" [disabled] [ref=f2e211]: ↶
+                      - button "Redo" [disabled] [ref=f2e212]: ↷
+                    - generic [ref=f2e213]:
+                      - button "Bold" [ref=f2e214] [cursor=pointer]: B
+                      - button "Italic" [ref=f2e215] [cursor=pointer]: I
+                      - button "Underline" [ref=f2e216] [cursor=pointer]: U
+                      - button "Strikethrough" [ref=f2e217] [cursor=pointer]: S
+                  - generic [ref=f2e218]: Bold, italic, underline…
+                - generic [ref=f2e220]: (type in the editor)
+              - heading [level=2] [ref=f2e221]:
+                - text: Read-only
+                - link "Direct link to Read-only" [ref=f2e222] [cursor=pointer]:
+                  - /url: "#read-only"
+                  - text: "#"
+              - paragraph [ref=f2e223]:
+                - code [ref=f2e224]: readonly
+                - text: disables editing and hides the toolbar — a lossless renderer for saved content.
+              - generic [ref=f2e225]:
+                - generic [ref=f2e228]:
+                  - generic [ref=f2e229]: وَقُل رَّبِّ زِدْنِي عِلْمًا
+                  - paragraph [ref=f2e230]: Read-only rendering of previously saved content.
+                - generic [ref=f2e231]: (type in the editor)
+          - navigation "Docs pages" [ref=f2e232]:
+            - link "Previous « API reference" [ref=f2e233] [cursor=pointer]:
+              - /url: /SpezUtil/richtext/api
+              - generic [ref=f2e234]: Previous
+              - generic [ref=f2e235]: « API reference
+            - link "Next hijri-core engine »" [ref=f2e236] [cursor=pointer]:
+              - /url: /SpezUtil/engine/hijri-core
+              - generic [ref=f2e237]: Next
+              - generic [ref=f2e238]: hijri-core engine »
+        - list [ref=f2e241]:
+          - listitem [ref=f2e242]:
+            - link "Default editor" [ref=f2e243] [cursor=pointer]:
+              - /url: "#default-editor"
+          - listitem [ref=f2e244]:
+            - link "Arabic toolbar, RTL" [ref=f2e245] [cursor=pointer]:
+              - /url: "#arabic-toolbar-rtl"
+          - listitem [ref=f2e246]:
+            - link "Dawat content blocks" [ref=f2e247] [cursor=pointer]:
+              - /url: "#dawat-content-blocks"
+          - listitem [ref=f2e248]:
+            - link "Minimal toolbar" [ref=f2e249] [cursor=pointer]:
+              - /url: "#minimal-toolbar"
+          - listitem [ref=f2e250]:
+            - link "Read-only" [ref=f2e251] [cursor=pointer]:
+              - /url: "#read-only"
