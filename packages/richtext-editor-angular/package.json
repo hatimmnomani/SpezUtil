@@ -1,6 +1,6 @@
 {
   "name": "@spezutil/richtext-editor-angular",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Angular wrapper for the SpezUtil rich-text editor Web Component.",
   "license": "Apache-2.0",
   "publishConfig": {

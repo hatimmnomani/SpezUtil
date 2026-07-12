@@ -1,6 +1,6 @@
 {
   "name": "@spezutil/richtext-editor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Rich-text editor Web Component for Arabic / Lisan-ud-Dawat content, built on Lexical.",
   "license": "Apache-2.0",
   "publishConfig": {
