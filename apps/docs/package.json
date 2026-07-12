@@ -17,8 +17,10 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "@spezutil/hijri-core": "workspace:*",
+    "@spezutil/hijri-datepicker": "workspace:*",
     "@spezutil/hijri-datepicker-react": "workspace:*",
-    "@spezutil/hijri-calendar-react": "workspace:*"
+    "@spezutil/hijri-calendar-react": "workspace:*",
+    "@spezutil/richtext-editor": "workspace:*"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "^3.6.0",

@@ -35,9 +35,15 @@ importers:
       '@spezutil/hijri-core':
         specifier: workspace:*
         version: link:../../packages/hijri-core
+      '@spezutil/hijri-datepicker':
+        specifier: workspace:*
+        version: link:../../packages/hijri-datepicker
       '@spezutil/hijri-datepicker-react':
         specifier: workspace:*
         version: link:../../packages/hijri-datepicker-react
+      '@spezutil/richtext-editor':
+        specifier: workspace:*
+        version: link:../../packages/richtext-editor
       clsx:
         specifier: ^2.1.1
         version: 2.1.1

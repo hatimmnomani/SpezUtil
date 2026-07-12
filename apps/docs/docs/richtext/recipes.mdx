@@ -1,0 +1,57 @@
+---
+title: Recipes
+---
+
+import RichtextDemo from "@site/src/components/RichtextDemo";
+
+# Recipes
+
+Every demo below is the real Web Component. Editing logs the emitted `change` detail
+(`{ json, isEmpty }`). The Hijri date-picker popover is enabled because
+`@spezutil/hijri-datepicker` is loaded on this page.
+
+## Default editor
+
+Full toolbar, direction auto-detected per paragraph — type Arabic and Latin text to see it switch.
+
+<RichtextDemo placeholder="Start writing…" />
+
+## Arabic toolbar, RTL
+
+`locale="ar"` localizes the toolbar; `dir="rtl"` mirrors it and sets the base direction.
+
+<RichtextDemo locale="ar" dir="rtl" placeholder="اكتب هنا…" />
+
+## Dawat content blocks
+
+Pre-loaded via `initialHtml` with an ayat block, a transliteration pair, and a Hijri date token.
+Try the toolbar **۞**, **ت/t**, and **📅** buttons to insert more.
+
+<RichtextDemo
+  initialHtml={`
+    <blockquote data-spez-type="ayat" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</blockquote>
+    <div data-spez-type="translit-pair">
+      <p data-role="arabic" dir="rtl">العلم نور</p>
+      <p data-role="latin" dir="ltr">al-ilmu noor</p>
+    </div>
+    <p>Written on <time data-spez-hijri="1446-9-17" data-spez-format="D MMMM YYYY">17 Ramadan al-Moazzam 1446</time>.</p>
+  `}
+/>
+
+## Minimal toolbar
+
+`toolbar="history,inline"` keeps only undo/redo and inline formatting.
+
+<RichtextDemo toolbar="history,inline" placeholder="Bold, italic, underline…" />
+
+## Read-only
+
+`readonly` disables editing and hides the toolbar — a lossless renderer for saved content.
+
+<RichtextDemo
+  readonly
+  initialHtml={`
+    <blockquote data-spez-type="ayat" dir="rtl">وَقُل رَّبِّ زِدْنِي عِلْمًا</blockquote>
+    <p>Read-only rendering of previously saved content.</p>
+  `}
+/>

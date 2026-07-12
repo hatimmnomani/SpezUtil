@@ -15,6 +15,11 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Rich Text Editor",
+      items: ["richtext/getting-started", "richtext/api", "richtext/recipes"],
+    },
+    {
+      type: "category",
       label: "Engine",
       items: ["engine/hijri-core"],
     },
