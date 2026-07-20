@@ -33,6 +33,8 @@ npm install @spezutil/hijri-datepicker
 </script>
 ```
 
+"Today" (initial view, keyboard "go to today") resolves against the viewer's local timezone by default — set `timezone="Asia/Kolkata"` (IANA name) to pin it to a fixed zone regardless of viewer location.
+
 Range mode:
 
 ```html

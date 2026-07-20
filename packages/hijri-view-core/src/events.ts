@@ -3,10 +3,17 @@ import type { CalendarEvent, NormalizedEvent } from "./types";
 const DAY_MS = 86400000;
 const HOUR_MS = 3600000;
 
+const ISO_RE =
+  /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
+
 function parseIsoUtc(iso: string): { ms: number; hasTime: boolean } {
-  const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?$/.exec(iso);
+  const m = ISO_RE.exec(iso);
   if (!m) return { ms: NaN, hasTime: false };
   const hasTime = m[4] !== undefined;
+  if (hasTime && m[6]) {
+    // Explicit offset/Z: a fully-qualified instant, not a bare wall-clock value — parse as-is.
+    return { ms: new Date(iso).getTime(), hasTime: true };
+  }
   const ms = Date.UTC(
     Number(m[1]),
     Number(m[2]) - 1,

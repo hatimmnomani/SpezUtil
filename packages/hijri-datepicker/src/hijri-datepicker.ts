@@ -3,6 +3,7 @@ import {
   formatHijri,
   translitMonthNames,
   weekdayNames,
+  zonedTodayUtc,
   type HijriCalendar,
   type HijriDate,
 } from "@spezutil/hijri-core";
@@ -72,6 +73,7 @@ export class HijriDatepicker extends HTMLElement {
       "time-format",
       "primary",
       "secondary-position",
+      "timezone",
     ];
   }
 
@@ -129,11 +131,14 @@ export class HijriDatepicker extends HTMLElement {
       : "below";
   }
   set secondaryPosition(v: string) { this.reflect("secondary-position", v); }
+  /** IANA timezone (e.g. "Asia/Kolkata") used to resolve "today". Defaults to the viewer's local zone. */
+  get timezone(): string | undefined { return this.getAttribute("timezone") ?? undefined; }
+  set timezone(v: string | null | undefined) { this.reflect("timezone", v ?? null); }
 
   constructor() {
     super();
     this.root = this.attachShadow({ mode: "open" });
-    const todayHijri = this.cal.gregorianToHijri(new Date());
+    const todayHijri = this.cal.gregorianToHijri(zonedTodayUtc(this.timezone));
     this.view = { year: todayHijri.year, month: todayHijri.month };
   }
 
@@ -398,7 +403,7 @@ export class HijriDatepicker extends HTMLElement {
       rangeStart: this._mode === "range" ? this.rangeStart : null,
       rangeEnd: this._mode === "range" ? this.rangeEnd ?? this.hoverDate : null,
       isDisabled: this.buildDisabledFn(),
-      today: new Date(),
+      today: zonedTodayUtc(this.timezone),
     });
     this.lastCells = model.weeks.flat();
 

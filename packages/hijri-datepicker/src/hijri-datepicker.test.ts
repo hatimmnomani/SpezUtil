@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import "./index";
 import type { HijriDatepicker } from "./hijri-datepicker";
 
@@ -151,5 +151,29 @@ describe("<hijri-datepicker>", () => {
     el.enableTime = false;
     expect(el.hasAttribute("value")).toBe(false);
     expect(el.hasAttribute("enable-time")).toBe(false);
+  });
+
+  it("reflects the timezone property to an attribute", () => {
+    const el = document.createElement("hijri-datepicker") as any;
+    el.timezone = "Asia/Kolkata";
+    expect(el.getAttribute("timezone")).toBe("Asia/Kolkata");
+    expect(el.timezone).toBe("Asia/Kolkata");
+  });
+});
+
+describe("<hijri-datepicker> timezone-aware today", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("marks the correct local calendar day as today, not the UTC day", () => {
+    vi.useFakeTimers();
+    // 00:30 UTC on 20 July 2026 is 13:30 on 19 July in UTC-11 (Pago Pago) — a UTC-day
+    // reading would mark the 20th as today instead.
+    vi.setSystemTime(new Date(Date.UTC(2026, 6, 20, 0, 30)));
+    const el = mount({ value: "2026-07-19", timezone: "Pacific/Pago_Pago" });
+    const todayCells = el.shadowRoot!.querySelectorAll(".cell.today");
+    expect(todayCells.length).toBe(1);
+    expect(todayCells[0]!.getAttribute("aria-label")).toContain("2026-07-19");
   });
 });

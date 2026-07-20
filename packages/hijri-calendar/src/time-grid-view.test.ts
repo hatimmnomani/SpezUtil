@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createCalendar } from "@spezutil/hijri-core";
 import type { CalendarEvent } from "@spezutil/hijri-view-core";
 import { HijriCalendarElement } from "./hijri-calendar";
@@ -107,6 +107,21 @@ describe("week view", () => {
     expect(sr(el).querySelectorAll(".now-line").length).toBe(1);
     const past = mount({ date: "2020-01-01", view: "week" });
     expect(sr(past).querySelectorAll(".now-line").length).toBe(0);
+  });
+
+  it("places the now indicator using the local calendar day, not UTC", () => {
+    vi.useFakeTimers();
+    try {
+      // 00:30 UTC on 20 July 2026 is 13:30 on 19 July in UTC-11 (Pago Pago) — a UTC-day
+      // reading would put "now" on the 20th and miss the 19th's column entirely.
+      vi.setSystemTime(new Date(Date.UTC(2026, 6, 20, 0, 30)));
+      const el = mount({ date: "2026-07-19", view: "day", timezone: "Pacific/Pago_Pago" });
+      expect(sr(el).querySelectorAll(".now-line").length).toBe(1);
+      const wrongDay = mount({ date: "2026-07-20", view: "day", timezone: "Pacific/Pago_Pago" });
+      expect(sr(wrongDay).querySelectorAll(".now-line").length).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

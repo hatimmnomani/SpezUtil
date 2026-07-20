@@ -1,6 +1,8 @@
 import {
   createCalendar,
   formatHijri,
+  zonedNowMinutes,
+  zonedTodayUtc,
   type HijriCalendar,
   type HijriDate,
 } from "@spezutil/hijri-core";
@@ -98,12 +100,13 @@ export class HijriCalendarElement extends HTMLElement {
       "max-events",
       "primary",
       "secondary-position",
+      "timezone",
     ];
   }
 
   private cal: HijriCalendar = createCalendar();
   private root: ShadowRoot;
-  private viewDate: Date = floorToDayUtc(new Date());
+  private viewDate: Date = zonedTodayUtc();
   private _events: CalendarEvent[] = [];
   private suppress = false;
   private loc: CalendarLocale = resolveLocale(null);
@@ -189,6 +192,13 @@ export class HijriCalendarElement extends HTMLElement {
   }
   set maxEvents(v: number) {
     this.reflect("max-events", String(v));
+  }
+  /** IANA timezone (e.g. "Asia/Kolkata") used to resolve "today"/"now". Defaults to the viewer's local zone. */
+  get timezone(): string | undefined {
+    return this.getAttribute("timezone") ?? undefined;
+  }
+  set timezone(v: string | null | undefined) {
+    this.reflect("timezone", v ?? null);
   }
 
   constructor() {
@@ -342,7 +352,7 @@ export class HijriCalendarElement extends HTMLElement {
       btn.addEventListener("click", () => this.navigate(Number(btn.dataset.nav)));
     });
     this.root.querySelector("[data-today]")?.addEventListener("click", () => {
-      this.setViewDate(new Date());
+      this.setViewDate(zonedTodayUtc(this.timezone));
     });
     this.root.querySelectorAll<HTMLButtonElement>("[data-view]").forEach((btn) => {
       btn.addEventListener("click", () => this.setView(isView(btn.dataset.view ?? null)));
@@ -358,7 +368,7 @@ export class HijriCalendarElement extends HTMLElement {
     const h = this.cal.gregorianToHijri(this.viewDate);
     const model = buildCalendarMonthModel(this.cal, { year: h.year, month: h.month }, this._events, {
       maxLanes: this.maxEvents,
-      today: new Date(),
+      today: zonedTodayUtc(this.timezone),
       weekStart: this.weekStart,
       isDisabled: this.buildDisabledFn(),
     });
@@ -546,7 +556,7 @@ export class HijriCalendarElement extends HTMLElement {
       dayStartHour: this.dayStart,
       dayEndHour: this.dayEnd,
       weekStart: this.weekStart,
-      today: new Date(),
+      today: zonedTodayUtc(this.timezone),
     });
     this.lastColumns = model.columns;
     this.lastTimedFlat = [];
@@ -602,7 +612,7 @@ export class HijriCalendarElement extends HTMLElement {
       gutterSlots.push(`<div class="tg-slot">${label}</div>`);
     }
 
-    const nowMs = Date.now();
+    const nowMin = zonedNowMinutes(this.timezone);
     const dayCols = model.columns
       .map((col) => {
         const iso = toIso(col.gregorian);
@@ -634,7 +644,6 @@ export class HijriCalendarElement extends HTMLElement {
 
         let nowLine = "";
         if (col.isToday) {
-          const nowMin = Math.round((nowMs % DAY_MS) / 60000);
           if (nowMin >= winStart && nowMin < winEnd) {
             const top = ((nowMin - winStart) / total) * 100;
             nowLine = `<div class="now-line" part="now-indicator" style="top:${top}%"></div>`;

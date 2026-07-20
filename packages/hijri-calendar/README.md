@@ -37,7 +37,7 @@ npm install @spezutil/hijri-calendar
 </script>
 ```
 
-Events use Gregorian ISO strings on the wire; every emitted detail carries both the Hijri and Gregorian date.
+Events use Gregorian ISO strings on the wire; every emitted detail carries both the Hijri and Gregorian date. `start`/`end` strings without an offset are treated as wall-clock values (matching the grid's own day/time layout); "today" and the current-time indicator resolve against the viewer's local timezone by default — set the `timezone` attribute/property (IANA name, e.g. `timezone="Asia/Kolkata"`) to pin them to a fixed zone regardless of viewer location.
 
 ## Theming
 

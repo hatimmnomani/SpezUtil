@@ -34,6 +34,7 @@ import type {
       [maxEvents]="maxEvents"
       [primary]="primary"
       [secondaryPosition]="secondaryPosition"
+      [timezone]="timezone"
       [events]="events"
       (event-click)="onEventClick($event)"
       (date-click)="onDateClick($event)"
@@ -56,6 +57,7 @@ export class HijriCalendarComponent {
   @Input() maxEvents = 3;
   @Input() primary: "hijri" | "gregorian" = "hijri";
   @Input() secondaryPosition = "end";
+  @Input() timezone: string | null = null;
   @Input() events: CalendarEvent[] = [];
 
   @Output() eventClick = new EventEmitter<EventClickDetail>();

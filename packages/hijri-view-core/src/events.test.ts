@@ -45,6 +45,17 @@ describe("normalizeEvent", () => {
     const n = normalizeEvent(ev({ start: "2026-07-06T09:00", end: "2026-07-06T08:00" }));
     expect(n.endMs).toBeGreaterThan(n.startMs);
   });
+
+  it("parses a start with an explicit Z suffix as that exact UTC instant", () => {
+    const n = normalizeEvent(ev({ start: "2026-07-06T09:00Z" }));
+    expect(n.startMs).toBe(Date.UTC(2026, 6, 6, 9, 0));
+  });
+
+  it("parses a start with an explicit offset as that exact instant, not bare wall-clock UTC", () => {
+    const n = normalizeEvent(ev({ start: "2026-07-06T23:30+05:30" }));
+    // 23:30 in UTC+05:30 is 18:00 UTC — a naive Date.UTC(y,m,d,23,30) reinterpretation would be wrong.
+    expect(n.startMs).toBe(Date.UTC(2026, 6, 6, 18, 0));
+  });
 });
 
 describe("eventsInRange", () => {

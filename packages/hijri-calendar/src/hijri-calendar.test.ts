@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createCalendar, translitMonthNames, arMonthNames } from "@spezutil/hijri-core";
 import type { CalendarEvent } from "@spezutil/hijri-view-core";
 import { HijriCalendarElement } from "./hijri-calendar";
@@ -112,6 +112,37 @@ describe("<hijri-calendar> shell", () => {
   it("applies rtl direction", () => {
     const el = mount({ date: "2026-07-06", dir: "rtl" });
     expect(el.getAttribute("dir")).toBe("rtl");
+  });
+
+  it("reflects the timezone property to an attribute", () => {
+    const el = mount({ date: "2026-07-06" });
+    el.timezone = "Asia/Kolkata";
+    expect(el.getAttribute("timezone")).toBe("Asia/Kolkata");
+    expect(el.timezone).toBe("Asia/Kolkata");
+  });
+});
+
+describe("<hijri-calendar> timezone-aware today", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("resolves the today button using the local calendar day, not UTC", () => {
+    vi.useFakeTimers();
+    // 00:30 UTC on 20 July 2026, but only 13:30 on 19 July in UTC-11 (Pago Pago).
+    vi.setSystemTime(new Date(Date.UTC(2026, 6, 20, 0, 30)));
+    const el = mount({ date: "2020-01-01", timezone: "Pacific/Pago_Pago" });
+    (sr(el).querySelector('[part="nav-today"]') as HTMLButtonElement).click();
+    expect(el.date).toBe("2026-07-19");
+  });
+
+  it("resolves the today button forward across the UTC day boundary when the zone is ahead", () => {
+    vi.useFakeTimers();
+    // 23:30 UTC on 20 July 2026 is already 13:30 on 21 July in UTC+14 (Kiritimati).
+    vi.setSystemTime(new Date(Date.UTC(2026, 6, 20, 23, 30)));
+    const el = mount({ date: "2020-01-01", timezone: "Pacific/Kiritimati" });
+    (sr(el).querySelector('[part="nav-today"]') as HTMLButtonElement).click();
+    expect(el.date).toBe("2026-07-21");
   });
 });
 
