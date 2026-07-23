@@ -13,6 +13,7 @@ export type {
 } from "./hijri-calendar";
 export type {
   CalendarEvent,
+  EventFieldMap,
   HijriDate,
 } from "@spezutil/hijri-view-core";
 

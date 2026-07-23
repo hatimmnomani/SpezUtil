@@ -12,6 +12,7 @@ import type {
   DateChangeDetail,
   DateClickDetail,
   EventClickDetail,
+  EventFieldMap,
   MoreClickDetail,
   SlotClickDetail,
   ViewChangeDetail,
@@ -35,6 +36,7 @@ import type {
       [primary]="primary"
       [secondaryPosition]="secondaryPosition"
       [timezone]="timezone"
+      [eventFields]="eventFields"
       [events]="events"
       (event-click)="onEventClick($event)"
       (date-click)="onDateClick($event)"
@@ -58,6 +60,7 @@ export class HijriCalendarComponent {
   @Input() primary: "hijri" | "gregorian" = "hijri";
   @Input() secondaryPosition = "end";
   @Input() timezone: string | null = null;
+  @Input() eventFields: EventFieldMap | null = null;
   @Input() events: CalendarEvent[] = [];
 
   @Output() eventClick = new EventEmitter<EventClickDetail>();

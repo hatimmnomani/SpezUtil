@@ -202,3 +202,43 @@ describe("<hijri-calendar> month view events", () => {
     expect(detail!.events.map((x) => x.id)).toEqual(["a", "b", "c"]);
   });
 });
+
+describe("<hijri-calendar> eventFields mapping", () => {
+  it("renders unmodified events as before when eventFields is unset", () => {
+    const el = mount({ date: "2026-07-06" });
+    el.events = [ev("a", "2026-07-06T10:00")];
+    expect(sr(el).querySelectorAll('[part~="event"]').length).toBe(1);
+  });
+
+  it("maps a differently-named start field before rendering", () => {
+    const el = mount({ date: "2026-07-06" });
+    el.eventFields = { start: "start_at" };
+    el.events = [
+      { id: "a", title: "Check", start_at: "2026-07-06T09:30", attendees: [{ id: "x" }] },
+    ] as unknown as CalendarEvent[];
+    const chips = sr(el).querySelectorAll('[part~="event"]');
+    expect(chips.length).toBe(1);
+    expect(chips[0]!.textContent).toContain("Check");
+  });
+
+  it("re-derives events when eventFields is set after events", () => {
+    const el = mount({ date: "2026-07-06" });
+    el.events = [
+      { id: "a", title: "Check", start_at: "2026-07-06T09:30" },
+    ] as unknown as CalendarEvent[];
+    expect(sr(el).querySelectorAll('[part~="event"]').length).toBe(0);
+    el.eventFields = { start: "start_at" };
+    expect(sr(el).querySelectorAll('[part~="event"]').length).toBe(1);
+  });
+
+  it("attaches the original raw object as data for click handlers", () => {
+    const el = mount({ date: "2026-07-06" });
+    el.eventFields = { start: "start_at" };
+    const raw = { id: "a", title: "Check", start_at: "2026-07-06T09:30", attendees: [{ id: "x" }] };
+    el.events = [raw] as unknown as CalendarEvent[];
+    let detail: { event: CalendarEvent } | null = null;
+    el.addEventListener("event-click", (e) => (detail = (e as CustomEvent).detail));
+    (sr(el).querySelector('[part~="event"]') as HTMLButtonElement).click();
+    expect(detail!.event.data).toBe(raw);
+  });
+});

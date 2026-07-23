@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { normalizeEvent, eventsInRange } from "./events";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { normalizeEvent, eventsInRange, mapEventFields } from "./events";
 import type { CalendarEvent } from "./types";
 
 const ev = (partial: Partial<CalendarEvent> & Pick<CalendarEvent, "start">): CalendarEvent => ({
@@ -55,6 +55,74 @@ describe("normalizeEvent", () => {
     const n = normalizeEvent(ev({ start: "2026-07-06T23:30+05:30" }));
     // 23:30 in UTC+05:30 is 18:00 UTC — a naive Date.UTC(y,m,d,23,30) reinterpretation would be wrong.
     expect(n.startMs).toBe(Date.UTC(2026, 6, 6, 18, 0));
+  });
+
+  describe("unparseable start", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("warns once instead of throwing when start is missing or unparseable", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const n = normalizeEvent(ev({ id: "missing-1", start: undefined as unknown as string }));
+      expect(Number.isNaN(n.startMs)).toBe(true);
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0]![0]).toContain("missing-1");
+      expect(warn.mock.calls[0]![0]).toContain("eventFields");
+    });
+
+    it("dedupes repeated warnings for the same event id + value", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      normalizeEvent(ev({ id: "missing-2", start: undefined as unknown as string }));
+      normalizeEvent(ev({ id: "missing-2", start: undefined as unknown as string }));
+      expect(warn).toHaveBeenCalledTimes(1);
+    });
+  });
+});
+
+describe("mapEventFields", () => {
+  it("renames configured fields and defaults unmapped keys to the same name", () => {
+    const raw = { id: "e1", title: "Check", start_at: "2026-07-06T09:30", color: "#0b7d3e" };
+    const mapped = mapEventFields(raw, { start: "start_at" });
+    expect(mapped).toMatchObject({
+      id: "e1",
+      title: "Check",
+      start: "2026-07-06T09:30",
+      color: "#0b7d3e",
+    });
+  });
+
+  it("attaches the original raw object as data", () => {
+    const raw = { id: "e1", title: "Check", start_at: "2026-07-06T09:30", attendees: [{ id: "a" }] };
+    const mapped = mapEventFields(raw, { start: "start_at" });
+    expect(mapped.data).toBe(raw);
+  });
+
+  it("renames every configured field, not just start", () => {
+    const raw = {
+      eventId: "e1",
+      name: "Check",
+      begins: "2026-07-06T09:30",
+      ends: "2026-07-06T10:00",
+      full_day: true,
+      hue: "#0b7d3e",
+    };
+    const mapped = mapEventFields(raw, {
+      id: "eventId",
+      title: "name",
+      start: "begins",
+      end: "ends",
+      allDay: "full_day",
+      color: "hue",
+    });
+    expect(mapped).toMatchObject({
+      id: "e1",
+      title: "Check",
+      start: "2026-07-06T09:30",
+      end: "2026-07-06T10:00",
+      allDay: true,
+      color: "#0b7d3e",
+    });
   });
 });
 

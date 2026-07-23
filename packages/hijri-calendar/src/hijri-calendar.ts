@@ -10,9 +10,11 @@ import {
   buildAgendaModel,
   buildCalendarMonthModel,
   buildTimeGridModel,
+  mapEventFields,
   normalizeEvent,
   type CalendarEvent,
   type DayCell,
+  type EventFieldMap,
   type EventSegment,
   type NormalizedEvent,
   type PositionedEvent,
@@ -108,6 +110,8 @@ export class HijriCalendarElement extends HTMLElement {
   private root: ShadowRoot;
   private viewDate: Date = zonedTodayUtc();
   private _events: CalendarEvent[] = [];
+  private _rawEvents: unknown = [];
+  private _eventFields: EventFieldMap | undefined;
   private suppress = false;
   private loc: CalendarLocale = resolveLocale(null);
 
@@ -116,9 +120,31 @@ export class HijriCalendarElement extends HTMLElement {
   get events(): CalendarEvent[] {
     return this._events;
   }
-  set events(v: CalendarEvent[]) {
-    this._events = Array.isArray(v) ? v : [];
+  set events(v: unknown) {
+    this._rawEvents = v;
+    this._events = this.mapEvents(v);
     this.render();
+  }
+
+  /**
+   * Optional field-name mapping applied to `events` before use, for hosts whose data
+   * doesn't use CalendarEvent's field names (e.g. `{ start: "start_at" }`). Omitted keys
+   * default to the same-named field. The original raw object is passed through as `data`.
+   */
+  get eventFields(): EventFieldMap | undefined {
+    return this._eventFields;
+  }
+  set eventFields(v: EventFieldMap | undefined) {
+    this._eventFields = v;
+    this._events = this.mapEvents(this._rawEvents);
+    this.render();
+  }
+
+  private mapEvents(v: unknown): CalendarEvent[] {
+    const arr = Array.isArray(v) ? v : [];
+    if (!this._eventFields) return arr as CalendarEvent[];
+    const fields = this._eventFields;
+    return arr.map((raw) => mapEventFields(raw as Record<string, unknown>, fields));
   }
 
   private reflect(name: string, v: string | null): void {

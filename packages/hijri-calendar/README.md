@@ -39,6 +39,15 @@ npm install @spezutil/hijri-calendar
 
 Events use Gregorian ISO strings on the wire; every emitted detail carries both the Hijri and Gregorian date. `start`/`end` strings without an offset are treated as wall-clock values (matching the grid's own day/time layout); "today" and the current-time indicator resolve against the viewer's local timezone by default — set the `timezone` attribute/property (IANA name, e.g. `timezone="Asia/Kolkata"`) to pin them to a fixed zone regardless of viewer location.
 
+### Mapping your own event shape
+
+If your data doesn't use `start`/`end`/etc. field names, set `eventFields` instead of pre-mapping every event by hand — omitted keys default to the same-named field, and the original object is still passed back as `event.data` in click handlers:
+
+```js
+cal.eventFields = { start: "start_at", end: "end_at" };
+cal.events = apiResponse; // objects have start_at/end_at, not start/end
+```
+
 ## Theming
 
 ```css
