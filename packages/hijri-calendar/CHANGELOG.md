@@ -1,5 +1,13 @@
 # @spezutil/hijri-calendar
 
+## 0.2.2
+
+### Patch Changes
+
+- Add `eventFields` mapping so hosts whose event objects use different field names (e.g. `start_at` instead of `start`) don't need to pre-map their data by hand — `<hijri-calendar>` does the renaming itself, and the original object is still passed through as `event.data`. Also fixes a silent-failure trap: an event with a missing or unparseable `start` now emits a `console.warn` (once per event) instead of just vanishing with no error.
+- Updated dependencies
+  - @spezutil/hijri-view-core@0.1.4
+
 ## 0.2.1
 
 ### Patch Changes

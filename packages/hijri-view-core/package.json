@@ -1,6 +1,6 @@
 {
   "name": "@spezutil/hijri-view-core",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Pure view-model builders for Hijri calendar UIs (month grid, time grid, agenda, event layout).",
   "license": "Apache-2.0",
   "publishConfig": {
