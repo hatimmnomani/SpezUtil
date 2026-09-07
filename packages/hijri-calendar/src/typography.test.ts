@@ -38,7 +38,10 @@ describe("<hijri-calendar> numerals", () => {
     const titlePrimary = sr(el).querySelector('[part="title-primary"]')!;
     expect(titlePrimary.textContent).toContain(formatNumerals(h.year, "arab"));
     expect(ASCII_DIGIT.test(titlePrimary.textContent!)).toBe(false);
-    expect(titlePrimary.getAttribute("dir")).toBe("rtl");
+    // Ruling M: `numerals="arab"` alone (names stays "translit") mixes a Latin month name with
+    // Arabic-Indic year digits ("Ramadan ١٤٤٧") — that mix must never carry dir="rtl", or bidi
+    // would reorder it under an RTL base direction. See the dedicated gate tests below.
+    expect(titlePrimary.getAttribute("dir")).toBeNull();
 
     const cell = cellFor(el, "2026-07-06");
     expect(cell.querySelector('[part="day-secondary"]')!.textContent!.trim()).toBe("6");
@@ -133,6 +136,24 @@ describe("<hijri-calendar> numerals", () => {
 
     const titlePrimary = sr(el).querySelector('[part="title-primary"]')!.textContent!;
     expect(ASCII_DIGIT.test(titlePrimary)).toBe(false);
+  });
+});
+
+describe("<hijri-calendar> title-primary dir gate (Ruling M)", () => {
+  it('names="translit" numerals="arab" never marks title-primary rtl, even though the year digits are Arabic-Indic', () => {
+    const el = mount({ date: "2026-07-06", names: "translit", numerals: "arab" });
+    const titlePrimary = sr(el).querySelector('[part="title-primary"]')!;
+    // "Ramadan ١٤٤٧": a Latin month name plus Arabic-Indic year digits. Bidi would reorder
+    // that mix under an RTL base direction, so dir must be gated on the name script
+    // (`names`), never on the numeral system.
+    expect(ARABIC_INDIC.test(titlePrimary.textContent!)).toBe(true);
+    expect(titlePrimary.getAttribute("dir")).toBeNull();
+  });
+
+  it('names="ar" still marks title-primary rtl regardless of numerals', () => {
+    const el = mount({ date: "2026-07-06", names: "ar", numerals: "latn" });
+    const titlePrimary = sr(el).querySelector('[part="title-primary"]')!;
+    expect(titlePrimary.getAttribute("dir")).toBe("rtl");
   });
 });
 
@@ -232,14 +253,13 @@ describe("<hijri-calendar> font-family custom properties", () => {
     expect(css).toMatch(/\.tg-event\s*\{[^}]*font-family:\s*var\(--hcal-font-family-display\)/);
   });
 
-  it("does not apply --hcal-font-family-display to Gregorian day-number spans in this phase (P2 owns --hcal-day-secondary-font-family)", () => {
+  it("does not apply --hcal-font-family-display to Gregorian day-number spans (P2 routes them through --hcal-day-secondary-font-family, still defaulting to --hcal-font-family-arabic)", () => {
     const el = mount({ date: "2026-07-06" });
     const css = sr(el).querySelector("style")!.textContent!;
     expect(css).toContain(
-      '.day-head .num-secondary { font-size: 9px; color: var(--hcal-muted); white-space: nowrap; font-family: var(--hcal-font-family-arabic); }'
+      '.day-head .num-secondary, .tg-col-head .num-secondary { font-size: var(--hcal-day-secondary-font-size); color: var(--hcal-day-secondary-color); white-space: nowrap; font-family: var(--hcal-day-secondary-font-family); }'
     );
-    expect(css).toContain(
-      '.tg-col-head .num-secondary { font-size: 10px; color: var(--hcal-muted); white-space: nowrap; font-family: var(--hcal-font-family-arabic); }'
-    );
+    expect(css).toContain("--hcal-day-secondary-font-family: var(--hcal-font-family-arabic);");
+    expect(css).not.toMatch(/\.num-secondary[^}]*font-family:\s*var\(--hcal-font-family-display\)/);
   });
 });

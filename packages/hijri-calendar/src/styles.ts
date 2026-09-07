@@ -32,11 +32,28 @@ ${arabicFontFace}
   --hcal-title-secondary-font-size: 11px;
   --hcal-title-secondary-color: var(--hcal-muted);
   --hcal-title-separator: 1px solid var(--hcal-border);
+  --hcal-grid-line: var(--hcal-border);
+  --hcal-cell-padding: 4px;
+  --hcal-cell-hover-bg: color-mix(in srgb, var(--hcal-fg) 6%, transparent);
+  --hcal-cell-out-bg: transparent;
+  --hcal-cell-out-opacity: 0.45;
+  --hcal-weekend-bg: transparent;
+  --hcal-weekend-fg: inherit;
+  --hcal-today-color: var(--hcal-accent);
+  --hcal-today-indicator-color: var(--hcal-accent);
+  --hcal-day-primary-font-size: 14px;
+  --hcal-day-primary-color: var(--hcal-fg);
+  --hcal-day-primary-weight: 600;
+  --hcal-day-secondary-font-size: 9px;
+  --hcal-day-secondary-color: var(--hcal-muted);
+  --hcal-day-secondary-font-family: var(--hcal-font-family-arabic);
+  --hcal-month-marker-color: var(--hcal-muted);
+  --hcal-transition: 0ms;
   display: block;
   font-family: var(--hcal-font-family);
   color: var(--hcal-fg);
 }
-.cal { background: var(--hcal-bg); border: 1px solid var(--hcal-border); border-radius: var(--hcal-radius); overflow: hidden; display: flex; flex-direction: column; }
+.cal { background: var(--hcal-bg); border: 1px solid var(--hcal-border); border-radius: var(--hcal-radius); overflow: hidden; overflow-x: auto; display: flex; flex-direction: column; }
 .toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--hcal-border); flex-wrap: wrap; }
 .toolbar button { background: none; border: 1px solid var(--hcal-border); cursor: pointer; font: inherit; color: var(--hcal-fg); border-radius: var(--hcal-button-radius); padding: 4px 10px; }
 .toolbar button:hover { background: color-mix(in srgb, var(--hcal-fg) 6%, transparent); }
@@ -55,22 +72,39 @@ ${arabicFontFace}
 .dow-row { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--hcal-border); background: var(--hcal-header-bg); }
 .dow { display: flex; flex-direction: column; align-items: var(--hcal-weekday-align); text-align: var(--hcal-weekday-align); font-size: var(--hcal-weekday-font-size); color: var(--hcal-weekday-color); padding: 6px 0; font-family: var(--hcal-font-family-arabic); }
 .dow [part~="weekday-secondary"] { font-family: var(--hcal-font-family-mono); opacity: 0.8; }
-.week { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: min-content; border-bottom: 1px solid var(--hcal-border); min-height: var(--hcal-cell-min-height); align-content: start; position: relative; }
-.week:last-child { border-bottom: none; }
-.day-head { grid-row: 1; border: none; background: none; cursor: pointer; font: inherit; color: var(--hcal-fg); display: flex; align-items: baseline; gap: 4px; justify-content: center; padding: 4px 4px 2px; border-radius: 6px; }
-.day-head:hover { background: color-mix(in srgb, var(--hcal-fg) 6%, transparent); }
-.day-head .num-primary { font-weight: 600; font-size: 14px; font-family: var(--hcal-font-family-arabic); }
-.day-head .num-secondary { font-size: 9px; color: var(--hcal-muted); white-space: nowrap; font-family: var(--hcal-font-family-arabic); }
+.dow[part~="weekend"] { color: var(--hcal-weekend-fg); }
+.week { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: min-content; min-height: var(--hcal-cell-min-height); align-content: start; position: relative; }
+/* Background layer (R1): one div per column, behind the day-head buttons/chips/more-link
+   (all position: relative; z-index: 1) in both DOM and stacking order. */
+.day-cell { position: relative; z-index: 0; box-sizing: border-box; padding: var(--hcal-cell-padding); border-inline-end: 1px solid var(--hcal-grid-line); border-block-end: 1px solid var(--hcal-grid-line); transition: background var(--hcal-transition); }
+.day-cell:nth-of-type(7) { border-inline-end: none; }
+.day-cell:hover { background: var(--hcal-cell-hover-bg); }
+.day-cell.out { background: var(--hcal-cell-out-bg); }
+.day-cell.weekend { background: var(--hcal-weekend-bg); }
+.day-cell.today { background: var(--hcal-today-bg); }
+[part~="today-indicator"] { position: absolute; top: 4px; inset-inline-end: 4px; width: 6px; height: 6px; border-radius: 999px; background: var(--hcal-today-indicator-color); pointer-events: none; }
+.day-head { grid-row: 1; border: none; background: none; cursor: pointer; font: inherit; color: var(--hcal-fg); display: flex; align-items: baseline; gap: 4px; justify-content: center; padding: 4px 4px 2px; border-radius: 6px; position: relative; z-index: 1; }
+.day-head:focus-visible { outline: 2px solid var(--hcal-accent); outline-offset: 1px; }
+[part~="day-numbers"] { display: contents; }
+[part~="day-month-marker"] { margin-inline-start: auto; font-size: var(--hcal-day-secondary-font-size); color: var(--hcal-month-marker-color); font-family: var(--hcal-day-secondary-font-family); white-space: nowrap; }
+.day-head .num-primary, .tg-col-head .num-primary { font-weight: var(--hcal-day-primary-weight); font-size: var(--hcal-day-primary-font-size); font-family: var(--hcal-font-family-arabic); color: var(--hcal-day-primary-color); }
+.day-head .num-secondary, .tg-col-head .num-secondary { font-size: var(--hcal-day-secondary-font-size); color: var(--hcal-day-secondary-color); white-space: nowrap; font-family: var(--hcal-day-secondary-font-family); }
 :host([secondary-position="start"]) .day-head { flex-direction: row-reverse; }
 :host([secondary-position="below"]) .day-head { flex-direction: column; gap: 0; align-items: center; }
 :host([secondary-position="above"]) .day-head { flex-direction: column-reverse; gap: 0; align-items: center; }
-.day-head.out { opacity: 0.45; }
-.day-head.today .num-primary { background: var(--hcal-accent); color: var(--hcal-accent-fg); border-radius: 999px; padding: 1px 6px; }
+:host([day-number-align="start"]) .day-head,
+:host([day-number-align="start"]) .tg-col-head { justify-content: flex-start; align-items: flex-start; }
+:host([day-number-align="end"]) .day-head,
+:host([day-number-align="end"]) .tg-col-head { justify-content: flex-end; align-items: flex-end; }
+.day-head.out { opacity: var(--hcal-cell-out-opacity); }
+:host(:not([today-marker])) .day-head.today .num-primary,
+:host([today-marker="pill"]) .day-head.today .num-primary { background: var(--hcal-accent); color: var(--hcal-accent-fg); border-radius: 999px; padding: 1px 6px; }
+:host([today-marker="dot"]) .day-head.today .num-primary { color: var(--hcal-today-color); }
 .day-head[data-disabled] { cursor: not-allowed; opacity: 0.3; }
-.chip { border: none; cursor: pointer; font: inherit; font-size: 11px; text-align: start; color: var(--hcal-event-fg); background: var(--_ev-color, var(--hcal-accent)); border-radius: 4px; padding: 1px 6px; margin: 1px 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip { border: none; cursor: pointer; font: inherit; font-size: 11px; text-align: start; color: var(--hcal-event-fg); background: var(--_ev-color, var(--hcal-accent)); border-radius: 4px; padding: 1px 6px; margin: 1px 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; position: relative; z-index: 1; }
 .chip.continues-before { border-start-start-radius: 0; border-end-start-radius: 0; }
 .chip.continues-after { border-start-end-radius: 0; border-end-end-radius: 0; }
-.more { border: none; background: none; cursor: pointer; font: inherit; font-size: 11px; color: var(--hcal-muted); text-align: start; padding: 0 6px; margin: 1px 2px; }
+.more { border: none; background: none; cursor: pointer; font: inherit; font-size: 11px; color: var(--hcal-muted); text-align: start; padding: 0 6px; margin: 1px 2px; position: relative; z-index: 1; }
 .more:hover { color: var(--hcal-fg); }
 
 /* time grid (week/day) */
@@ -78,8 +112,7 @@ ${arabicFontFace}
 .tg-head { display: grid; border-bottom: 1px solid var(--hcal-border); background: var(--hcal-header-bg); }
 .tg-col-head { text-align: center; padding: 6px 2px; border-inline-start: 1px solid var(--hcal-border); display: flex; flex-direction: column; align-items: center; }
 .tg-col-head .dow { padding: 0; }
-.tg-col-head .num-primary { font-weight: 600; font-size: 15px; font-family: var(--hcal-font-family-arabic); }
-.tg-col-head .num-secondary { font-size: 10px; color: var(--hcal-muted); white-space: nowrap; font-family: var(--hcal-font-family-arabic); }
+.tg-col-head.today { background: var(--hcal-today-bg); }
 .tg-col-head.today .num-primary { color: var(--hcal-accent); }
 .tg-allday { display: grid; border-bottom: 1px solid var(--hcal-border); min-height: 22px; background: var(--hcal-header-bg); }
 .tg-allday-label { font-size: 10px; color: var(--hcal-muted); display: flex; align-items: center; justify-content: center; }

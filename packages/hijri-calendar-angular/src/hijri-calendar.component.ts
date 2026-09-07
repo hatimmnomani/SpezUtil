@@ -45,6 +45,9 @@ import type {
       [numeralsGregorian]="numeralsGregorian"
       [weekdayFormat]="weekdayFormat"
       [weekendDays]="weekendDays"
+      [dayNumberAlign]="dayNumberAlign"
+      [monthMarker]="monthMarker"
+      [todayMarker]="todayMarker"
       [eventFields]="eventFields"
       [events]="events"
       (event-click)="onEventClick($event)"
@@ -82,6 +85,9 @@ export class HijriCalendarComponent {
   @Input() numeralsGregorian: "latn" | "arab" | null = null;
   @Input() weekdayFormat: "short" | "long" | "bilingual" | null = null;
   @Input() weekendDays: string | number[] | null = null;
+  @Input() dayNumberAlign: "center" | "start" | "end" | null = null;
+  @Input() monthMarker: "gregorian" | "hijri" | "both" | "none" | null = null;
+  @Input() todayMarker: "pill" | "dot" | "none" | null = null;
   @Input() eventFields: EventFieldMap | null = null;
   @Input() events: CalendarEvent[] = [];
 

@@ -132,6 +132,9 @@ export class HijriCalendarElement extends HTMLElement {
       "numerals-gregorian",
       "weekday-format",
       "weekend-days",
+      "day-number-align",
+      "month-marker",
+      "today-marker",
     ];
   }
 
@@ -327,6 +330,36 @@ export class HijriCalendarElement extends HTMLElement {
     this.reflect("weekend-days", Array.isArray(v) ? v.join(" ") : v);
   }
 
+  /** Alignment of the number row in month cells and time-grid column heads. Default `"center"`. */
+  get dayNumberAlign(): "center" | "start" | "end" {
+    const v = this.getAttribute("day-number-align");
+    return v === "start" || v === "end" ? v : "center";
+  }
+  set dayNumberAlign(v: string) {
+    this.reflect("day-number-align", v);
+  }
+  /** Which calendar's first-of-month gets a month-name marker. Default `"gregorian"` (today's behaviour). */
+  get monthMarker(): "gregorian" | "hijri" | "both" | "none" {
+    const v = this.getAttribute("month-marker");
+    return v === "hijri" || v === "both" || v === "none" ? v : "gregorian";
+  }
+  set monthMarker(v: string) {
+    this.reflect("month-marker", v);
+  }
+  /**
+   * `pill` (default) keeps today's ring around the primary number; `dot` renders a small
+   * corner indicator on the cell instead and colours the primary number with
+   * `--hcal-today-color`; `none` renders neither. `--hcal-today-bg` tints the cell/column-head
+   * background in all three modes.
+   */
+  get todayMarker(): "pill" | "dot" | "none" {
+    const v = this.getAttribute("today-marker");
+    return v === "dot" || v === "none" ? v : "pill";
+  }
+  set todayMarker(v: string) {
+    this.reflect("today-marker", v);
+  }
+
   private parseWeekendDays(attr: string | null): number[] {
     if (attr === null) return [0, 6];
     const out: number[] = [];
@@ -342,6 +375,19 @@ export class HijriCalendarElement extends HTMLElement {
   }
   private numG(n: number | string): string {
     return formatNumerals(n, this.numeralsGregorian);
+  }
+
+  /**
+   * `dir="rtl"` gate for spans whose content is a Hijri/weekday/month *name* string (as
+   * opposed to a numeral). Generalises the P1 principle already used for day numbers (see the
+   * `gregHasMonthMarker` comment in `dayNumbersHtml`): whether a span gets `dir="rtl"` is a
+   * property of its actual rendered content, never merely of which attribute happens to be
+   * `"arab"`. A title mixing a translit month name with Arabic-Indic year digits
+   * (`"Ramadan ١٤٤٧"`) must not be marked rtl — only `names==="ar"` (genuinely Arabic-script
+   * text) does, regardless of `numerals`.
+   */
+  private namesDirAttr(): string {
+    return this.names === "ar" ? ' dir="rtl"' : "";
   }
 
   private parseViews(attr: string | null): CalendarView[] {
@@ -463,26 +509,47 @@ export class HijriCalendarElement extends HTMLElement {
   }
 
   /**
-   * Gregorian day number, with "1 Jul"-style month marker on the first of a month. The day
-   * number (and year, N/A here) route through `numerals-gregorian`; the month abbreviation
-   * is never transliterated (`numG` only rewrites ASCII digits).
+   * Gregorian day number, with "1 Jul"-style month marker on the first of a month when
+   * `month-marker` is `"gregorian"` or `"both"`. The day number (and year, N/A here) route
+   * through `numerals-gregorian`; the month abbreviation is never transliterated (`numG` only
+   * rewrites ASCII digits).
    */
   private gregDayLabel(g: Date): string {
     const d = g.getUTCDate();
-    if (d !== 1) return this.numG(d);
+    const showMonthName =
+      d === 1 && (this.monthMarker === "gregorian" || this.monthMarker === "both");
+    if (!showMonthName) return this.numG(d);
     return this.numG(`1 ${g.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" })}`);
   }
 
-  /** Primary/secondary day-number spans honoring `primary` and `secondary-position`. */
-  private dayNumbersHtml(hijriDay: number, g: Date): string {
+  /**
+   * The Hijri month-name marker (`month-marker="hijri"|"both"`), rendered on the first day of
+   * a Hijri month. Bare month names, so no numeral formatting; the rtl gate is content-based
+   * (`namesDirAttr`), not a property of `numerals`.
+   */
+  private monthMarkerHtml(hijri: HijriDate): string {
+    if (hijri.day !== 1) return "";
+    if (this.monthMarker !== "hijri" && this.monthMarker !== "both") return "";
+    const name = this.nameSet.monthNames[hijri.month - 1] ?? "";
+    return `<span part="day-month-marker"${this.namesDirAttr()}>${escapeHtml(name)}</span>`;
+  }
+
+  /**
+   * Primary/secondary day-number spans (wrapped in `part="day-numbers"`) honoring `primary`
+   * and `secondary-position`, plus the `month-marker` name span.
+   */
+  private dayNumbersHtml(hijri: HijriDate, g: Date): string {
     const gregLabel = this.gregDayLabel(g);
-    const hijriLabel = this.numH(hijriDay);
+    const hijriLabel = this.numH(hijri.day);
     // The "1 Jul"-style month marker mixes an Arabic-Indic numeral with a Latin month
     // abbreviation. Under an RTL base direction the bidi algorithm reorders that mix (it
     // would render "Jul ١" instead of "١ Jul"), so a span carrying that mixed content never
     // gets `dir`, regardless of `numerals-gregorian` — see the dayNumbersHtml/gregDayLabel
     // comment above. A bare Hijri or Gregorian numeral has no such mix and is safe to mark.
-    const gregHasMonthMarker = g.getUTCDate() === 1;
+    // `gregHasMonthMarker` must mirror gregDayLabel's own condition, not just "is the 1st" —
+    // when `month-marker` doesn't render the Gregorian name, the span is a bare digit again.
+    const gregHasMonthMarker =
+      g.getUTCDate() === 1 && (this.monthMarker === "gregorian" || this.monthMarker === "both");
     const gregDir = !gregHasMonthMarker && this.numeralsGregorian === "arab" ? ' dir="rtl"' : "";
     const hijriDir = this.numerals === "arab" ? ' dir="rtl"' : "";
     const [primHtml, secHtml] =
@@ -495,8 +562,10 @@ export class HijriCalendarElement extends HTMLElement {
             `<span class="num-primary" part="day-primary"${hijriDir}>${escapeHtml(hijriLabel)}</span>`,
             `<span class="num-secondary" part="day-secondary"${gregDir}>${escapeHtml(gregLabel)}</span>`,
           ];
-    if (this.secondaryPosition === "hidden") return primHtml;
-    return `${primHtml}${secHtml}`;
+    const numbers = this.secondaryPosition === "hidden" ? primHtml : `${primHtml}${secHtml}`;
+    // `day-numbers` is `display: contents` by default (see styles.ts), so wrapping it here
+    // never changes layout unless a month-marker span is also present as its flex sibling.
+    return `<span part="day-numbers">${numbers}</span>${this.monthMarkerHtml(hijri)}`;
   }
 
   /** Weekday header cell honoring `weekday-format` and `weekend-days`. Shared by month and time-grid views. */
@@ -504,7 +573,7 @@ export class HijriCalendarElement extends HTMLElement {
     const full = this.nameSet.weekdayNames[dow] ?? "";
     const isWeekend = this.weekendDays.includes(dow);
     const partTokens = ["weekday", isWeekend ? "weekend" : ""].filter(Boolean).join(" ");
-    const dirAttr = this.names === "ar" ? ' dir="rtl"' : "";
+    const dirAttr = this.namesDirAttr();
     let inner: string;
     if (this.weekdayFormat === "bilingual") {
       const secondary = (enWeekdayNames[dow] ?? "").slice(0, 3);
@@ -537,7 +606,10 @@ export class HijriCalendarElement extends HTMLElement {
           `<button type="button" part="view-btn" data-view="${v}" aria-pressed="${v === this.view}">${this.loc.viewLabels[v]}</button>`
       )
       .join("");
-    const titleDir = this.names === "ar" || this.numerals === "arab" ? ' dir="rtl"' : "";
+    // Ruling M: gate title-primary's dir the same way as any other name-bearing span — on
+    // `names`, not on `numerals` (a Latin month name with an Arabic-Indic year, e.g.
+    // "Ramadan ١٤٤٧", must not be marked rtl; see namesDirAttr()).
+    const titleDir = this.namesDirAttr();
     const titleHtml = `<div class="title" part="title"><span part="title-primary"${titleDir}>${escapeHtml(title)}</span><span part="title-secondary">${escapeHtml(subtitle)}</span></div>`;
     return `<div class="toolbar" part="toolbar">
       <slot name="toolbar-start"></slot>
@@ -593,6 +665,27 @@ export class HijriCalendarElement extends HTMLElement {
 
     const weeksHtml = model.weeks
       .map((week, w) => {
+        // Background layer, one div per column, emitted *before* the day-head buttons so it
+        // sits behind them in DOM/stacking order (R1). It shares the button's click handler
+        // (see wireMonth) rather than re-emitting date-click itself.
+        const dayCells = week
+          .map((cell, d) => {
+            const i = w * 7 + d;
+            const tokens = ["day-cell"];
+            if (cell.isToday) tokens.push("today");
+            if (!cell.inCurrentMonth) tokens.push("out");
+            if (cell.isWeekend) tokens.push("weekend");
+            if (cell.disabled) tokens.push("disabled");
+            const tokenStr = tokens.join(" ");
+            const indicator =
+              this.todayMarker === "dot" && cell.isToday
+                ? `<span part="today-indicator"></span>`
+                : "";
+            return `<div class="${tokenStr}" part="${tokenStr}" data-cell="${i}"
+              style="grid-column:${d + 1}; grid-row:1 / -1">${indicator}</div>`;
+          })
+          .join("");
+
         const dayHeads = week
           .map((cell, d) => {
             const i = w * 7 + d;
@@ -607,7 +700,7 @@ export class HijriCalendarElement extends HTMLElement {
             return `<button type="button" part="day" class="${cls}" role="gridcell"
               style="grid-column:${d + 1}" data-i="${i}" data-date="${toIso(cell.gregorian)}"
               aria-label="${escapeHtml(label)}" tabindex="-1" ${cell.disabled ? "disabled data-disabled" : ""}>
-              ${this.dayNumbersHtml(cell.hijri.day, cell.gregorian)}
+              ${this.dayNumbersHtml(cell.hijri, cell.gregorian)}
             </button>`;
           })
           .join("");
@@ -640,7 +733,7 @@ export class HijriCalendarElement extends HTMLElement {
           })
           .join("");
 
-        return `<div class="week" role="row">${dayHeads}${chips}${mores}</div>`;
+        return `<div class="week" role="row">${dayCells}${dayHeads}${chips}${mores}</div>`;
       })
       .join("");
 
@@ -665,6 +758,13 @@ export class HijriCalendarElement extends HTMLElement {
           gregorian: toIso(cell.gregorian),
         });
       });
+    });
+    // The day-cell background layer forwards clicks to its column's button instead of
+    // re-emitting date-click itself: one source of truth for the detail, and disabled
+    // buttons already no-op on `.click()` so disabled cells never fire.
+    this.root.querySelectorAll<HTMLElement>("[data-cell]").forEach((div) => {
+      const btn = dayButtons[Number(div.dataset.cell)];
+      if (btn) div.addEventListener("click", () => btn.click());
     });
     this.wireEventChips();
     this.root.querySelectorAll<HTMLButtonElement>("[data-more]").forEach((btn) => {
@@ -788,9 +888,18 @@ export class HijriCalendarElement extends HTMLElement {
         const cls = ["tg-col-head", col.isToday ? "today" : "", col.isWeekend ? "weekend" : ""]
           .filter(Boolean)
           .join(" ");
-        return `<div class="${cls}" part="day">
+        // D2: `day` keeps matching existing ::part(day) selectors; `column-head` is additive.
+        const partTokens = [
+          "day",
+          "column-head",
+          col.isToday ? "today" : "",
+          col.isWeekend ? "weekend" : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
+        return `<div class="${cls}" part="${partTokens}">
           ${this.weekdayCellHtml(col.gregorian.getUTCDay())}
-          ${this.dayNumbersHtml(col.hijri.day, col.gregorian)}
+          ${this.dayNumbersHtml(col.hijri, col.gregorian)}
         </div>`;
       })
       .join("");
@@ -855,7 +964,10 @@ export class HijriCalendarElement extends HTMLElement {
           }
         }
 
-        return `<div class="tg-day-col">${slots.join("")}${blocks}${nowLine}</div>`;
+        const dayColPart = ["day-column", col.isToday ? "today" : "", col.isWeekend ? "weekend" : ""]
+          .filter(Boolean)
+          .join(" ");
+        return `<div class="tg-day-col" part="${dayColPart}">${slots.join("")}${blocks}${nowLine}</div>`;
       })
       .join("");
 
