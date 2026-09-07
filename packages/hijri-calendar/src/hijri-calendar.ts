@@ -668,6 +668,15 @@ export class HijriCalendarElement extends HTMLElement {
         // Background layer, one div per column, emitted *before* the day-head buttons so it
         // sits behind them in DOM/stacking order (R1). It shares the button's click handler
         // (see wireMonth) rather than re-emitting date-click itself.
+        //
+        // `grid-row: 1 / span 999` (not `1 / -1`): `.week` has no `grid-template-rows`, so it
+        // has zero *explicit* row tracks, and a negative line counts from the end of the
+        // explicit grid only — `-1` resolves to line 1, collapsing the span to nothing beyond
+        // the head row. `span 999` instead forces the grid to create however many implicit row
+        // tracks the layer's own placement needs; empty ones size to 0 (min-content of nothing),
+        // so in practice the layer's box still ends exactly where the last real row (head, any
+        // occupied chip lane, the more-link row) ends. 999 is comfortably above any real row
+        // count (`maxEvents + 2`).
         const dayCells = week
           .map((cell, d) => {
             const i = w * 7 + d;
@@ -682,7 +691,7 @@ export class HijriCalendarElement extends HTMLElement {
                 ? `<span part="today-indicator"></span>`
                 : "";
             return `<div class="${tokenStr}" part="${tokenStr}" data-cell="${i}"
-              style="grid-column:${d + 1}; grid-row:1 / -1">${indicator}</div>`;
+              style="grid-column:${d + 1}; grid-row:1 / span 999">${indicator}</div>`;
           })
           .join("");
 

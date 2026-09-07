@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { createCalendar, translitMonthNames } from "@spezutil/hijri-core";
+import { createCalendar, formatNumerals, translitMonthNames } from "@spezutil/hijri-core";
 import { HijriCalendarElement } from "./hijri-calendar";
 
 const cal = createCalendar();
@@ -37,6 +37,24 @@ describe("<hijri-calendar> month day-cell background layer", () => {
   it("renders exactly 42 [part~=day-cell] layers per month", () => {
     const el = mount({ date: "2026-07-06" });
     expect(sr(el).querySelectorAll('[part~="day-cell"]').length).toBe(42);
+  });
+
+  it("gives every day-cell an unbounded row span so it isn't collapsed to the head row (fix: `.week` has no explicit row tracks, so `-1` used to resolve to line 1)", () => {
+    // jsdom performs no layout, so it cannot see whether the *rendered* box actually covers the
+    // chip/more-link rows below the head row (that assertion belongs to the Playwright visual
+    // suite, against .day-cell's measured height vs .week's). What we can honestly assert here
+    // is the emitted inline style itself: it must not be the collapsing `1 / -1` form, and it
+    // must span far enough (`span 999`) to reach past any real row count (`maxEvents + 2`).
+    const el = mount({ date: "2026-07-06", "max-events": "3" });
+    const cells = Array.from(sr(el).querySelectorAll<HTMLElement>("[data-cell]"));
+    expect(cells.length).toBeGreaterThan(0);
+    for (const cell of cells) {
+      const gridRow = cell.style.gridRow;
+      expect(gridRow).not.toBe("1 / -1");
+      const match = gridRow.match(/^1\s*\/\s*span\s+(\d+)$/);
+      expect(match).toBeTruthy();
+      expect(Number(match![1])).toBeGreaterThanOrEqual(3 /* maxEvents */ + 2);
+    }
   });
 
   it("marks the out token consistently with its column's day-head button (out-of-Hijri-month cells)", () => {
@@ -205,6 +223,18 @@ describe("<hijri-calendar> month-marker", () => {
       (b) => cal.gregorianToHijri(new Date(`${b.dataset.date}T00:00:00Z`)).day === 1
     )!;
     expect(hijriFirst.querySelector('[part="day-month-marker"]')).toBeTruthy();
+  });
+
+  it('"hijri" with numerals-gregorian="arab" renders a bare, transliterated day-secondary digit with dir="rtl" on the Gregorian first-of-month (gregHasMonthMarker mirrors the actual rendered condition, not just "is the 1st")', () => {
+    // Regression coverage for the gregHasMonthMarker fix: under month-marker="hijri" the
+    // Gregorian "1 Jul" name never renders, so 2026-07-01's day-secondary is a bare digit and
+    // must get the same dir="rtl" treatment as any other bare Arabic-Indic digit — previously
+    // gregHasMonthMarker checked only `date === 1`, which wrongly suppressed dir here.
+    const el = mount({ date: "2026-07-06", "month-marker": "hijri", "numerals-gregorian": "arab" });
+    const gregFirst = cellFor(el, "2026-07-01");
+    const secondary = gregFirst.querySelector('[part="day-secondary"]')!;
+    expect(secondary.textContent!.trim()).toBe(formatNumerals("1", "arab"));
+    expect(secondary.getAttribute("dir")).toBe("rtl");
   });
 
   it('"none" shows bare numbers: day-secondary is bare "1" on 2026-07-01, no marker spans at all', () => {
