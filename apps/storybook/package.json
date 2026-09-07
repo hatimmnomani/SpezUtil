@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "storybook dev -p 6006 --no-open",
     "build": "storybook build",
-    "lint": "echo \"no lint\""
+    "lint": "echo \"no lint\"",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots"
   },
   "dependencies": {
     "@spezutil/hijri-datepicker": "workspace:*",
@@ -13,10 +15,12 @@
     "@spezutil/richtext-editor": "workspace:*"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@storybook/addon-a11y": "^8.3.0",
     "@storybook/addon-essentials": "^8.3.0",
     "@storybook/web-components": "^8.3.0",
     "@storybook/web-components-vite": "^8.3.0",
+    "http-server": "^14.1.1",
     "lit": "^3.2.0",
     "storybook": "^8.3.0",
     "lit-html": "^3.2.0",

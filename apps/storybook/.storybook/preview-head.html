@@ -1,0 +1,38 @@
+<!--
+  Vendored @font-face declarations for the "Editorial" stories' type ramp
+  (--font-display / --font-sans / --font-mono, plan §2.1). These load from
+  public/fonts/ (served as static files via `staticDirs` in main.ts, NOT
+  base64-inlined) rather than Google Fonts, so the visual-regression tests
+  (task-6) never depend on a network font fetch. Amiri
+  (--hcal-font-family-arabic) is not declared here: it ships embedded inside
+  the hijri-calendar component itself.
+
+  Each family is OFL-1.1 licensed; its license file sits alongside the TTF in
+  public/fonts/, same obligation the repo already honours for Amiri at
+  assets/fonts/OFL-Amiri.txt.
+-->
+<style>
+  @font-face {
+    font-family: "Newsreader";
+    src: url("/fonts/Newsreader-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Public Sans";
+    src: url("/fonts/PublicSans-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "JetBrains Mono";
+    src: url("/fonts/JetBrainsMono-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+</style>
