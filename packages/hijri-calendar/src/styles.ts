@@ -76,7 +76,7 @@ ${arabicFontFace}
 .week { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: min-content; min-height: var(--hcal-cell-min-height); align-content: start; position: relative; }
 /* Background layer (R1): one div per column, behind the day-head buttons/chips/more-link
    (all position: relative; z-index: 1) in both DOM and stacking order. */
-.day-cell { position: relative; z-index: 0; box-sizing: border-box; padding: var(--hcal-cell-padding); border-inline-end: 1px solid var(--hcal-grid-line); border-block-end: 1px solid var(--hcal-grid-line); transition: background var(--hcal-transition); }
+.day-cell { position: absolute; top: 0; bottom: 0; inset-inline-start: calc(var(--_col, 0) * (100% / 7)); width: calc(100% / 7); z-index: 0; box-sizing: border-box; padding: var(--hcal-cell-padding); border-inline-end: 1px solid var(--hcal-grid-line); border-block-end: 1px solid var(--hcal-grid-line); transition: background var(--hcal-transition); }
 .day-cell:nth-of-type(7) { border-inline-end: none; }
 .day-cell:hover { background: var(--hcal-cell-hover-bg); }
 .day-cell.out { background: var(--hcal-cell-out-bg); }

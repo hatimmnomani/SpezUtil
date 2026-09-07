@@ -39,22 +39,32 @@ describe("<hijri-calendar> month day-cell background layer", () => {
     expect(sr(el).querySelectorAll('[part~="day-cell"]').length).toBe(42);
   });
 
-  it("gives every day-cell an unbounded row span so it isn't collapsed to the head row (fix: `.week` has no explicit row tracks, so `-1` used to resolve to line 1)", () => {
-    // jsdom performs no layout, so it cannot see whether the *rendered* box actually covers the
-    // chip/more-link rows below the head row (that assertion belongs to the Playwright visual
-    // suite, against .day-cell's measured height vs .week's). What we can honestly assert here
-    // is the emitted inline style itself: it must not be the collapsing `1 / -1` form, and it
-    // must span far enough (`span 999`) to reach past any real row count (`maxEvents + 2`).
-    const el = mount({ date: "2026-07-06", "max-events": "3" });
+  it("takes each day-cell out of grid placement (--_col only, no grid-row/grid-column) so it can be positioned to fill .week's real rendered box rather than a track-bounded grid area", () => {
+    // Fix history: `.week` has `min-height: var(--hcal-cell-min-height)` with `align-content:
+    // start`, so any week whose real content (head + chip lanes + more-link) is shorter than
+    // that min-height has leftover space sitting *after* the last grid line — nothing placed
+    // via grid-row, at any span (`1 / -1` or `1 / span 999`), can reach into it, since a grid
+    // item's box is bounded by the tracks it spans. The layer is therefore not a grid item at
+    // all: no `grid-row`/`grid-column` in its inline style (a definite grid position would make
+    // an absolutely-positioned child use that grid *area*, not `.week`'s padding box, as its
+    // containing block — see styles.ts's `.day-cell` comment). jsdom performs no layout, so it
+    // cannot see whether the rendered box actually reaches `.week`'s real height — that's a
+    // Playwright-only assertion (see the fix report) — but it CAN honestly see that no grid
+    // placement was emitted, and that the CSS declares the absolute/inset mechanism instead.
+    const el = mount({ date: "2026-07-06" });
     const cells = Array.from(sr(el).querySelectorAll<HTMLElement>("[data-cell]"));
-    expect(cells.length).toBeGreaterThan(0);
-    for (const cell of cells) {
-      const gridRow = cell.style.gridRow;
-      expect(gridRow).not.toBe("1 / -1");
-      const match = gridRow.match(/^1\s*\/\s*span\s+(\d+)$/);
-      expect(match).toBeTruthy();
-      expect(Number(match![1])).toBeGreaterThanOrEqual(3 /* maxEvents */ + 2);
+    expect(cells.length).toBe(42);
+    for (let d = 0; d < 7; d++) {
+      const cell = cells[d]!;
+      expect(cell.style.getPropertyValue("--_col")).toBe(String(d));
+      expect(cell.style.gridRow).toBe("");
+      expect(cell.style.gridColumn).toBe("");
     }
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toMatch(/\.day-cell\s*\{[^}]*position:\s*absolute/);
+    expect(css).toMatch(/\.day-cell\s*\{[^}]*top:\s*0\b/);
+    expect(css).toMatch(/\.day-cell\s*\{[^}]*bottom:\s*0\b/);
+    expect(css).toMatch(/\.day-cell\s*\{[^}]*inset-inline-start:\s*calc\(var\(--_col/);
   });
 
   it("marks the out token consistently with its column's day-head button (out-of-Hijri-month cells)", () => {

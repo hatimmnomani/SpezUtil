@@ -669,14 +669,18 @@ export class HijriCalendarElement extends HTMLElement {
         // sits behind them in DOM/stacking order (R1). It shares the button's click handler
         // (see wireMonth) rather than re-emitting date-click itself.
         //
-        // `grid-row: 1 / span 999` (not `1 / -1`): `.week` has no `grid-template-rows`, so it
-        // has zero *explicit* row tracks, and a negative line counts from the end of the
-        // explicit grid only — `-1` resolves to line 1, collapsing the span to nothing beyond
-        // the head row. `span 999` instead forces the grid to create however many implicit row
-        // tracks the layer's own placement needs; empty ones size to 0 (min-content of nothing),
-        // so in practice the layer's box still ends exactly where the last real row (head, any
-        // occupied chip lane, the more-link row) ends. 999 is comfortably above any real row
-        // count (`maxEvents + 2`).
+        // Deliberately NOT a grid item: `.week`'s own box can be taller than the sum of its row
+        // tracks (min-height: var(--hcal-cell-min-height) with align-content: start puts any
+        // leftover height *after* the last track, outside every grid line — nothing placed via
+        // grid-row/grid-column, at any span, can reach into it). So the layer is taken out of
+        // grid layout entirely and positioned absolutely instead: `.week` is already `position:
+        // relative`, and an absolutely-positioned child with NO definite grid-row/grid-column
+        // uses the grid container's own padding box as its containing block (a definite grid
+        // position would instead use that grid *area* as the containing block, which is exactly
+        // the track-bounded box we're trying to escape). `top:0;bottom:0` in styles.ts then
+        // stretches it to `.week`'s actual rendered height, whatever produced it (min-height or
+        // content). Horizontal placement is done manually via the `--_col` custom property
+        // (`inset-inline-start`/`width` in styles.ts) since there's no grid-column to rely on.
         const dayCells = week
           .map((cell, d) => {
             const i = w * 7 + d;
@@ -691,7 +695,7 @@ export class HijriCalendarElement extends HTMLElement {
                 ? `<span part="today-indicator"></span>`
                 : "";
             return `<div class="${tokenStr}" part="${tokenStr}" data-cell="${i}"
-              style="grid-column:${d + 1}; grid-row:1 / span 999">${indicator}</div>`;
+              style="--_col:${d}">${indicator}</div>`;
           })
           .join("");
 
