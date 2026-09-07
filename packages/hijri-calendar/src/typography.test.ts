@@ -49,11 +49,34 @@ describe("<hijri-calendar> numerals", () => {
     const el = mount({ date: "2026-07-06", "numerals-gregorian": "arab" });
     const first = cellFor(el, "2026-07-01");
     expect(first.querySelector('[part="day-secondary"]')!.textContent!.trim()).toBe("١ Jul");
-    expect(first.querySelector('[part="day-secondary"]')!.getAttribute("dir")).toBe("rtl");
+    // "١ Jul" mixes an Arabic-Indic numeral with a Latin month abbreviation; under an RTL
+    // base direction the bidi algorithm would reorder that mix to "Jul ١", so this span must
+    // never carry `dir` even though its digit is Arabic-Indic.
+    expect(first.querySelector('[part="day-secondary"]')!.getAttribute("dir")).toBeNull();
 
     const titlePrimary = sr(el).querySelector('[part="title-primary"]')!;
     expect(ARABIC_INDIC.test(titlePrimary.textContent!)).toBe(false);
     expect(titlePrimary.getAttribute("dir")).toBeNull();
+  });
+
+  it('numerals-gregorian="arab" transliterates a bare (non-month-marker) Gregorian day number and does carry dir="rtl"', () => {
+    const el = mount({ date: "2026-07-06", "numerals-gregorian": "arab" });
+    const cell = cellFor(el, "2026-07-06");
+    const secondary = cell.querySelector('[part="day-secondary"]')!;
+    expect(secondary.textContent!.trim()).toBe("٦");
+    expect(secondary.getAttribute("dir")).toBe("rtl");
+  });
+
+  it('never sets dir on the "N Jul"-style month-marker span, even when it is the primary span (primary="gregorian")', () => {
+    const el = mount({
+      date: "2026-07-06",
+      primary: "gregorian",
+      "numerals-gregorian": "arab",
+    });
+    const first = cellFor(el, "2026-07-01");
+    const primarySpan = first.querySelector('[part="day-primary"]')!;
+    expect(primarySpan.textContent!.trim()).toBe("١ Jul");
+    expect(primarySpan.getAttribute("dir")).toBeNull();
   });
 
   it('numerals="arab" alone leaves week-view gutter labels (Gregorian clock digits) Latin', () => {
@@ -100,9 +123,10 @@ describe("<hijri-calendar> numerals", () => {
       h.querySelector('[part="day-secondary"]')!.textContent!.includes("Jul")
     );
     expect(julHead).toBeTruthy();
-    expect(julHead!.querySelector('[part="day-secondary"]')!.textContent!.trim()).toBe(
-      `${formatNumerals("1", "arab")} Jul`
-    );
+    const julSecondary = julHead!.querySelector('[part="day-secondary"]')!;
+    expect(julSecondary.textContent!.trim()).toBe(`${formatNumerals("1", "arab")} Jul`);
+    // Mixed Arabic-Indic-numeral + Latin-abbreviation content never carries `dir`.
+    expect(julSecondary.getAttribute("dir")).toBeNull();
 
     const gutterFirst = sr(el).querySelectorAll(".tg-gutter span")[0]!.textContent;
     expect(gutterFirst).toBe(formatNumerals("00:00", "arab"));
@@ -200,5 +224,22 @@ describe("<hijri-calendar> font-family custom properties", () => {
     const css = sr(el).querySelector("style")!.textContent!;
     expect(css).toContain("--hcal-font-family-display: var(--hcal-font-family);");
     expect(css).toContain("--hcal-font-family-mono: var(--hcal-font-family);");
+  });
+
+  it("applies --hcal-font-family-display to the time-grid event title", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toMatch(/\.tg-event\s*\{[^}]*font-family:\s*var\(--hcal-font-family-display\)/);
+  });
+
+  it("does not apply --hcal-font-family-display to Gregorian day-number spans in this phase (P2 owns --hcal-day-secondary-font-family)", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain(
+      '.day-head .num-secondary { font-size: 9px; color: var(--hcal-muted); white-space: nowrap; font-family: var(--hcal-font-family-arabic); }'
+    );
+    expect(css).toContain(
+      '.tg-col-head .num-secondary { font-size: 10px; color: var(--hcal-muted); white-space: nowrap; font-family: var(--hcal-font-family-arabic); }'
+    );
   });
 });

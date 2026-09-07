@@ -477,7 +477,13 @@ export class HijriCalendarElement extends HTMLElement {
   private dayNumbersHtml(hijriDay: number, g: Date): string {
     const gregLabel = this.gregDayLabel(g);
     const hijriLabel = this.numH(hijriDay);
-    const gregDir = this.numeralsGregorian === "arab" ? ' dir="rtl"' : "";
+    // The "1 Jul"-style month marker mixes an Arabic-Indic numeral with a Latin month
+    // abbreviation. Under an RTL base direction the bidi algorithm reorders that mix (it
+    // would render "Jul ١" instead of "١ Jul"), so a span carrying that mixed content never
+    // gets `dir`, regardless of `numerals-gregorian` — see the dayNumbersHtml/gregDayLabel
+    // comment above. A bare Hijri or Gregorian numeral has no such mix and is safe to mark.
+    const gregHasMonthMarker = g.getUTCDate() === 1;
+    const gregDir = !gregHasMonthMarker && this.numeralsGregorian === "arab" ? ' dir="rtl"' : "";
     const hijriDir = this.numerals === "arab" ? ' dir="rtl"' : "";
     const [primHtml, secHtml] =
       this.primary === "gregorian"
