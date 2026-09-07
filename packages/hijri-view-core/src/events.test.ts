@@ -96,6 +96,17 @@ describe("normalizeEvent", () => {
       expect(n.allDay).toBe(true);
       expect(n.endMs).toBe(Date.UTC(2026, 6, 7));
     });
+
+    it("falls back to the 1h default (not durationMinutes) when end is present but invalid", () => {
+      // Pinning the current, intentional behaviour: "explicit end wins" is read literally as
+      // "end is present", not "end is present and valid" — an inverted/invalid end does not
+      // fall through to durationMinutes, it falls through to the same +1h default as no end at
+      // all. See the fix-report note for the reasoning.
+      const n = normalizeEvent(
+        ev({ start: "2026-07-06T10:00", end: "2026-07-06T09:00", durationMinutes: 90 })
+      );
+      expect(n.endMs).toBe(Date.UTC(2026, 6, 6, 11, 0));
+    });
   });
 
   describe("variant sanitising", () => {
@@ -126,17 +137,21 @@ describe("normalizeEvent", () => {
       expect(warn).toHaveBeenCalledTimes(1);
     });
 
-    it("does not mutate the original event object", () => {
+    it("drops an uppercase variant and does not mutate the original event object", () => {
       const original = ev({ id: "bad-2", start: "2026-07-06T09:00", variant: "Not Ok" });
-      vi.spyOn(console, "warn").mockImplementation(() => {});
-      normalizeEvent(original);
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const n = normalizeEvent(original);
+      expect(n.event.variant).toBeUndefined();
+      expect(warn).toHaveBeenCalledTimes(1);
       expect(original.variant).toBe("Not Ok");
     });
 
-    it("dedupes repeated warnings for the same event id + value", () => {
+    it("drops a variant with disallowed whitespace/punctuation and dedupes repeated warnings", () => {
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-      normalizeEvent(ev({ id: "bad-3", start: "2026-07-06T09:00", variant: "Bad!" }));
-      normalizeEvent(ev({ id: "bad-3", start: "2026-07-06T09:00", variant: "Bad!" }));
+      const n1 = normalizeEvent(ev({ id: "bad-3", start: "2026-07-06T09:00", variant: "Bad!" }));
+      const n2 = normalizeEvent(ev({ id: "bad-3", start: "2026-07-06T09:00", variant: "Bad!" }));
+      expect(n1.event.variant).toBeUndefined();
+      expect(n2.event.variant).toBeUndefined();
       expect(warn).toHaveBeenCalledTimes(1);
     });
 
