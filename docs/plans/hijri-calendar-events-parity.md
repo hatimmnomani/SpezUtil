@@ -28,7 +28,7 @@ plan turns every one of those traits into first-class, documented API: ~50 new `
 properties, 21 new attributes/properties, 1 new DOM event (`range-change`), 2 render hooks
 (`renderEvent`, `renderDayCell`), 5 slots, and ~30 new `::part()` names/tokens — all additive, shipped in
 eight phases (six package phases, one CI/visual-regression phase, one consumer-migration phase), with the
-default look unchanged for existing 0.2.x consumers except the two accepted changes in §5.4.
+default look unchanged for existing 0.2.x consumers except the four accepted changes in §5.4.
 
 ---
 
@@ -193,7 +193,7 @@ possible → new feature. **Ref** cites the reference CSS selector (`events.css`
 | X1 | Four font families (display / sans / mono / Arabic) | One Arabic prop + undeclared base prop | b | `--hcal-font-family`, `--hcal-font-family-display`, `--hcal-font-family-mono` (both default to `var(--hcal-font-family)`) |
 | X2 | Hijri numerals in **Arabic-Indic digits**, Gregorian in Latin | Latin everywhere; no numeral utility in `hijri-core` | c | `numerals="latn" (default) \| "arab"` for Hijri numbers; `numerals-gregorian="latn" (default) \| "arab"` for Gregorian numbers and clock labels (§5.1 truth table); shared `formatNumerals()` in `hijri-core` |
 | X3 | Arabic month/weekday names with **English UI** labels | `locale="ar"` switches names *and* UI strings | c | `names="translit\|ar"` (default: follows `locale`) |
-| X4 | Arabic runs are `direction: rtl` inline within an LTR page | Whole component flips with `dir="rtl"` only | b | Emit `dir="rtl"` on Arabic-name/numeral spans when `names="ar"` or the relevant `numerals*` is `arab` |
+| X4 | Arabic runs are `direction: rtl` inline within an LTR page | Whole component flips with `dir="rtl"` only | b | `dir="rtl"` is a property of a span's actual rendered content, not of which attribute is `arab`: emit it only on spans whose content is single-script Arabic (`names="ar"` name spans); a span mixing an Arabic-Indic numeral with a Latin month name/abbreviation (`day-secondary`, `day-primary` under `primary="gregorian"`, `title-primary` under mixed `names`/`numerals`) gets no `dir`, since Arabic-Indic digits render correctly inside an LTR run — implemented as a shared content-based gate, not per-span special-casing |
 | X5 | Event tone from event type; `draft` status → dashed | Only `color` per event | c | `eventFields` values accept `string \| (raw) => unknown` so colour/style/variant can be **derived**; per-event `style`, `variant` |
 | X6 | Backend events carry `duration_mins`, not `end` | `end` or +1h default | c | `CalendarEvent.durationMinutes` + `eventFields.durationMinutes`, honoured by `normalizeEvent` |
 | X7 | App must fetch events for the visible range (it currently fetches page 1 of 10, unfiltered) | Host cannot know the visible range without recomputing it | c | `range-change` event with a defined contract (§5.3) + app-side `useEventsInRange` (§6 P7) |
@@ -209,7 +209,7 @@ possible → new feature. **Ref** cites the reference CSS selector (`events.css`
 
 1. **Additive and default-preserving.** Every new attribute has a default equal to today's behaviour;
    every new custom property defaults to today's literal value. A 0.2.x consumer upgrading sees no
-   visual change except D1/D2 (§5.4, accepted).
+   visual change except D1/D2/D3/D4 (§5.4, accepted).
 2. **Attributes for structure, custom properties for appearance, parts for escape hatches.** If a
    trait changes *what DOM is rendered* (bilingual weekday, banner header, time prefix) it is an
    attribute. If it changes *how existing DOM looks* it is a `--hcal-*` property. `::part()` exists
@@ -421,6 +421,12 @@ export interface RangeChangeDetail {
   (`part="day column-head"`). Existing `::part(day)` selectors keep matching. Changeset text as above.
 - **D3 — title DOM.** `.title small` is replaced by `<span part="title-secondary">` (the old `<small>`
   had no part). Selectors on the internal `<small>` were never public; changelog notes it anyway.
+- **D4 — time-grid column-head numeral sizes.** The week/day column-head primary/secondary numerals
+  change default size from 15px/10px to 14px/9px because `--hcal-day-primary-font-size` (default
+  `14px`) and `--hcal-day-secondary-font-size` (default `9px`) now drive both the month `.day-head`
+  and the time-grid `.tg-col-head` (§5.5). One token driving both heads was chosen over a second
+  token or a per-view default. Purely visual; parts unchanged. Ships in P2. A consumer who wants the
+  old time-grid size restores it with a one-line override: `--hcal-day-primary-font-size: 15px`.
 
 ### 5.5 CSS custom properties
 
@@ -431,7 +437,7 @@ Defaults are today's literal values unless marked **new**. All declared on `:hos
 | `--hcal-bg`, `--hcal-fg`, `--hcal-muted`, `--hcal-accent`, `--hcal-accent-fg`, `--hcal-border`, `--hcal-radius`, `--hcal-event-fg`, `--hcal-font-family-arabic` | existing | — | unchanged |
 | `--hcal-today-bg` | `color-mix(in srgb, var(--hcal-accent) 10%, transparent)` | P2 | **Now actually used**: month day-cell background, week/day column-head background when today |
 | `--hcal-font-family` | `system-ui, sans-serif` **(declare; was referenced but undefined)** | P0 | base font |
-| `--hcal-font-family-display` | `var(--hcal-font-family)` **new** | P1 | Gregorian day numbers, `title-secondary`, day-banner secondary, time-grid event title |
+| `--hcal-font-family-display` | `var(--hcal-font-family)` **new** | P1 | `title-secondary`, day-banner secondary, time-grid event title (Gregorian day-number spans are governed by `--hcal-day-secondary-font-family` instead, whose default preserves the Arabic family — see §7.1 for overriding it to the display serif) |
 | `--hcal-font-family-mono` | `var(--hcal-font-family)` **new** | P1 | gutter labels, `event-time`, `weekday-secondary`, day-banner weekday |
 | `--hcal-grid-line` | `var(--hcal-border)` **new** | P2 | inner hairlines (cell borders, slot lines, gutter border) — outer border stays `--hcal-border` |
 | `--hcal-header-bg` | `transparent` **new** | P1 | weekday row, time-grid head row, all-day row background |
@@ -635,8 +641,9 @@ Acceptance
 Wrappers
 - React (`packages/hijri-calendar-react/src/index.ts`): add
   `onRangeChange: "range-change" as EventName<CustomEvent<RangeChangeDetail>>`; re-export
-  `RangeChangeDetail`. Test in `index.test.tsx`: `onRangeChange` called once on mount with
-  `reason:"init"`.
+  `RangeChangeDetail`. Test in `index.test.tsx`: after mount, `visibleRange` (read via the ref) reflects
+  `reason:"init"`; `onRangeChange` fires with `reason:"navigate"` after a subsequent `nav-next` click
+  (R5 — `onRangeChange` cannot observe the `init` fire itself under `@lit/react`).
 - Angular (`hijri-calendar.component.ts`): `@Input() views`, `@Input() toolbar`,
   `@Output() rangeChange`, template bindings `[views] [toolbar] (range-change)`; add
   `<ng-content select="[slot=toolbar-start]">`, `[slot=toolbar-end]`, `[slot=subheader]` inside
@@ -666,8 +673,12 @@ Tasks
    `<div part="weekday [weekend]"><span part="weekday-primary">…</span><span part="weekday-secondary">…</span></div>`;
    `--hcal-weekday-align`, `--hcal-header-bg`.
 6. `--hcal-font-family-display`, `--hcal-font-family-mono` declared and applied (§5.5 "Applies to").
-7. `dir="rtl"` on Arabic-name spans (`names="ar"`) and Arabic-numeral spans (`numerals="arab"` /
-   `numerals-gregorian="arab"`) (X4).
+7. `dir="rtl"` gate (X4): a property of the span's actual rendered content, not of which attribute is
+   `arab` — only spans whose content is single-script Arabic (`names="ar"` name spans) get `dir="rtl"`;
+   a span mixing an Arabic-Indic numeral with a Latin month name/abbreviation (`day-secondary`,
+   `day-primary` under `primary="gregorian"`, `title-primary` under mixed `names`/`numerals`) gets
+   none, since Arabic-Indic digits render correctly inside an LTR run. Implemented as a shared gate,
+   not per-span special-casing.
 8. `weekend-days`: parse to `number[]` (default `[0,6]`); pass as `weekendDays` to
    `buildCalendarMonthModel` / `buildMonthModel` / `buildTimeGridModel`. `hijri-view-core`: add
    `isWeekend` to `DayCell` and `TimeGridColumn`, computed from `getUTCDay()` against
@@ -717,7 +728,7 @@ Tasks
 3. `--hcal-cell-padding`, `--hcal-cell-out-bg`, `--hcal-cell-out-opacity`, `--hcal-weekend-bg`,
    `--hcal-weekend-fg`, `--hcal-transition`; minimal `overflow-x: auto` on `.cal` as a safety net
    (superseded by P5's `part="scroll"` containers but harmless).
-4. `day-number-align` → `:host([day-number-align="start"]) .day-head, .tg-col-head { justify-content:flex-start; align-items:flex-start }`.
+4. `day-number-align` → `:host([day-number-align="start"]) .day-head, :host([day-number-align="start"]) .tg-col-head { justify-content:flex-start; align-items:flex-start }`.
 5. `today-marker`: `pill` keeps today's rule; `dot` renders `<span part="today-indicator">` inside
    `day-cell` and colours the primary number with `--hcal-today-color`; `none` renders neither.
    `--hcal-today-bg` applied to `.day-cell.today` and `.tg-col-head.today` in **all** modes (fixes
@@ -727,7 +738,7 @@ Tasks
    preserved for `gregorian`/`both`; `none` shows bare numbers. Wrap numbers in
    `<span part="day-numbers">` so the marker can be pushed to the far edge (`margin-inline-start:auto`).
 7. Tokenise number typography (`--hcal-day-primary-*`, `--hcal-day-secondary-*`); unify time-grid
-   head size to the same tokens.
+   head size to the same tokens (D4).
 8. Column heads: `part="day column-head [today] [weekend]"` (D2); `part="day-column [today] [weekend]"`
    on `.tg-day-col`.
 
@@ -893,8 +904,9 @@ Acceptance (unit, jsdom with the stub)
   `<button part="event">`, `+N` text when events exceed `max-events`; clicking the `day-cell` fires
   `date-click`; `event-click` cannot fire (no chip buttons). `narrow-events="scroll"` → chip buttons
   present and `[part="scroll"]` wraps `.month`.
-- `narrow` week view → `[part="scroll"]` contains `.tg-head`, `.tg-allday` and `.tg-body`; styles
-  string contains `position: sticky` for `.tg-gutter`.
+- `narrow` week view with an all-day event present (or `allday-row="always"`) → `[part="scroll"]`
+  contains `.tg-head`, `.tg-allday` and `.tg-body`; with no all-day row, `[part="scroll"]` still wraps
+  `.tg-head` and `.tg-body`; styles string contains `position: sticky` for `.tg-gutter`.
 - `narrow` + `weekday-format="bilingual"` → no `weekday-secondary`; `title-layout="inline"` →
   `.title` lacks the inline class/attribute hook.
 - No `ResizeObserver` (delete the global) → `size === "wide"`, no errors.
@@ -982,8 +994,8 @@ Tasks
    → confirm `hijri-calendar 0.3.0`, `hijri-view-core 0.2.0`, `hijri-core 0.2.0`, both wrappers
    `0.2.0`. Watch the peer-dependency note: the Angular wrapper declares
    `@spezutil/hijri-calendar >=0.1.0 <2.0.0`, so a minor bump must **not** force-major it — verify in
-   the status output before `pnpm version-packages`. CHANGELOG entries must include D1, D2, D3 and the
-   "1.0 will default `event-style` to `tinted`" notice (§8.2).
+   the status output before `pnpm version-packages`. CHANGELOG entries must include D1, D2, D3, D4 and
+   the "1.0 will default `event-style` to `tinted`" notice (§8.2).
 6. **`da-office-management-fe`** (separate repo; git-ignored here as a local clone):
    - Bump `@spezutil/hijri-calendar-react` to `^0.2.0` (pulls `hijri-calendar ^0.3.0`).
    - **Range-based fetching (blocked on backend filter, see below).** In `src/api/events.js` add
@@ -1181,7 +1193,7 @@ resolution below is already propagated into §5 and §6; this section is the rec
 | R2 | `innerHTML` re-render + post-render hook passes could be slow for very large event sets. | Fine for ≤ a few hundred events (measured against the reference's 16); virtualisation is explicitly out of scope; the `ResizeObserver` re-renders only on band change. |
 | R3 | `EventFieldMap` accepting functions makes `eventFields` non-JSON-serialisable; Angular templates pass it as an object binding anyway. | Documented in `api.md`; string values keep working. |
 | R4 (new) | Narrow-width design has **no reference** to match; the 768/420 baselines are self-referential. | Review the `Responsive` story with the user once before locking baselines (P5 → P6 hand-off checklist item). |
-| R5 (new) | `range-change` on first render fires synchronously inside `connectedCallback`; a React host attaches `onRangeChange` via `@lit/react` after the element is created but before it is connected, so it receives it — but a vanilla host that adds the listener after `appendChild` misses it. | `visibleRange` property documented as the catch-up path; docs recipe shows both. |
+| R5 (new) | `range-change` on first render fires synchronously inside `connectedCallback`. `@lit/react@1.0.8`'s `createComponent` attaches `onRangeChange` inside a dependency-free `useLayoutEffect`, which React runs only after the ref callback fires post-commit — strictly after the custom element's `connectedCallback` and its synchronous `init` dispatch have already happened. So a React host misses the connect-time `init` event exactly as a vanilla host that adds its listener after `appendChild` does; the Angular wrapper's `(rangeChange)` binding has the same timing. | `visibleRange` property is the load-bearing catch-up path for React and Angular hosts too, not just vanilla ones; docs recipe shows all three. |
 | R6 (new) | Vendoring three more OFL fonts into `apps/storybook/public/fonts/` adds license obligations. | Ship license files alongside, as done for Amiri; storybook is private and never published. |
 
 ---
@@ -1196,7 +1208,7 @@ resolution below is already propagated into §5 and §6; this section is the rec
 - `apps/docs` API page lists every attribute, property, event, custom property, part and slot in §5,
   the numerals truth table, the `range-change` contract, the `slot-minutes` note, and the size-band
   table.
-- Changesets applied; versions as in the header; CHANGELOGs mention D1, D2, D3 and the 1.0
+- Changesets applied; versions as in the header; CHANGELOGs mention D1, D2, D3, D4 and the 1.0
   `event-style` default change.
 - `da-office-management-fe` PR deletes the five dead calendar sections of `events.css`, ships
   `calendar-theme.css` + the rewritten `my-calendar.jsx`, and fetches by visible range via
