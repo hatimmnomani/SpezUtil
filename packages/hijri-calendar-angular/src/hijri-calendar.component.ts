@@ -39,6 +39,12 @@ import type {
       [timezone]="timezone"
       [views]="views"
       [toolbar]="toolbar"
+      [titleLayout]="titleLayout"
+      [names]="names"
+      [numerals]="numerals"
+      [numeralsGregorian]="numeralsGregorian"
+      [weekdayFormat]="weekdayFormat"
+      [weekendDays]="weekendDays"
       [eventFields]="eventFields"
       [events]="events"
       (event-click)="onEventClick($event)"
@@ -70,6 +76,12 @@ export class HijriCalendarComponent {
   @Input() timezone: string | null = null;
   @Input() views: string | null = null;
   @Input() toolbar: "full" | "none" = "full";
+  @Input() titleLayout: "stacked" | "inline" | null = null;
+  @Input() names: "translit" | "ar" | null = null;
+  @Input() numerals: "latn" | "arab" | null = null;
+  @Input() numeralsGregorian: "latn" | "arab" | null = null;
+  @Input() weekdayFormat: "short" | "long" | "bilingual" | null = null;
+  @Input() weekendDays: string | number[] | null = null;
   @Input() eventFields: EventFieldMap | null = null;
   @Input() events: CalendarEvent[] = [];
 

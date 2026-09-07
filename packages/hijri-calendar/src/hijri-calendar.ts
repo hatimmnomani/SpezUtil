@@ -1,6 +1,8 @@
 import {
   createCalendar,
   formatHijri,
+  formatNumerals,
+  weekdayNames as enWeekdayNames,
   zonedNowMinutes,
   zonedTodayUtc,
   type HijriCalendar,
@@ -20,7 +22,7 @@ import {
   type PositionedEvent,
   type TimeGridColumn,
 } from "@spezutil/hijri-view-core";
-import { resolveLocale, type CalendarLocale } from "./locale";
+import { resolveLocale, resolveNames, type CalendarLocale, type NameSet } from "./locale";
 import { styles } from "./styles";
 
 export type CalendarView = "month" | "week" | "day" | "agenda";
@@ -124,6 +126,12 @@ export class HijriCalendarElement extends HTMLElement {
       "timezone",
       "views",
       "toolbar",
+      "title-layout",
+      "names",
+      "numerals",
+      "numerals-gregorian",
+      "weekday-format",
+      "weekend-days",
     ];
   }
 
@@ -135,6 +143,7 @@ export class HijriCalendarElement extends HTMLElement {
   private _eventFields: EventFieldMap | undefined;
   private suppress = false;
   private loc: CalendarLocale = resolveLocale(null);
+  private nameSet: NameSet = resolveNames(null);
   private lastRangeDetail: RangeChangeDetail | null = null;
 
   public isDateDisabled?: (hijri: HijriDate, gregorian: Date) => boolean;
@@ -269,6 +278,71 @@ export class HijriCalendarElement extends HTMLElement {
   get visibleRange(): RangeChangeDetail | null {
     return this.lastRangeDetail;
   }
+  /** Gregorian subtitle below (`stacked`, default) or inline after the Hijri title (`inline`). */
+  get titleLayout(): "stacked" | "inline" {
+    return this.getAttribute("title-layout") === "inline" ? "inline" : "stacked";
+  }
+  set titleLayout(v: string) {
+    this.reflect("title-layout", v);
+  }
+  /**
+   * Hijri month & weekday name set, independent of the `locale` attribute's UI strings.
+   * Defaults to following `locale` (`"ar"` when `locale="ar"`, `"translit"` otherwise).
+   */
+  get names(): "translit" | "ar" {
+    const v = this.getAttribute("names");
+    if (v === "translit" || v === "ar") return v;
+    return this.locale === "ar" ? "ar" : "translit";
+  }
+  set names(v: string) {
+    this.reflect("names", v);
+  }
+  /** Digit system for Hijri numbers: day numbers, Hijri year, title primary, agenda Hijri date. */
+  get numerals(): "latn" | "arab" {
+    return this.getAttribute("numerals") === "arab" ? "arab" : "latn";
+  }
+  set numerals(v: string) {
+    this.reflect("numerals", v);
+  }
+  /** Digit system for Gregorian numbers and clock digits (gutter labels, event times, etc). */
+  get numeralsGregorian(): "latn" | "arab" {
+    return this.getAttribute("numerals-gregorian") === "arab" ? "arab" : "latn";
+  }
+  set numeralsGregorian(v: string) {
+    this.reflect("numerals-gregorian", v);
+  }
+  /** `bilingual` renders the `names` weekday (primary) and the English abbreviation (secondary). */
+  get weekdayFormat(): "short" | "long" | "bilingual" {
+    const v = this.getAttribute("weekday-format");
+    return v === "long" || v === "bilingual" ? v : "short";
+  }
+  set weekdayFormat(v: string) {
+    this.reflect("weekday-format", v);
+  }
+  /** Day indices (0=Sunday..6=Saturday) that receive the `weekend` part token. Default `[0, 6]`. */
+  get weekendDays(): number[] {
+    return this.parseWeekendDays(this.getAttribute("weekend-days"));
+  }
+  set weekendDays(v: number[] | string) {
+    this.reflect("weekend-days", Array.isArray(v) ? v.join(" ") : v);
+  }
+
+  private parseWeekendDays(attr: string | null): number[] {
+    if (attr === null) return [0, 6];
+    const out: number[] = [];
+    for (const t of attr.split(/\s+/).filter(Boolean)) {
+      const n = Number(t);
+      if (Number.isInteger(n) && n >= 0 && n <= 6 && !out.includes(n)) out.push(n);
+    }
+    return out;
+  }
+
+  private numH(n: number | string): string {
+    return formatNumerals(n, this.numerals);
+  }
+  private numG(n: number | string): string {
+    return formatNumerals(n, this.numeralsGregorian);
+  }
 
   private parseViews(attr: string | null): CalendarView[] {
     const tokens = (attr ?? "month week day agenda").split(/\s+/).filter(Boolean);
@@ -315,6 +389,7 @@ export class HijriCalendarElement extends HTMLElement {
     const d = parseIsoDateUtc(this.getAttribute("date"));
     if (d) this.viewDate = d;
     this.loc = resolveLocale(this.getAttribute("locale"));
+    this.nameSet = resolveNames(this.names);
   }
 
   private emit<T>(type: string, detail: T): void {
@@ -358,17 +433,18 @@ export class HijriCalendarElement extends HTMLElement {
     return (h, g) => (this.isDateDisabled ? this.isDateDisabled(h, g) : false);
   }
 
+  /** Clock label ("10:30", "8 AM"); routes digits through `numerals-gregorian`. */
   protected formatTimeLabel(minutes: number): string {
     const hour = Math.floor(minutes / 60);
     const minute = minutes % 60;
     const mm = minute ? `:${String(minute).padStart(2, "0")}` : "";
     if (this.timeFormat === "24") {
-      return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+      return this.numG(`${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`);
     }
     const meridiem = hour < 12 ? "AM" : "PM";
     let h12 = hour % 12;
     if (h12 === 0) h12 = 12;
-    return `${h12}${mm} ${meridiem}`;
+    return this.numG(`${h12}${mm} ${meridiem}`);
   }
 
   private eventTimeLabel(event: CalendarEvent): string {
@@ -378,29 +454,61 @@ export class HijriCalendarElement extends HTMLElement {
     return this.formatTimeLabel(startMin);
   }
 
+  /** Gregorian month/year subtitle ("May 2026"); routes the year digits through `numerals-gregorian`. */
   private gregSubtitle(first: Date, last: Date): string {
     const opts: Intl.DateTimeFormatOptions = { month: "short", year: "numeric", timeZone: "UTC" };
     const a = first.toLocaleDateString("en-US", opts);
     const b = last.toLocaleDateString("en-US", opts);
-    return a === b ? a : `${a} – ${b}`;
+    return this.numG(a === b ? a : `${a} – ${b}`);
   }
 
-  /** Gregorian day number, with "1 Jul"-style month marker on the first of a month. */
+  /**
+   * Gregorian day number, with "1 Jul"-style month marker on the first of a month. The day
+   * number (and year, N/A here) route through `numerals-gregorian`; the month abbreviation
+   * is never transliterated (`numG` only rewrites ASCII digits).
+   */
   private gregDayLabel(g: Date): string {
     const d = g.getUTCDate();
-    if (d !== 1) return String(d);
-    return `1 ${g.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" })}`;
+    if (d !== 1) return this.numG(d);
+    return this.numG(`1 ${g.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" })}`);
   }
 
   /** Primary/secondary day-number spans honoring `primary` and `secondary-position`. */
   private dayNumbersHtml(hijriDay: number, g: Date): string {
     const gregLabel = this.gregDayLabel(g);
-    const hijriLabel = String(hijriDay);
-    const [prim, sec] =
-      this.primary === "gregorian" ? [gregLabel, hijriLabel] : [hijriLabel, gregLabel];
-    const primarySpan = `<span class="num-primary" part="day-primary">${escapeHtml(prim)}</span>`;
-    if (this.secondaryPosition === "hidden") return primarySpan;
-    return `${primarySpan}<span class="num-secondary" part="day-secondary">${escapeHtml(sec)}</span>`;
+    const hijriLabel = this.numH(hijriDay);
+    const gregDir = this.numeralsGregorian === "arab" ? ' dir="rtl"' : "";
+    const hijriDir = this.numerals === "arab" ? ' dir="rtl"' : "";
+    const [primHtml, secHtml] =
+      this.primary === "gregorian"
+        ? [
+            `<span class="num-primary" part="day-primary"${gregDir}>${escapeHtml(gregLabel)}</span>`,
+            `<span class="num-secondary" part="day-secondary"${hijriDir}>${escapeHtml(hijriLabel)}</span>`,
+          ]
+        : [
+            `<span class="num-primary" part="day-primary"${hijriDir}>${escapeHtml(hijriLabel)}</span>`,
+            `<span class="num-secondary" part="day-secondary"${gregDir}>${escapeHtml(gregLabel)}</span>`,
+          ];
+    if (this.secondaryPosition === "hidden") return primHtml;
+    return `${primHtml}${secHtml}`;
+  }
+
+  /** Weekday header cell honoring `weekday-format` and `weekend-days`. Shared by month and time-grid views. */
+  private weekdayCellHtml(dow: number): string {
+    const full = this.nameSet.weekdayNames[dow] ?? "";
+    const isWeekend = this.weekendDays.includes(dow);
+    const partTokens = ["weekday", isWeekend ? "weekend" : ""].filter(Boolean).join(" ");
+    const dirAttr = this.names === "ar" ? ' dir="rtl"' : "";
+    let inner: string;
+    if (this.weekdayFormat === "bilingual") {
+      const secondary = (enWeekdayNames[dow] ?? "").slice(0, 3);
+      inner = `<span part="weekday-primary"${dirAttr}>${escapeHtml(full)}</span><span part="weekday-secondary">${escapeHtml(secondary)}</span>`;
+    } else if (this.weekdayFormat === "long") {
+      inner = `<span part="weekday-primary"${dirAttr}>${escapeHtml(full)}</span>`;
+    } else {
+      inner = `<span part="weekday-primary"${dirAttr}>${escapeHtml(full.slice(0, 3))}</span>`;
+    }
+    return `<div class="dow" part="${partTokens}" role="columnheader" title="${escapeHtml(full)}">${inner}</div>`;
   }
 
   private eventsOnDay(dayStartMs: number): CalendarEvent[] {
@@ -423,6 +531,8 @@ export class HijriCalendarElement extends HTMLElement {
           `<button type="button" part="view-btn" data-view="${v}" aria-pressed="${v === this.view}">${this.loc.viewLabels[v]}</button>`
       )
       .join("");
+    const titleDir = this.names === "ar" || this.numerals === "arab" ? ' dir="rtl"' : "";
+    const titleHtml = `<div class="title" part="title"><span part="title-primary"${titleDir}>${escapeHtml(title)}</span><span part="title-secondary">${escapeHtml(subtitle)}</span></div>`;
     return `<div class="toolbar" part="toolbar">
       <slot name="toolbar-start"></slot>
       <div class="nav-group" part="nav-group">
@@ -430,7 +540,7 @@ export class HijriCalendarElement extends HTMLElement {
         <button type="button" part="nav-today" data-today>${this.loc.todayLabel}</button>
         <button type="button" part="nav-next" data-nav="1" aria-label="Next">›</button>
       </div>
-      <div class="title" part="title">${escapeHtml(title)}<small>${escapeHtml(subtitle)}</small></div>
+      ${titleHtml}
       <div class="view-switch" part="view-switch">${viewBtns}</div>
       <slot name="toolbar-end"></slot>
     </div>${subheaderSlot}`;
@@ -459,23 +569,21 @@ export class HijriCalendarElement extends HTMLElement {
       maxLanes: this.maxEvents,
       today: zonedTodayUtc(this.timezone),
       weekStart: this.weekStart,
+      weekendDays: this.weekendDays,
       isDisabled: this.buildDisabledFn(),
     });
     this.lastCells = model.weeks.flat();
     this.lastSegments = model.segments;
 
     const inMonth = this.lastCells.filter((c) => c.inCurrentMonth);
-    const title = `${this.loc.monthNames[h.month - 1] ?? ""} ${h.year}`;
+    const title = `${this.nameSet.monthNames[h.month - 1] ?? ""} ${this.numH(h.year)}`;
     const subtitle = this.gregSubtitle(
       inMonth[0]!.gregorian,
       inMonth[inMonth.length - 1]!.gregorian
     );
 
     const ws = this.weekStart;
-    const dowRow = Array.from({ length: 7 }, (_, i) => {
-      const name = this.loc.weekdayNames[(i + ws) % 7] ?? "";
-      return `<div class="dow" part="weekday" role="columnheader" title="${escapeHtml(name)}">${escapeHtml(name.slice(0, 3))}</div>`;
-    }).join("");
+    const dowRow = Array.from({ length: 7 }, (_, i) => this.weekdayCellHtml((i + ws) % 7)).join("");
 
     const weeksHtml = model.weeks
       .map((week, w) => {
@@ -489,7 +597,7 @@ export class HijriCalendarElement extends HTMLElement {
             ]
               .filter(Boolean)
               .join(" ");
-            const label = `${formatHijri(cell.hijri, "D MMMM YYYY")} (${toIso(cell.gregorian)})`;
+            const label = `${formatHijri(cell.hijri, "D MMMM YYYY", { monthNames: this.nameSet.monthNames })} (${toIso(cell.gregorian)})`;
             return `<button type="button" part="day" class="${cls}" role="gridcell"
               style="grid-column:${d + 1}" data-i="${i}" data-date="${toIso(cell.gregorian)}"
               aria-label="${escapeHtml(label)}" tabindex="-1" ${cell.disabled ? "disabled data-disabled" : ""}>
@@ -635,11 +743,13 @@ export class HijriCalendarElement extends HTMLElement {
   private lastColumns: TimeGridColumn[] = [];
 
   private hijriRangeTitle(first: HijriDate, last: HijriDate): string {
-    const a = this.loc.monthNames[first.month - 1] ?? "";
-    const b = this.loc.monthNames[last.month - 1] ?? "";
-    if (first.month === last.month && first.year === last.year) return `${a} ${first.year}`;
-    if (first.year === last.year) return `${a} – ${b} ${first.year}`;
-    return `${a} ${first.year} – ${b} ${last.year}`;
+    const a = this.nameSet.monthNames[first.month - 1] ?? "";
+    const b = this.nameSet.monthNames[last.month - 1] ?? "";
+    if (first.month === last.month && first.year === last.year) {
+      return `${a} ${this.numH(first.year)}`;
+    }
+    if (first.year === last.year) return `${a} – ${b} ${this.numH(first.year)}`;
+    return `${a} ${this.numH(first.year)} – ${b} ${this.numH(last.year)}`;
   }
 
   private renderTimeGrid(dayCount: number): ViewRenderResult {
@@ -647,6 +757,7 @@ export class HijriCalendarElement extends HTMLElement {
       dayStartHour: this.dayStart,
       dayEndHour: this.dayEnd,
       weekStart: this.weekStart,
+      weekendDays: this.weekendDays,
       today: zonedTodayUtc(this.timezone),
     });
     this.lastColumns = model.columns;
@@ -657,7 +768,7 @@ export class HijriCalendarElement extends HTMLElement {
     const last = model.columns[model.columns.length - 1]!;
     const title =
       dayCount === 1
-        ? `${first.hijri.day} ${this.loc.monthNames[first.hijri.month - 1] ?? ""} ${first.hijri.year}`
+        ? `${this.numH(first.hijri.day)} ${this.nameSet.monthNames[first.hijri.month - 1] ?? ""} ${this.numH(first.hijri.year)}`
         : this.hijriRangeTitle(first.hijri, last.hijri);
     const subtitle = this.gregSubtitle(first.gregorian, last.gregorian);
 
@@ -668,9 +779,11 @@ export class HijriCalendarElement extends HTMLElement {
 
     const heads = model.columns
       .map((col) => {
-        const dow = this.loc.weekdayNames[col.gregorian.getUTCDay()] ?? "";
-        return `<div class="tg-col-head${col.isToday ? " today" : ""}" part="day">
-          <div class="dow" part="weekday">${escapeHtml(dow.slice(0, 3))}</div>
+        const cls = ["tg-col-head", col.isToday ? "today" : "", col.isWeekend ? "weekend" : ""]
+          .filter(Boolean)
+          .join(" ");
+        return `<div class="${cls}" part="day">
+          ${this.weekdayCellHtml(col.gregorian.getUTCDay())}
           ${this.dayNumbersHtml(col.hijri.day, col.gregorian)}
         </div>`;
       })
@@ -693,14 +806,7 @@ export class HijriCalendarElement extends HTMLElement {
 
     const gutterSlots: string[] = [];
     for (let min = winStart; min < winEnd; min += 30) {
-      const label =
-        min % 60 === 0
-          ? `<span>${escapeHtml(
-              this.timeFormat === "24"
-                ? `${String(min / 60).padStart(2, "0")}:00`
-                : this.formatTimeLabel(min)
-            )}</span>`
-          : "";
+      const label = min % 60 === 0 ? `<span>${escapeHtml(this.formatTimeLabel(min))}</span>` : "";
       gutterSlots.push(`<div class="tg-slot">${label}</div>`);
     }
 
@@ -835,13 +941,15 @@ export class HijriCalendarElement extends HTMLElement {
             </button>`;
           })
           .join("");
-        const hijriLabel = `${day.hijri.day} ${this.loc.monthNames[day.hijri.month - 1] ?? ""} ${day.hijri.year}`;
-        const gregLabel = day.gregorian.toLocaleDateString("en-US", {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-          timeZone: "UTC",
-        });
+        const hijriLabel = `${this.numH(day.hijri.day)} ${this.nameSet.monthNames[day.hijri.month - 1] ?? ""} ${this.numH(day.hijri.year)}`;
+        const gregLabel = this.numG(
+          day.gregorian.toLocaleDateString("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            timeZone: "UTC",
+          })
+        );
         return `<div class="agenda-day" part="agenda-day">
           <div class="agenda-date">
             <div class="hijri">${escapeHtml(hijriLabel)}</div>

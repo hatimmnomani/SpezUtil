@@ -7,9 +7,12 @@ import {
 
 export type LocaleName = "translit" | "ar";
 
+/**
+ * UI chrome strings (toolbar/labels), selected by the `locale` attribute. Independent of
+ * the `names` attribute, which selects the Hijri month/weekday *name set* instead — see
+ * `NameSet` / `resolveNames()` below.
+ */
 export interface CalendarLocale {
-  monthNames: string[];
-  weekdayNames: string[];
   todayLabel: string;
   moreLabel: (n: number) => string;
   allDayLabel: string;
@@ -18,8 +21,6 @@ export interface CalendarLocale {
 }
 
 const translit: CalendarLocale = {
-  monthNames: translitMonthNames,
-  weekdayNames,
   todayLabel: "Today",
   moreLabel: (n) => `+${n} more`,
   allDayLabel: "All day",
@@ -28,8 +29,6 @@ const translit: CalendarLocale = {
 };
 
 const ar: CalendarLocale = {
-  monthNames: arMonthNames,
-  weekdayNames: arWeekdayNames,
   todayLabel: "اليوم",
   moreLabel: (n) => `+${n} أخرى`,
   allDayLabel: "طوال اليوم",
@@ -39,4 +38,24 @@ const ar: CalendarLocale = {
 
 export function resolveLocale(name: string | null): CalendarLocale {
   return name === "ar" ? ar : translit;
+}
+
+/** Hijri month & weekday name set, selected by the `names` attribute. */
+export interface NameSet {
+  monthNames: string[];
+  weekdayNames: string[];
+}
+
+const translitNames: NameSet = {
+  monthNames: translitMonthNames,
+  weekdayNames,
+};
+
+const arNames: NameSet = {
+  monthNames: arMonthNames,
+  weekdayNames: arWeekdayNames,
+};
+
+export function resolveNames(name: string | null): NameSet {
+  return name === "ar" ? arNames : translitNames;
 }

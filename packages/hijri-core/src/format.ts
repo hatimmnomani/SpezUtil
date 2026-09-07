@@ -5,21 +5,39 @@ function pad(n: number, len: number): string {
   return String(n).padStart(len, "0");
 }
 
-export function formatHijri(h: HijriDate, pattern: string): string {
+/**
+ * Maps every ASCII digit (0-9) in `value` to its Arabic-Indic equivalent (U+0660-U+0669)
+ * for `system: "arab"`; returns the input unchanged for `"latn"`. Non-digit characters
+ * (":", "/", letters, spaces, ...) pass through untouched, so it can be applied safely to
+ * a whole formatted string like "10:30" or "1447" without disturbing separators or names.
+ */
+export function formatNumerals(value: number | string, system: "latn" | "arab"): string {
+  const s = String(value);
+  if (system !== "arab") return s;
+  return s.replace(/[0-9]/g, (d) => String.fromCharCode(0x0660 + Number(d)));
+}
+
+export function formatHijri(
+  h: HijriDate,
+  pattern: string,
+  opts?: { numerals?: "latn" | "arab"; monthNames?: string[] }
+): string {
+  const numerals = opts?.numerals ?? "latn";
+  const monthNames = opts?.monthNames ?? translitMonthNames;
   return pattern.replace(/YYYY|MMMM|MM|DD|M|D/g, (token) => {
     switch (token) {
       case "YYYY":
-        return String(h.year);
+        return formatNumerals(h.year, numerals);
       case "MMMM":
-        return translitMonthNames[h.month - 1] ?? String(h.month);
+        return monthNames[h.month - 1] ?? String(h.month);
       case "MM":
-        return pad(h.month, 2);
+        return formatNumerals(pad(h.month, 2), numerals);
       case "M":
-        return String(h.month);
+        return formatNumerals(h.month, numerals);
       case "DD":
-        return pad(h.day, 2);
+        return formatNumerals(pad(h.day, 2), numerals);
       case "D":
-        return String(h.day);
+        return formatNumerals(h.day, numerals);
       default:
         return token;
     }
