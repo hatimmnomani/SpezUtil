@@ -30,10 +30,13 @@ binaries don't match the version driving them).
 3. Review the new/changed PNGs under `editorial.spec.ts-snapshots/` as you would any other diff —
    `git diff --stat` shows which images changed; open them to confirm the change is expected.
 4. If the run finds *unexpected* diffs against existing baselines, Playwright writes actual/expected/
-   diff images and an HTML report under `../../playwright-report/`. Locally, open
-   `../../playwright-report/index.html`. In CI, that folder is uploaded as the `playwright-report`
-   artifact whenever the `visual` job fails (see `.github/workflows/ci.yml`) — download it from the
-   failed run to see what changed.
+   diff images plus an HTML report to `../../playwright-report/index.html` — `playwright.config.ts`
+   configures the `html` reporter explicitly with that `outputFolder` (Playwright's own default
+   reporter, `dot` in CI or `list` locally, never writes this directory, so it has to be turned on).
+   Locally, open `../../playwright-report/index.html` directly in a browser. In CI, that same folder
+   is uploaded as the `playwright-report` artifact whenever the `visual` job fails (see
+   `.github/workflows/ci.yml`) — download it from the failed run's Summary page, unzip it, and open
+   `index.html` to see the actual/expected/diff images for what changed.
 5. Commit the updated baselines in their own commit, prefixed `test(visual):`, with no changeset (this
    phase carries no package version).
 
@@ -57,3 +60,11 @@ Mono) is vendored locally under `../../public/fonts/` with `@font-face` rules in
 `playwright.config.ts` for the `expect.toHaveScreenshot` defaults (`maxDiffPixelRatio: 0.01`,
 `animations: "disabled"`, `caret: "hide"`) that keep comparisons stable against minor anti-aliasing
 noise.
+
+The vendored `@font-face` rules use `font-display: block`, not the more common `swap`: `swap` lets the
+browser paint a fallback font first and swap in the real one once it loads, which is a race a
+screenshot can land on either side of — the opposite of what a baseline comparison wants. `block`
+makes the browser wait briefly for the real font instead. Belt and braces, **any new spec in this
+directory should still `await page.evaluate(() => document.fonts.ready)` (or equivalent) before its
+first `toHaveScreenshot()` call**, so a screenshot is never taken before the vendored fonts have
+actually finished loading.

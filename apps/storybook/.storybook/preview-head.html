@@ -10,6 +10,13 @@
   Each family is OFL-1.1 licensed; its license file sits alongside the TTF in
   public/fonts/, same obligation the repo already honours for Amiri at
   assets/fonts/OFL-Amiri.txt.
+
+  font-display is deliberately "block", not the usual "swap": these are same-origin static
+  files loaded specifically for a screenshot-diff suite, and "swap" is a race between first
+  paint and font load — a screenshot taken mid-swap would differ from the baseline for no real
+  visual reason. "block" makes the browser wait (briefly; a short timeout, then fallback) for
+  the real font instead of ever painting a fallback face. See tests/visual/README.md for the
+  matching await document.fonts.ready guidance for spec authors.
 -->
 <style>
   @font-face {
@@ -17,7 +24,7 @@
     src: url("/fonts/Newsreader-Regular.ttf") format("truetype");
     font-weight: 400;
     font-style: normal;
-    font-display: swap;
+    font-display: block;
   }
 
   @font-face {
@@ -25,7 +32,7 @@
     src: url("/fonts/PublicSans-Regular.ttf") format("truetype");
     font-weight: 400;
     font-style: normal;
-    font-display: swap;
+    font-display: block;
   }
 
   @font-face {
@@ -33,6 +40,6 @@
     src: url("/fonts/JetBrainsMono-Regular.ttf") format("truetype");
     font-weight: 400;
     font-style: normal;
-    font-display: swap;
+    font-display: block;
   }
 </style>

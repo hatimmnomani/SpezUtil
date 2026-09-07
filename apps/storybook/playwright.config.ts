@@ -7,6 +7,12 @@ import { defineConfig } from "@playwright/test";
 // @playwright/test devDependency version in package.json).
 export default defineConfig({
   testDir: "./tests/visual",
+  // Playwright's built-in default reporter (`dot` in CI, `list` locally) never writes
+  // playwright-report/ — only the "html" reporter does. The CI `visual` job uploads
+  // apps/storybook/playwright-report on failure, so it must be configured explicitly here or
+  // that upload step silently finds nothing. `open: "never"` stops it trying to launch a
+  // browser in CI/headless environments.
+  reporter: [["dot"], ["html", { outputFolder: "playwright-report", open: "never" }]],
   expect: {
     toHaveScreenshot: {
       maxDiffPixelRatio: 0.01,
