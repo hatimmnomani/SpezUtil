@@ -14,6 +14,7 @@ import type {
   EventClickDetail,
   EventFieldMap,
   MoreClickDetail,
+  RangeChangeDetail,
   SlotClickDetail,
   ViewChangeDetail,
 } from "@spezutil/hijri-calendar";
@@ -36,6 +37,8 @@ import type {
       [primary]="primary"
       [secondaryPosition]="secondaryPosition"
       [timezone]="timezone"
+      [views]="views"
+      [toolbar]="toolbar"
       [eventFields]="eventFields"
       [events]="events"
       (event-click)="onEventClick($event)"
@@ -44,7 +47,12 @@ import type {
       (more-click)="onMoreClick($event)"
       (view-change)="onViewChange($event)"
       (date-change)="onDateChange($event)"
-    ></hijri-calendar>
+      (range-change)="onRangeChange($event)"
+    >
+      <ng-content select="[slot=toolbar-start]"></ng-content>
+      <ng-content select="[slot=toolbar-end]"></ng-content>
+      <ng-content select="[slot=subheader]"></ng-content>
+    </hijri-calendar>
   `,
 })
 export class HijriCalendarComponent {
@@ -60,6 +68,8 @@ export class HijriCalendarComponent {
   @Input() primary: "hijri" | "gregorian" = "hijri";
   @Input() secondaryPosition = "end";
   @Input() timezone: string | null = null;
+  @Input() views: string | null = null;
+  @Input() toolbar: "full" | "none" = "full";
   @Input() eventFields: EventFieldMap | null = null;
   @Input() events: CalendarEvent[] = [];
 
@@ -69,6 +79,7 @@ export class HijriCalendarComponent {
   @Output() moreClick = new EventEmitter<MoreClickDetail>();
   @Output() viewChange = new EventEmitter<ViewChangeDetail>();
   @Output() dateChange = new EventEmitter<DateChangeDetail>();
+  @Output() rangeChange = new EventEmitter<RangeChangeDetail>();
 
   onEventClick(event: Event): void {
     this.eventClick.emit((event as CustomEvent<EventClickDetail>).detail);
@@ -87,5 +98,8 @@ export class HijriCalendarComponent {
   }
   onDateChange(event: Event): void {
     this.dateChange.emit((event as CustomEvent<DateChangeDetail>).detail);
+  }
+  onRangeChange(event: Event): void {
+    this.rangeChange.emit((event as CustomEvent<RangeChangeDetail>).detail);
   }
 }

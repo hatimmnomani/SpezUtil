@@ -54,6 +54,25 @@ export interface DateChangeDetail {
   /** Focused date as Gregorian ISO date. */
   date: string;
 }
+export interface RangeChangeDetail {
+  view: CalendarView;
+  /** Inclusive first visible day, "yyyy-mm-dd" (Gregorian, UTC day). */
+  start: string;
+  /** Exclusive end, "yyyy-mm-dd" — the day after the last visible day. */
+  end: string;
+  hijriStart: HijriDate;
+  /** Hijri date of the last visible day (inclusive, for display). */
+  hijriEnd: HijriDate;
+  reason: "init" | "navigate" | "view" | "attribute";
+}
+
+interface ViewRenderResult {
+  title: string;
+  subtitle: string;
+  body: string;
+  /** Inclusive start / exclusive end of the visible range, used to compute `range-change`. */
+  range: { start: Date; end: Date };
+}
 
 const DAY_MS = 86400000;
 const VIEWS: CalendarView[] = ["month", "week", "day", "agenda"];
@@ -103,6 +122,8 @@ export class HijriCalendarElement extends HTMLElement {
       "primary",
       "secondary-position",
       "timezone",
+      "views",
+      "toolbar",
     ];
   }
 
@@ -114,6 +135,7 @@ export class HijriCalendarElement extends HTMLElement {
   private _eventFields: EventFieldMap | undefined;
   private suppress = false;
   private loc: CalendarLocale = resolveLocale(null);
+  private lastRangeDetail: RangeChangeDetail | null = null;
 
   public isDateDisabled?: (hijri: HijriDate, gregorian: Date) => boolean;
 
@@ -226,6 +248,39 @@ export class HijriCalendarElement extends HTMLElement {
   set timezone(v: string | null | undefined) {
     this.reflect("timezone", v ?? null);
   }
+  /**
+   * Which view buttons render, in which order. Unknown tokens are ignored; the currently
+   * active `view` is always included even if absent from the list.
+   */
+  get views(): CalendarView[] {
+    return this.parseViews(this.getAttribute("views"));
+  }
+  set views(v: string | CalendarView[]) {
+    this.reflect("views", Array.isArray(v) ? v.join(" ") : v);
+  }
+  /** `"none"` removes the built-in toolbar (host drives `view`/`date` itself); slots still render. */
+  get toolbar(): "full" | "none" {
+    return this.getAttribute("toolbar") === "none" ? "none" : "full";
+  }
+  set toolbar(v: string) {
+    this.reflect("toolbar", v);
+  }
+  /** The range last carried by a `range-change` event, or `null` before the first render. */
+  get visibleRange(): RangeChangeDetail | null {
+    return this.lastRangeDetail;
+  }
+
+  private parseViews(attr: string | null): CalendarView[] {
+    const tokens = (attr ?? "month week day agenda").split(/\s+/).filter(Boolean);
+    const list: CalendarView[] = [];
+    for (const t of tokens) {
+      if (VIEWS.includes(t as CalendarView) && !list.includes(t as CalendarView)) {
+        list.push(t as CalendarView);
+      }
+    }
+    if (!list.includes(this.view)) list.push(this.view);
+    return list;
+  }
 
   constructor() {
     super();
@@ -234,7 +289,7 @@ export class HijriCalendarElement extends HTMLElement {
 
   connectedCallback(): void {
     this.syncFromAttrs();
-    this.render();
+    this.render("init");
   }
 
   disconnectedCallback(): void {
@@ -244,7 +299,7 @@ export class HijriCalendarElement extends HTMLElement {
   attributeChangedCallback(): void {
     if (!this.root || this.suppress) return;
     this.syncFromAttrs();
-    if (this.isConnected) this.render();
+    if (this.isConnected) this.render("attribute");
   }
 
   private applyAttrs(fn: () => void): void {
@@ -270,7 +325,7 @@ export class HijriCalendarElement extends HTMLElement {
     this.viewDate = floorToDayUtc(d);
     const iso = toIso(this.viewDate);
     this.applyAttrs(() => this.setAttribute("date", iso));
-    this.render();
+    this.render("navigate");
     this.emit<DateChangeDetail>("date-change", { date: iso });
   }
 
@@ -295,7 +350,7 @@ export class HijriCalendarElement extends HTMLElement {
 
   private setView(v: CalendarView): void {
     this.applyAttrs(() => this.setAttribute("view", v));
-    this.render();
+    this.render("view");
     this.emit<ViewChangeDetail>("view-change", { view: v });
   }
 
@@ -358,19 +413,27 @@ export class HijriCalendarElement extends HTMLElement {
   // ---- toolbar ----
 
   private renderToolbar(title: string, subtitle: string): string {
-    const viewBtns = VIEWS.map(
-      (v) =>
-        `<button type="button" part="view-btn" data-view="${v}" aria-pressed="${v === this.view}">${this.loc.viewLabels[v]}</button>`
-    ).join("");
+    const subheaderSlot = `<slot name="subheader" part="subheader" class="subheader"></slot>`;
+    if (this.toolbar === "none") {
+      return `<slot name="toolbar-start"></slot><slot name="toolbar-end"></slot>${subheaderSlot}`;
+    }
+    const viewBtns = this.views
+      .map(
+        (v) =>
+          `<button type="button" part="view-btn" data-view="${v}" aria-pressed="${v === this.view}">${this.loc.viewLabels[v]}</button>`
+      )
+      .join("");
     return `<div class="toolbar" part="toolbar">
-      <button type="button" part="nav-today" data-today>${this.loc.todayLabel}</button>
-      <div class="nav-group">
+      <slot name="toolbar-start"></slot>
+      <div class="nav-group" part="nav-group">
         <button type="button" part="nav-prev" data-nav="-1" aria-label="Previous">‹</button>
+        <button type="button" part="nav-today" data-today>${this.loc.todayLabel}</button>
         <button type="button" part="nav-next" data-nav="1" aria-label="Next">›</button>
       </div>
       <div class="title" part="title">${escapeHtml(title)}<small>${escapeHtml(subtitle)}</small></div>
       <div class="view-switch" part="view-switch">${viewBtns}</div>
-    </div>`;
+      <slot name="toolbar-end"></slot>
+    </div>${subheaderSlot}`;
   }
 
   private wireToolbar(): void {
@@ -390,7 +453,7 @@ export class HijriCalendarElement extends HTMLElement {
   private lastCells: DayCell[] = [];
   private lastSegments: EventSegment[] = [];
 
-  private renderMonth(): { title: string; subtitle: string; body: string } {
+  private renderMonth(): ViewRenderResult {
     const h = this.cal.gregorianToHijri(this.viewDate);
     const model = buildCalendarMonthModel(this.cal, { year: h.year, month: h.month }, this._events, {
       maxLanes: this.maxEvents,
@@ -449,7 +512,7 @@ export class HijriCalendarElement extends HTMLElement {
             const color = s.event.color ? ` style="--_ev-color:${escapeHtml(s.event.color)};grid-row:${s.lane + 2};grid-column:${s.startCol + 1} / span ${s.span}"` : ` style="grid-row:${s.lane + 2};grid-column:${s.startCol + 1} / span ${s.span}"`;
             const label = `${s.event.title}, ${this.eventTimeLabel(s.event)}`;
             return `<button type="button" part="event" class="${cls}" data-ev="${idx}"${color}
-              aria-label="${escapeHtml(label)}">${escapeHtml(s.event.title)}</button>`;
+              aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${escapeHtml(s.event.title)}</button>`;
           })
           .join("");
 
@@ -471,7 +534,9 @@ export class HijriCalendarElement extends HTMLElement {
       <div class="dow-row" role="row">${dowRow}</div>
       ${weeksHtml}
     </div>`;
-    return { title, subtitle, body };
+    const rangeStart = this.lastCells[0]!.gregorian;
+    const rangeEnd = new Date(this.lastCells[this.lastCells.length - 1]!.gregorian.getTime() + DAY_MS);
+    return { title, subtitle, body, range: { start: rangeStart, end: rangeEnd } };
   }
 
   private wireMonth(): void {
@@ -577,7 +642,7 @@ export class HijriCalendarElement extends HTMLElement {
     return `${a} ${first.year} – ${b} ${last.year}`;
   }
 
-  private renderTimeGrid(dayCount: number): { title: string; subtitle: string; body: string } {
+  private renderTimeGrid(dayCount: number): ViewRenderResult {
     const model = buildTimeGridModel(this.cal, this.viewDate, dayCount, this._events, {
       dayStartHour: this.dayStart,
       dayEndHour: this.dayEnd,
@@ -617,8 +682,9 @@ export class HijriCalendarElement extends HTMLElement {
           .map((n) => {
             const idx = this.lastAllDayFlat.push(n) - 1;
             const color = n.event.color ? `--_ev-color:${escapeHtml(n.event.color)};` : "";
+            const label = `${n.event.title}, ${this.loc.allDayLabel}`;
             return `<button type="button" part="event" class="chip" data-aev="${idx}"
-              style="${color}" aria-label="${escapeHtml(`${n.event.title}, ${this.loc.allDayLabel}`)}">${escapeHtml(n.event.title)}</button>`;
+              style="${color}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${escapeHtml(n.event.title)}</button>`;
           })
           .join("");
         return `<div class="tg-allday-col" part="allday-row">${chips}</div>`;
@@ -660,9 +726,10 @@ export class HijriCalendarElement extends HTMLElement {
             const width = 100 / p.colCount;
             const color = p.event.color ? `--_ev-color:${escapeHtml(p.event.color)};` : "";
             const timeLabel = this.formatTimeLabel(p.startMin);
+            const label = `${p.event.title}, ${timeLabel}`;
             return `<button type="button" part="event" class="tg-event" data-tev="${idx}"
               style="${color}top:${top}%;height:${height}%;left:${left}%;width:${width}%"
-              aria-label="${escapeHtml(`${p.event.title}, ${timeLabel}`)}">
+              aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">
               ${escapeHtml(p.event.title)}<small>${escapeHtml(timeLabel)}</small>
             </button>`;
           })
@@ -690,7 +757,9 @@ export class HijriCalendarElement extends HTMLElement {
         ${dayCols}
       </div>
     </div>`;
-    return { title, subtitle, body };
+    const rangeStart = first.gregorian;
+    const rangeEnd = new Date(last.gregorian.getTime() + DAY_MS);
+    return { title, subtitle, body, range: { start: rangeStart, end: rangeEnd } };
   }
 
   private wireTimeGrid(): void {
@@ -731,7 +800,7 @@ export class HijriCalendarElement extends HTMLElement {
   private static readonly AGENDA_DAYS = 30;
   private lastAgendaFlat: NormalizedEvent[] = [];
 
-  private renderAgenda(): { title: string; subtitle: string; body: string } {
+  private renderAgenda(): ViewRenderResult {
     const model = buildAgendaModel(
       this.cal,
       this.viewDate,
@@ -758,7 +827,8 @@ export class HijriCalendarElement extends HTMLElement {
             const when = n.allDay
               ? this.loc.allDayLabel
               : this.formatTimeLabel(Math.round((n.startMs % DAY_MS) / 60000));
-            return `<button type="button" part="agenda-item" class="agenda-item" data-gev="${idx}">
+            const label = `${n.event.title}, ${when}`;
+            return `<button type="button" part="agenda-item" class="agenda-item" data-gev="${idx}" title="${escapeHtml(label)}">
               <span class="dot"${color}></span>
               <span class="when">${escapeHtml(when)}</span>
               <span>${escapeHtml(n.event.title)}</span>
@@ -785,7 +855,9 @@ export class HijriCalendarElement extends HTMLElement {
     const body = `<div class="agenda">${
       daysHtml || `<div class="agenda-empty">${escapeHtml(this.loc.emptyLabel)}</div>`
     }</div>`;
-    return { title, subtitle, body };
+    const rangeStart = this.viewDate;
+    const rangeEnd = new Date(this.viewDate.getTime() + HijriCalendarElement.AGENDA_DAYS * DAY_MS);
+    return { title, subtitle, body, range: { start: rangeStart, end: rangeEnd } };
   }
 
   private wireAgenda(): void {
@@ -798,7 +870,7 @@ export class HijriCalendarElement extends HTMLElement {
 
   // ---- view dispatch ----
 
-  protected renderView(): { title: string; subtitle: string; body: string } {
+  protected renderView(): ViewRenderResult {
     switch (this.view) {
       case "week":
         return this.renderTimeGrid(7);
@@ -833,16 +905,39 @@ export class HijriCalendarElement extends HTMLElement {
     }
   }
 
-  protected render(): void {
+  private maybeEmitRangeChange(
+    view: CalendarView,
+    start: Date,
+    end: Date,
+    reason: RangeChangeDetail["reason"]
+  ): void {
+    const startIso = toIso(start);
+    const endIso = toIso(end);
+    const prev = this.lastRangeDetail;
+    if (prev && prev.view === view && prev.start === startIso && prev.end === endIso) return;
+    const detail: RangeChangeDetail = {
+      view,
+      start: startIso,
+      end: endIso,
+      hijriStart: this.cal.gregorianToHijri(start),
+      hijriEnd: this.cal.gregorianToHijri(new Date(end.getTime() - DAY_MS)),
+      reason,
+    };
+    this.lastRangeDetail = detail;
+    this.emit<RangeChangeDetail>("range-change", detail);
+  }
+
+  protected render(reason: RangeChangeDetail["reason"] = "attribute"): void {
     if (!this.root) return;
     this.stopNowTimer();
-    const { title, subtitle, body } = this.renderView();
+    const { title, subtitle, body, range } = this.renderView();
     this.root.innerHTML = `<style>${styles}</style>
-      <div class="cal" role="application" aria-label="Hijri calendar">
+      <div class="cal" part="calendar" role="application" aria-label="Hijri calendar">
         ${this.renderToolbar(title, subtitle)}
         ${body}
       </div>`;
     this.wireToolbar();
+    this.maybeEmitRangeChange(this.view, range.start, range.end, reason);
     this.wireView();
   }
 }

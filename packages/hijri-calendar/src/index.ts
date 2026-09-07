@@ -10,6 +10,7 @@ export type {
   MoreClickDetail,
   ViewChangeDetail,
   DateChangeDetail,
+  RangeChangeDetail,
 } from "./hijri-calendar";
 export type {
   CalendarEvent,

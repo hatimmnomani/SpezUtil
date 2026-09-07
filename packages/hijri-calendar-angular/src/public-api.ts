@@ -8,5 +8,6 @@ export type {
   MoreClickDetail,
   ViewChangeDetail,
   DateChangeDetail,
+  RangeChangeDetail,
   HijriDate,
 } from "@spezutil/hijri-calendar";

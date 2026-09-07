@@ -203,6 +203,50 @@ describe("<hijri-calendar> month view events", () => {
   });
 });
 
+describe("<hijri-calendar> Phase 0 tokenised styles", () => {
+  it("declares --hcal-font-family on :host and uses it for the base font", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-font-family: system-ui, sans-serif;");
+    expect(css).toContain("font-family: var(--hcal-font-family);");
+  });
+
+  it("tokenises previously hard-coded sizes", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-cell-min-height: 96px;");
+    expect(css).toContain("--hcal-body-max-height: 640px;");
+    expect(css).toContain("--hcal-button-radius: 6px;");
+    expect(css).toContain("--hcal-switch-bg: transparent;");
+    expect(css).toContain("--hcal-switch-active-bg: var(--hcal-accent);");
+    expect(css).toContain("--hcal-switch-active-fg: var(--hcal-accent-fg);");
+    expect(css).toContain("--hcal-switch-active-shadow: none;");
+    expect(css).toContain("min-height: var(--hcal-cell-min-height);");
+    expect(css).toContain("max-height: var(--hcal-body-max-height);");
+  });
+});
+
+describe("<hijri-calendar> Phase 0 native title on events", () => {
+  it("carries a title on the all-day and timed time-grid event blocks", () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    el.events = [
+      { id: "a", title: "Event a", start: "2026-07-06", allDay: true },
+      { id: "b", title: "Event b", start: "2026-07-06T10:00" },
+    ];
+    const allDayChip = sr(el).querySelector('[data-aev]') as HTMLElement;
+    expect(allDayChip.getAttribute("title")).toBe("Event a, All day");
+    const timedBlock = sr(el).querySelector('[data-tev]') as HTMLElement;
+    expect(timedBlock.getAttribute("title")).toBe("Event b, 10 AM");
+  });
+
+  it("carries a title on agenda items", () => {
+    const el = mount({ date: "2026-07-06", view: "agenda" });
+    el.events = [{ id: "a", title: "Event a", start: "2026-07-06T10:00" }];
+    const item = sr(el).querySelector('[part="agenda-item"]') as HTMLElement;
+    expect(item.getAttribute("title")).toBe("Event a, 10 AM");
+  });
+});
+
 describe("<hijri-calendar> eventFields mapping", () => {
   it("renders unmodified events as before when eventFields is unset", () => {
     const el = mount({ date: "2026-07-06" });
