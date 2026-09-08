@@ -20,10 +20,29 @@ import type { CalendarEvent } from "@spezutil/hijri-calendar";
  * `EventStyles` deliberately does *not* set that structural set: its whole point is to compare
  * `event-style="solid"|"tinted"|"outline"` side by side, so it keeps every other attribute at
  * its default and only varies `event-style` across its three columns.
+ *
+ * `Month`, `Week` and `Day` additionally take a `hostWidth` arg (presets: 900/700/388, the P5
+ * task-5-brief's wide/medium/narrow host widths — see §5.9) that wraps the calendar in a
+ * `<div style="width:…">`. The calendar itself stays `display: block` with `max-width: 100%`
+ * (P5 task 7), so it always shrinks to that wrapper's width — these are the exact stories
+ * Phase 6's screenshot baselines are taken against. `Responsive` renders all three bands side
+ * by side for a quick visual gut-check in Storybook itself.
  */
 export default {
   title: "Editorial",
+  argTypes: {
+    hostWidth: { control: "radio", options: [900, 700, 388] },
+  },
 };
+
+interface EditorialArgs {
+  hostWidth?: number;
+}
+
+/** `width:…px; max-width: 100%` wrapper matching the task-5-brief's three size-band presets. */
+function hostWrapperStyle(width?: number): string {
+  return `width: ${width ?? 900}px; max-width: 100%;`;
+}
 
 const sampleEvents: CalendarEvent[] = [
   { id: "1", title: "Standup", start: "2026-07-06T09:30", end: "2026-07-06T09:45", color: "#2F6E54" },
@@ -65,73 +84,82 @@ const EDITORIAL_STYLE = `
   }
 `;
 
-export const Month = () => html`
+export const Month = (args: EditorialArgs) => html`
   <style>${EDITORIAL_STYLE}</style>
-  <hijri-calendar
-    class="editorial-cal"
-    view="month"
-    date="2026-07-06"
-    locale="translit"
-    dir="ltr"
-    numerals="arab"
-    names="ar"
-    weekday-format="bilingual"
-    title-layout="inline"
-    day-number-align="start"
-    month-marker="hijri"
-    today-marker="dot"
-    week-start="0"
-    .events=${sampleEvents}
-  ></hijri-calendar>
+  <div style=${hostWrapperStyle(args.hostWidth)}>
+    <hijri-calendar
+      class="editorial-cal"
+      view="month"
+      date="2026-07-06"
+      locale="translit"
+      dir="ltr"
+      numerals="arab"
+      names="ar"
+      weekday-format="bilingual"
+      title-layout="inline"
+      day-number-align="start"
+      month-marker="hijri"
+      today-marker="dot"
+      week-start="0"
+      .events=${sampleEvents}
+    ></hijri-calendar>
+  </div>
 `;
+(Month as any).args = { hostWidth: 900 };
 
-export const Week = () => html`
+export const Week = (args: EditorialArgs) => html`
   <style>${EDITORIAL_STYLE}</style>
-  <hijri-calendar
-    class="editorial-cal"
-    view="week"
-    date="2026-07-06"
-    locale="translit"
-    dir="ltr"
-    numerals="arab"
-    names="ar"
-    weekday-format="bilingual"
-    title-layout="inline"
-    day-number-align="start"
-    week-start="0"
-    now-indicator="none"
-    event-style="tinted"
-    event-time="start-duration"
-    slot-minutes="30"
-    allday-row="auto"
-    time-label-position="line"
-    .events=${sampleEvents}
-  ></hijri-calendar>
+  <div style=${hostWrapperStyle(args.hostWidth)}>
+    <hijri-calendar
+      class="editorial-cal"
+      view="week"
+      date="2026-07-06"
+      locale="translit"
+      dir="ltr"
+      numerals="arab"
+      names="ar"
+      weekday-format="bilingual"
+      title-layout="inline"
+      day-number-align="start"
+      week-start="0"
+      now-indicator="none"
+      event-style="tinted"
+      event-time="start-duration"
+      slot-minutes="30"
+      allday-row="auto"
+      time-label-position="line"
+      .events=${sampleEvents}
+    ></hijri-calendar>
+  </div>
 `;
+(Week as any).args = { hostWidth: 900 };
 
-export const Day = () => html`
+export const Day = (args: EditorialArgs) => html`
   <style>${EDITORIAL_STYLE}</style>
-  <hijri-calendar
-    class="editorial-cal"
-    view="day"
-    date="2026-07-06"
-    locale="translit"
-    dir="ltr"
-    numerals="arab"
-    names="ar"
-    weekday-format="bilingual"
-    title-layout="inline"
-    day-number-align="start"
-    week-start="0"
-    now-indicator="none"
-    event-style="tinted"
-    event-time="start-duration"
-    slot-minutes="30"
-    allday-row="auto"
-    time-label-position="line"
-    .events=${sampleEvents}
-  ></hijri-calendar>
+  <div style=${hostWrapperStyle(args.hostWidth)}>
+    <hijri-calendar
+      class="editorial-cal"
+      view="day"
+      date="2026-07-06"
+      locale="translit"
+      dir="ltr"
+      numerals="arab"
+      names="ar"
+      weekday-format="bilingual"
+      title-layout="inline"
+      day-number-align="start"
+      week-start="0"
+      now-indicator="none"
+      event-style="tinted"
+      event-time="start-duration"
+      slot-minutes="30"
+      allday-row="auto"
+      time-label-position="line"
+      .events=${sampleEvents}
+    ></hijri-calendar>
+  </div>
 `;
+(Day as any).args = { hostWidth: 900 };
 
 const EVENT_STYLE_LABEL_CSS = `
   .event-style-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
@@ -183,6 +211,59 @@ export const EventStyles = () => html`
         event-time="start-duration"
         .events=${sampleEvents}
       ></hijri-calendar>
+    </div>
+  </div>
+`;
+
+const RESPONSIVE_LABEL_CSS = `
+  .responsive-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+  .responsive-col h4 { font: 600 13px "Public Sans", system-ui, sans-serif; color: #1F1A17; margin: 0 0 8px; }
+`;
+
+/**
+ * The same Month editorial calendar (structural attributes and all — see the file docblock)
+ * at each of the three §5.9 size bands, side by side, so a band regression is visible without
+ * switching Storybook controls. Phase 6's screenshot baselines are taken from `Month`/`Week`/
+ * `Day` with `hostWidth` directly, not from this story — this one is a Storybook-only
+ * side-by-side convenience.
+ */
+function responsiveMonthCalendar(width: number) {
+  return html`
+    <div style=${hostWrapperStyle(width)}>
+      <hijri-calendar
+        class="editorial-cal"
+        view="month"
+        date="2026-07-06"
+        locale="translit"
+        dir="ltr"
+        numerals="arab"
+        names="ar"
+        weekday-format="bilingual"
+        title-layout="inline"
+        day-number-align="start"
+        month-marker="hijri"
+        today-marker="dot"
+        week-start="0"
+        .events=${sampleEvents}
+      ></hijri-calendar>
+    </div>
+  `;
+}
+
+export const Responsive = () => html`
+  <style>${EDITORIAL_STYLE}${RESPONSIVE_LABEL_CSS}</style>
+  <div class="responsive-row">
+    <div class="responsive-col">
+      <h4>Wide — 900px</h4>
+      ${responsiveMonthCalendar(900)}
+    </div>
+    <div class="responsive-col">
+      <h4>Medium — 700px</h4>
+      ${responsiveMonthCalendar(700)}
+    </div>
+    <div class="responsive-col">
+      <h4>Narrow — 388px</h4>
+      ${responsiveMonthCalendar(388)}
     </div>
   </div>
 `;

@@ -71,11 +71,21 @@ ${arabicFontFace}
   --hcal-banner-bg: var(--hcal-header-bg);
   --hcal-banner-padding: 16px 20px;
   --hcal-banner-primary-font-size: 28px;
+  --hcal-cell-min-height-medium: 72px;
+  --hcal-cell-min-height-narrow: 56px;
+  --hcal-column-min-width: 120px;
+  --hcal-event-dot-size: 6px;
   display: block;
   font-family: var(--hcal-font-family);
   color: var(--hcal-fg);
+  /* §5.9 task 7: the host never widens its container — every band's overflow lives inside
+     its own part="scroll" container instead (month narrow-events="scroll", week/day at
+     medium/narrow), never on the host or the page. */
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
-.cal { background: var(--hcal-bg); border: 1px solid var(--hcal-border); border-radius: var(--hcal-radius); overflow: hidden; overflow-x: auto; display: flex; flex-direction: column; }
+.cal { background: var(--hcal-bg); border: 1px solid var(--hcal-border); border-radius: var(--hcal-radius); overflow: hidden; display: flex; flex-direction: column; }
 .body-wrap { position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0; }
 [part="loading"] { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: var(--hcal-event-font-size); color: var(--hcal-muted); background: color-mix(in srgb, var(--hcal-bg) 80%, transparent); }
 :host([loading]) .month, :host([loading]) .timegrid, :host([loading]) .agenda { pointer-events: none; }
@@ -86,19 +96,44 @@ ${arabicFontFace}
 .title { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 160px; }
 .title [part~="title-primary"] { font-weight: 600; font-size: var(--hcal-title-font-size); color: var(--hcal-title-color); font-family: var(--hcal-font-family-arabic); }
 .title [part~="title-secondary"] { font-weight: 400; color: var(--hcal-title-secondary-color); font-size: var(--hcal-title-secondary-font-size); font-family: var(--hcal-font-family-display); }
-:host([title-layout="inline"]) .title { flex-direction: row; align-items: baseline; justify-content: center; gap: 8px; }
-:host([title-layout="inline"]) .title [part~="title-secondary"] { padding-inline-start: 8px; border-inline-start: var(--hcal-title-separator); }
+/* title-layout: the effective layout ("stacked"/"inline") is decided at render time
+   (hijri-calendar.ts, task 3 — forced "stacked" at the narrow band regardless of the
+   title-layout attribute), so CSS keys off the rendered data-layout hook rather than the
+   raw host attribute directly. */
+.title[data-layout="inline"] { flex-direction: row; align-items: baseline; justify-content: center; gap: 8px; }
+.title[data-layout="inline"] [part~="title-secondary"] { padding-inline-start: 8px; border-inline-start: var(--hcal-title-separator); }
 .view-switch { display: flex; gap: 2px; background: var(--hcal-switch-bg); }
 .view-switch button[aria-pressed="true"] { background: var(--hcal-switch-active-bg); color: var(--hcal-switch-active-fg); border-color: var(--hcal-switch-active-bg); box-shadow: var(--hcal-switch-active-shadow); }
 .subheader { display: block; width: 100%; }
 
+/* §5.9 task 3: toolbar wrap rules at medium/narrow — nav+title on the first row, the view
+   switch (and toolbar-end slot content) forced onto a second row via flex-basis:100%, which
+   only takes effect because .toolbar already has flex-wrap: wrap. */
+.cal[data-size="medium"] .view-switch, .cal[data-size="medium"] .toolbar > slot[name="toolbar-end"],
+.cal[data-size="narrow"] .view-switch, .cal[data-size="narrow"] .toolbar > slot[name="toolbar-end"] { flex-basis: 100%; }
+.cal[data-size="narrow"] .view-switch { display: flex; }
+.cal[data-size="narrow"] .view-switch button { flex: 1; }
+
+/* §5.9: part="scroll" is the one horizontal-scroll container the responsive model uses —
+   month's narrow-events="scroll" wraps .month in it (task 4); week/day always wrap
+   .tg-head/.tg-allday/.tg-body in it (task 5), harmlessly inert at wide since those tracks
+   never overflow it there (Global Constraint 1). */
+[part="scroll"] { overflow-x: auto; min-width: 0; }
+
 /* month view */
 .month { display: flex; flex-direction: column; flex: 1; }
+/* narrow-events="scroll" (task 4): .month keeps its desktop min-width inside the scroll
+   wrapper instead of collapsing, so the horizontal scrollbar actually has something to scroll. */
+[part="scroll"] > .month { min-width: 640px; }
 .dow-row { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--hcal-border); background: var(--hcal-header-bg); }
 .dow { display: flex; flex-direction: column; align-items: var(--hcal-weekday-align); text-align: var(--hcal-weekday-align); font-size: var(--hcal-weekday-font-size); color: var(--hcal-weekday-color); padding: 6px 0; font-family: var(--hcal-font-family-arabic); }
 .dow [part~="weekday-secondary"] { font-family: var(--hcal-font-family-mono); opacity: 0.8; }
 .dow[part~="weekend"] { color: var(--hcal-weekend-fg); }
 .week { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: min-content; min-height: var(--hcal-cell-min-height); align-content: start; position: relative; }
+/* §5.9 task 4: month-cell minimum height shrinks at medium/narrow — wide keeps
+   --hcal-cell-min-height unchanged (Global Constraint 1). */
+.cal[data-size="medium"] .week { min-height: var(--hcal-cell-min-height-medium); }
+.cal[data-size="narrow"] .week { min-height: var(--hcal-cell-min-height-narrow); }
 /* Background layer (R1): one div per column, behind the day-head buttons/chips/more-link
    (all position: relative; z-index: 1) in both DOM and stacking order. */
 .day-cell { position: absolute; top: 0; bottom: 0; inset-inline-start: calc(var(--_col, 0) * (100% / 7)); width: calc(100% / 7); z-index: 0; box-sizing: border-box; padding: var(--hcal-cell-padding); border-inline-end: 1px solid var(--hcal-grid-line); border-block-end: 1px solid var(--hcal-grid-line); transition: background var(--hcal-transition); }
@@ -108,6 +143,12 @@ ${arabicFontFace}
 .day-cell.weekend { background: var(--hcal-weekend-bg); }
 .day-cell.today { background: var(--hcal-today-bg); }
 [part~="today-indicator"] { position: absolute; top: 4px; inset-inline-end: 4px; width: 6px; height: 6px; border-radius: 999px; background: var(--hcal-today-indicator-color); pointer-events: none; }
+/* §5.9 task 4: narrow-events="dots" — the day-cell layer becomes the dots' own layout
+   container (bottom-aligned, wrapping), never a grid item itself (see the R1 comment above:
+   day-cell keeps its --_col-based absolute positioning either way). */
+.cal[data-size="narrow"] .day-cell { display: flex; align-items: flex-end; justify-content: center; flex-wrap: wrap; gap: 2px; padding-bottom: 4px; }
+[part~="event"][part~="dot"] { width: var(--hcal-event-dot-size); height: var(--hcal-event-dot-size); border-radius: 999px; background: var(--_ev-color, var(--hcal-accent)); flex: none; pointer-events: none; }
+.day-cell [part="more-link"] { font-size: 9px; line-height: var(--hcal-event-dot-size); color: var(--hcal-muted); font-family: var(--hcal-font-family-mono); pointer-events: none; }
 .day-head { grid-row: 1; border: none; background: none; cursor: pointer; font: inherit; color: var(--hcal-fg); display: flex; align-items: baseline; gap: 4px; justify-content: center; padding: 4px 4px 2px; border-radius: 6px; position: relative; z-index: 1; }
 .day-head:focus-visible { outline: 2px solid var(--hcal-accent); outline-offset: 1px; }
 [part~="day-numbers"] { display: contents; }
@@ -144,6 +185,15 @@ ${arabicFontFace}
 
 /* time grid (week/day) */
 .timegrid { display: flex; flex-direction: column; flex: 1; }
+/* §5.9 task 5: .tg-head/.tg-allday/.tg-body's shared scroll wrapper (see the generic
+   [part="scroll"] rule above) also needs to lay them out in a column, same as .timegrid did
+   directly before this wrapper existed. */
+.timegrid > [part="scroll"] { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+/* Sticky gutter (task 5, verbatim): the time gutter, the all-day row's label cell, and the
+   head row's leading (empty) cell stay pinned to the scroll container's inline-start edge
+   while [part="scroll"] scrolls horizontally; the head row itself stays pinned to the top. */
+.tg-gutter, .tg-allday-label, .tg-head > :first-child { position: sticky; inset-inline-start: 0; z-index: 3; background: var(--hcal-gutter-bg, var(--hcal-bg)); }
+.tg-head { position: sticky; top: 0; z-index: 4; }
 .tg-head { display: grid; border-bottom: 1px solid var(--hcal-border); background: var(--hcal-header-bg); }
 .tg-col-head { text-align: center; padding: 6px 2px; border-inline-start: 1px solid var(--hcal-border); display: flex; flex-direction: column; align-items: center; }
 .tg-col-head .dow { padding: 0; }
@@ -160,8 +210,21 @@ ${arabicFontFace}
 .tg-allday { display: grid; border-bottom: 1px solid var(--hcal-border); min-height: 22px; background: var(--hcal-header-bg); }
 .tg-allday-label { font-size: 10px; color: var(--hcal-muted); display: flex; align-items: center; justify-content: center; }
 .tg-allday-col { border-inline-start: 1px solid var(--hcal-border); display: flex; flex-direction: column; }
-.tg-body { display: grid; position: relative; overflow-y: auto; max-height: var(--hcal-body-max-height); }
-.tg-gutter { position: relative; background: var(--hcal-gutter-bg); }
+/* overflow-x: clip (not the default "visible"): per the CSS Overflow spec, an element whose
+   overflow-y is non-visible (here, "auto") has its overflow-x *computed value* silently
+   promoted from "visible" to "auto" too, unless overflow-x is itself something other than
+   "visible" — "clip" is exempt from that promotion (unlike "hidden", it never establishes its
+   own scroll container). Without this, .tg-body quietly became a second horizontal scrolling
+   ancestor nested inside part="scroll", and position: sticky on .tg-gutter (a .tg-body grid
+   child) resolved against .tg-body's own (always-stationary, since nothing ever sets its
+   scrollLeft) scrollport instead of part="scroll"'s — so the gutter scrolled away with the
+   content instead of staying pinned. Caught by browser verification (Chromium), not jsdom,
+   which performs no layout and can't see this at all. */
+.tg-body { display: grid; position: relative; overflow-y: auto; overflow-x: clip; max-height: var(--hcal-body-max-height); }
+/* position comes from the sticky rule above (.tg-gutter, .tg-allday-label, .tg-head >
+   :first-child) — not redeclared here so that rule's position: sticky isn't shadowed by a
+   same-specificity position: relative later in the cascade. */
+.tg-gutter { background: var(--hcal-gutter-bg); }
 .tg-slot { height: var(--_slot-h); box-sizing: border-box; }
 .tg-gutter .tg-slot { position: relative; }
 .tg-gutter .tg-slot span { position: absolute; top: -7px; inset-inline-end: 6px; font-size: 10px; color: var(--hcal-muted); white-space: nowrap; font-family: var(--hcal-font-family-mono); }
@@ -177,10 +240,15 @@ ${arabicFontFace}
 .now-line { position: absolute; inset-inline: 0; height: var(--hcal-now-width); background: var(--hcal-now-color); pointer-events: none; }
 .now-line::before { content: ""; position: absolute; inset-inline-start: calc(var(--hcal-now-dot-size) / -2); top: calc((var(--hcal-now-width) - var(--hcal-now-dot-size)) / 2); width: var(--hcal-now-dot-size); height: var(--hcal-now-dot-size); border-radius: 999px; background: var(--hcal-now-color); }
 [part="now-label"] { position: absolute; top: -8px; inset-inline-start: 4px; transform: translateY(-100%); font-size: 10px; font-family: var(--hcal-font-family-mono); color: var(--hcal-now-color); white-space: nowrap; pointer-events: none; }
+/* §5.9 task 6: the day banner's summary stacks below the date at the narrow band. */
+.cal[data-size="narrow"] [part~="day-banner"] { flex-direction: column; align-items: flex-start; }
 
 /* agenda */
 .agenda { padding: 8px 0; overflow-y: auto; max-height: var(--hcal-body-max-height); }
 .agenda-day { display: flex; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--hcal-border); }
+/* §5.9 task 6: the agenda date stacks above its items at the narrow band. */
+.cal[data-size="narrow"] .agenda-day { flex-direction: column; gap: 4px; }
+.cal[data-size="narrow"] .agenda-date { min-width: 0; }
 .agenda-date { min-width: 120px; }
 .agenda-date .hijri { font-weight: 600; font-family: var(--hcal-font-family-arabic); }
 .agenda-date .greg { font-size: 11px; color: var(--hcal-muted); font-family: var(--hcal-font-family-display); }

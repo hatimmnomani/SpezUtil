@@ -59,6 +59,7 @@ import type {
       [dayHeader]="dayHeader"
       [agendaDays]="agendaDays"
       [loading]="loading"
+      [narrowEvents]="narrowEvents"
       [renderEvent]="renderEvent"
       [renderDayCell]="renderDayCell"
       [eventFields]="eventFields"
@@ -110,6 +111,7 @@ export class HijriCalendarComponent {
   @Input() dayHeader: "column" | "banner" | null = null;
   @Input() agendaDays = 30;
   @Input() loading = false;
+  @Input() narrowEvents: "dots" | "scroll" | null = null;
   @Input() renderEvent: ((ctx: RenderEventContext) => Node | string | null) | null = null;
   @Input() renderDayCell: ((ctx: RenderDayCellContext) => Node | string | null) | null = null;
   @Input() eventFields: EventFieldMap | null = null;

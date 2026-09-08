@@ -92,9 +92,12 @@ describe("<hijri-calendar> nav-group", () => {
 });
 
 describe("<hijri-calendar> part=calendar", () => {
-  it('the root .cal element carries part="calendar"', () => {
+  it('the root .cal element carries part="calendar" plus the current size-band token (task 2: additive, so existing ::part(calendar) selectors keep matching)', () => {
     const el = mount({ date: "2026-07-06" });
-    expect(sr(el).querySelector('.cal')!.getAttribute("part")).toBe("calendar");
+    // No ResizeObserver in this jsdom environment, so the band falls back to "wide" (task 1).
+    const parts = (sr(el).querySelector(".cal")!.getAttribute("part") ?? "").split(/\s+/);
+    expect(parts).toContain("calendar");
+    expect(parts).toContain("wide");
   });
 });
 

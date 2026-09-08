@@ -299,7 +299,7 @@ describe("<hijri-calendar> column order invariant (Arabic content must never reo
     // Rulings K/M: dir="rtl" belongs only on single-script inner spans, never on a grid
     // container, a row, or the weekday header — those must stay direction-neutral so the
     // column order itself is never subject to bidi reordering.
-    expect(sr(el).querySelector('[part="calendar"]')!.getAttribute("dir")).toBeNull();
+    expect(sr(el).querySelector('[part~="calendar"]')!.getAttribute("dir")).toBeNull();
     expect(sr(el).querySelector(".dow-row")!.getAttribute("dir")).toBeNull();
     const weeks = Array.from(sr(el).querySelectorAll(".week"));
     expect(weeks.length).toBeGreaterThan(0);
@@ -315,7 +315,7 @@ describe("<hijri-calendar> column order invariant (Arabic content must never reo
     heads.forEach((head, i) => {
       expect(head.querySelector(".dow")!.getAttribute("title")).toBe(arWeekdayNames[i]);
     });
-    expect(sr(el).querySelector('[part="calendar"]')!.getAttribute("dir")).toBeNull();
+    expect(sr(el).querySelector('[part~="calendar"]')!.getAttribute("dir")).toBeNull();
     expect(sr(el).querySelector(".tg-head")!.getAttribute("dir")).toBeNull();
   });
 });

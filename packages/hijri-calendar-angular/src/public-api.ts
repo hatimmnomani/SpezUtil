@@ -1,4 +1,5 @@
 export { HijriCalendarComponent } from "./hijri-calendar.component";
+export { SIZE_BANDS } from "@spezutil/hijri-calendar";
 export type {
   CalendarEvent,
   CalendarView,
@@ -13,4 +14,6 @@ export type {
   RenderEventContext,
   RenderDayCellContext,
   HijriDate,
+  SizeBand,
+  NarrowEventsMode,
 } from "@spezutil/hijri-calendar";

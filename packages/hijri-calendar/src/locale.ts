@@ -32,6 +32,13 @@ export interface CalendarLocale {
   hoursScheduled: (digits: string) => string;
   /** Default text of the `loading` overlay (`part="loading"`, `slot="loading"`). */
   loadingLabel: string;
+  /**
+   * Appended to a month day button's `aria-label` at the `narrow` size band under
+   * `narrow-events="dots"` (§5.9), where the events themselves render as non-interactive dots
+   * with no accessible text of their own, e.g. "3 events". Takes the digit(s) already
+   * transliterated by the caller (same Ruling Y contract as `eventsCount`).
+   */
+  moreDotsLabel: (digits: string) => string;
 }
 
 const translit: CalendarLocale = {
@@ -45,6 +52,7 @@ const translit: CalendarLocale = {
   eventsCount: (digits) => `${digits} events`,
   hoursScheduled: (digits) => `${digits} hours scheduled`,
   loadingLabel: "Loading…",
+  moreDotsLabel: (digits) => `${digits} events`,
 };
 
 const ar: CalendarLocale = {
@@ -58,6 +66,7 @@ const ar: CalendarLocale = {
   eventsCount: (digits) => `${digits} أحداث`,
   hoursScheduled: (digits) => `${digits} ساعة مجدولة`,
   loadingLabel: "جارٍ التحميل…",
+  moreDotsLabel: (digits) => `${digits} أحداث`,
 };
 
 export function resolveLocale(name: string | null): CalendarLocale {

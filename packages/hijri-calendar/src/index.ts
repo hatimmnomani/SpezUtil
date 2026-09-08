@@ -1,6 +1,6 @@
 import { HijriCalendarElement } from "./hijri-calendar";
 
-export { HijriCalendarElement } from "./hijri-calendar";
+export { HijriCalendarElement, SIZE_BANDS } from "./hijri-calendar";
 export type {
   CalendarView,
   SecondaryPosition,
@@ -12,6 +12,7 @@ export type {
   TimeLabelPosition,
   DayHeaderMode,
   SizeBand,
+  NarrowEventsMode,
   RenderEventContext,
   RenderEventHook,
   RenderDayCellContext,

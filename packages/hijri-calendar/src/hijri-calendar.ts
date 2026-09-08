@@ -104,12 +104,27 @@ export type DayHeaderMode = "column" | "banner";
 const DAY_HEADER_MODES: DayHeaderMode[] = ["column", "banner"];
 
 /**
- * Size band the calendar is rendered at. Phase 5 measures the host with a `ResizeObserver`
- * and exposes this properly (as a reflected read-only property plus a `part="calendar"`
- * token); until then every render context reports the `ResizeObserver`-unavailable fallback
- * ("wide") — see `currentSize()`.
+ * Size band the calendar is rendered at, measured from the host's own `contentRect.width` via
+ * a `ResizeObserver` (§5.9). Exposed as a read-only `size` property and as a token on
+ * `part="calendar <band>"`. `SIZE_BANDS` gives the two thresholds as fixed literals (not
+ * customizable attributes — see the task-5 brief): `wide` is `width >= SIZE_BANDS.wide`,
+ * `medium` is `SIZE_BANDS.medium <= width < SIZE_BANDS.wide`, `narrow` is everything below
+ * `SIZE_BANDS.medium`. When `ResizeObserver` is unavailable (jsdom, very old browsers) the
+ * band is always `"wide"` — see `classifySize()`/`setupResizeObserver()`.
  */
 export type SizeBand = "wide" | "medium" | "narrow";
+
+/** Fixed size-band thresholds (host width, px) — see `SizeBand`. Not configurable; 1.0 defers that. */
+export const SIZE_BANDS = { medium: 600, wide: 900 } as const;
+
+function classifySize(width: number): SizeBand {
+  if (width >= SIZE_BANDS.wide) return "wide";
+  if (width >= SIZE_BANDS.medium) return "medium";
+  return "narrow";
+}
+
+export type NarrowEventsMode = "dots" | "scroll";
+const NARROW_EVENTS_MODES: NarrowEventsMode[] = ["dots", "scroll"];
 
 /** Context passed to the `renderEvent` hook for every chip/block/agenda item. */
 export interface RenderEventContext {
@@ -234,6 +249,7 @@ export class HijriCalendarElement extends HTMLElement {
       "day-header",
       "agenda-days",
       "loading",
+      "narrow-events",
     ];
   }
 
@@ -249,6 +265,24 @@ export class HijriCalendarElement extends HTMLElement {
   private lastRangeDetail: RangeChangeDetail | null = null;
   private _renderEvent: RenderEventHook | undefined;
   private _renderDayCell: RenderDayCellHook | undefined;
+  /**
+   * Current size band (§5.9). Defaults to the documented `ResizeObserver`-unavailable
+   * fallback, "wide"; `setupResizeObserver()` measures the real value (synchronously, for the
+   * stub tests use — see responsive.test.ts — asynchronously in real browsers) before the
+   * band can ever affect a render, because it runs before the first `render("init")` call in
+   * `connectedCallback()`.
+   */
+  private _size: SizeBand = "wide";
+  private resizeObserver: ResizeObserver | null = null;
+  /**
+   * Set `true` at the end of every `render()`. Guards `handleResize()`: the *first* observer
+   * callback (fired synchronously by observe() in real browsers is async, but the stub used by
+   * responsive.test.ts fires it synchronously from `connectedCallback`) must only update
+   * `_size` before the first render, never trigger a second one — otherwise the "exactly one
+   * range-change with reason 'init'" contract (§5.3) could be broken by an earlier,
+   * differently-reasoned render.
+   */
+  private hasRendered = false;
 
   public isDateDisabled?: (hijri: HijriDate, gregorian: Date) => boolean;
 
@@ -381,6 +415,14 @@ export class HijriCalendarElement extends HTMLElement {
   /** The range last carried by a `range-change` event, or `null` before the first render. */
   get visibleRange(): RangeChangeDetail | null {
     return this.lastRangeDetail;
+  }
+  /**
+   * Current size band, measured from the host's own width (§5.9). Read-only: there is no
+   * setter and no reflected attribute — hosts that want to react to it read the property or
+   * select on the `part="calendar <band>"` token.
+   */
+  get size(): SizeBand {
+    return this._size;
   }
   /** Gregorian subtitle below (`stacked`, default) or inline after the Hijri title (`inline`). */
   get titleLayout(): "stacked" | "inline" {
@@ -552,6 +594,19 @@ export class HijriCalendarElement extends HTMLElement {
     else this.removeAttribute("loading");
   }
   /**
+   * Month view at the `narrow` size band only (§5.9): `"dots"` (default) collapses chips to
+   * coloured `part="event dot"` spans (tap the cell → `date-click`); `"scroll"` keeps the
+   * desktop chip layout and scrolls it horizontally inside `part="scroll"` instead. No effect
+   * at `wide`/`medium` — the desktop chip layout always renders there.
+   */
+  get narrowEvents(): NarrowEventsMode {
+    const v = this.getAttribute("narrow-events");
+    return NARROW_EVENTS_MODES.includes(v as NarrowEventsMode) ? (v as NarrowEventsMode) : "dots";
+  }
+  set narrowEvents(v: string) {
+    this.reflect("narrow-events", v);
+  }
+  /**
    * Replaces the inner content of every chip/block/agenda item (`part="event …"`). Returning
    * `null` keeps the default renderer; a `string` is inserted as a text node (never parsed as
    * HTML); a `Node` is appended as-is. Property only — see `RenderEventContext`.
@@ -624,11 +679,47 @@ export class HijriCalendarElement extends HTMLElement {
 
   connectedCallback(): void {
     this.syncFromAttrs();
+    this.setupResizeObserver();
     this.render("init");
   }
 
   disconnectedCallback(): void {
     this.stopNowTimer();
+    this.teardownResizeObserver();
+  }
+
+  /**
+   * Measures the host width via `ResizeObserver` and classifies it into a `SizeBand`
+   * (§5.9). Runs before the first `render("init")` in `connectedCallback()`, so `_size`
+   * already holds the real measured band by the time anything renders — `handleResize()`
+   * itself never triggers a render until `hasRendered` is true (see that field's doc
+   * comment), so this initial measurement is silent even when the observer implementation
+   * invokes its callback synchronously from `observe()` (the stub used by the unit tests
+   * does; real `ResizeObserver` invokes it asynchronously after layout, in which case `_size`
+   * simply starts as the documented "wide" fallback for that first render and corrects itself
+   * — with a real re-render — once the async callback lands).
+   */
+  private setupResizeObserver(): void {
+    if (typeof ResizeObserver === "undefined") {
+      this._size = "wide";
+      return;
+    }
+    this.resizeObserver = new ResizeObserver((entries) => this.handleResize(entries));
+    this.resizeObserver.observe(this);
+  }
+
+  private teardownResizeObserver(): void {
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
+  }
+
+  /** Re-renders only when the classified band actually changes (task 1). */
+  private handleResize(entries: ResizeObserverEntry[]): void {
+    const width = entries[entries.length - 1]?.contentRect.width ?? 0;
+    const band = classifySize(width);
+    if (band === this._size) return;
+    this._size = band;
+    if (this.hasRendered) this.render();
   }
 
   attributeChangedCallback(): void {
@@ -897,22 +988,31 @@ export class HijriCalendarElement extends HTMLElement {
    * The primary weekday label text honoring `weekday-format` (full name for `long`/`bilingual`,
    * a 3-letter abbreviation for `short`). Shared by `weekdayCellHtml()` (HTML) and
    * `dayCellLabels()` (plain text, for the `renderDayCell` hook context's `labels.weekday`).
+   *
+   * §5.9 (task 3, render-time not CSS): at the `narrow` band, `weekday-format="long"` downgrades
+   * to the `short` abbreviation. `bilingual`'s primary is unaffected by this — it keeps the full
+   * name at every band; only its *secondary* span disappears at `narrow` (see `weekdayCellHtml`).
    */
   private weekdayPrimaryText(dow: number): string {
     const full = this.nameSet.weekdayNames[dow] ?? "";
-    return this.weekdayFormat === "bilingual" || this.weekdayFormat === "long"
-      ? full
-      : full.slice(0, 3);
+    const fmt = this.weekdayFormat;
+    const downgradeLong = this._size === "narrow" && fmt === "long";
+    return (fmt === "bilingual" || fmt === "long") && !downgradeLong ? full : full.slice(0, 3);
   }
 
-  /** Weekday header cell honoring `weekday-format` and `weekend-days`. Shared by month and time-grid views. */
+  /**
+   * Weekday header cell honoring `weekday-format` and `weekend-days`. Shared by month and
+   * time-grid views. §5.9 (task 3, render-time not CSS): `weekday-secondary` is omitted
+   * entirely at the `narrow` band, even under `weekday-format="bilingual"` — the DOM itself
+   * differs per band, not just its CSS visibility.
+   */
   private weekdayCellHtml(dow: number): string {
     const full = this.nameSet.weekdayNames[dow] ?? "";
     const isWeekend = this.weekendDays.includes(dow);
     const partTokens = ["weekday", isWeekend ? "weekend" : ""].filter(Boolean).join(" ");
     const dirAttr = this.namesDirAttr();
     let inner = `<span part="weekday-primary"${dirAttr}>${escapeHtml(this.weekdayPrimaryText(dow))}</span>`;
-    if (this.weekdayFormat === "bilingual") {
+    if (this.weekdayFormat === "bilingual" && this._size !== "narrow") {
       const secondary = (enWeekdayNames[dow] ?? "").slice(0, 3);
       inner += `<span part="weekday-secondary">${escapeHtml(secondary)}</span>`;
     }
@@ -951,13 +1051,9 @@ export class HijriCalendarElement extends HTMLElement {
     return `${this.numG(g.getUTCDate())} ${month} ${this.numG(g.getUTCFullYear())}`;
   }
 
-  /**
-   * Size band the calendar is rendered at, for `RenderEventContext`/`RenderDayCellContext`.
-   * Phase 5 measures the host with a `ResizeObserver`; until then this always returns the
-   * documented no-`ResizeObserver` fallback, "wide" (see `SizeBand`).
-   */
+  /** Size band the calendar is rendered at, for `RenderEventContext`/`RenderDayCellContext`. */
   private currentSize(): SizeBand {
-    return "wide";
+    return this._size;
   }
 
   /**
@@ -1022,7 +1118,13 @@ export class HijriCalendarElement extends HTMLElement {
     // `names`, not on `numerals` (a Latin month name with an Arabic-Indic year, e.g.
     // "Ramadan ١٤٤٧", must not be marked rtl; see namesDirAttr()).
     const titleDir = this.namesDirAttr();
-    const titleHtml = `<div class="title" part="title"><span part="title-primary"${titleDir}>${escapeHtml(title)}</span><span part="title-secondary">${escapeHtml(subtitle)}</span></div>`;
+    // §5.9 (task 3): title is forced "stacked" at the `narrow` band, decided here at render
+    // time — not left to CSS — so the effective layout is a real, testable render-time fact.
+    // `title-secondary` is emitted identically either way (§5.4 D3); only the `data-layout`
+    // hook that styles.ts keys off changes. See styles.ts's `.title[data-layout="inline"]`
+    // rules, which replace the old `:host([title-layout="inline"])` selector for this reason.
+    const titleLayout = this._size === "narrow" ? "stacked" : this.titleLayout;
+    const titleHtml = `<div class="title" part="title" data-layout="${titleLayout}"><span part="title-primary"${titleDir}>${escapeHtml(title)}</span><span part="title-secondary">${escapeHtml(subtitle)}</span></div>`;
     return `<div class="toolbar" part="toolbar">
       <slot name="toolbar-start"></slot>
       <div class="nav-group" part="nav-group">
@@ -1075,6 +1177,14 @@ export class HijriCalendarElement extends HTMLElement {
     const ws = this.weekStart;
     const dowRow = Array.from({ length: 7 }, (_, i) => this.weekdayCellHtml((i + ws) % 7)).join("");
 
+    // §5.9 (task 4): at the `narrow` band, `narrow-events="dots"` (the default) replaces the
+    // lane-based chip layout with per-day coloured dots inside the `day-cell` background layer
+    // — no lane chips, no desktop `more-link` buttons, the whole cell stays the only tap
+    // target (its existing click-forwarding to the day button in wireMonth already covers
+    // dots, since they're inside the same `data-cell` div). `narrow-events="scroll"` keeps the
+    // desktop layout untouched and instead scrolls it horizontally (handled below, at `body`).
+    const narrowDots = this._size === "narrow" && this.narrowEvents === "dots";
+
     const weeksHtml = model.weeks
       .map((week, w) => {
         // Background layer, one div per column, emitted *before* the day-head buttons so it
@@ -1106,8 +1216,29 @@ export class HijriCalendarElement extends HTMLElement {
               this.todayMarker === "dot" && cell.isToday
                 ? `<span part="today-indicator"></span>`
                 : "";
+            // Dot-mode chips (task 4): up to `max-events` coloured dots per day, then a
+            // non-interactive `+N` count. Lives inside the same background layer as
+            // `today-indicator` — a `<span>`, never a `<button>`, since the whole cell (not
+            // the dot) is the tap target (wireMonth forwards the div's click to the day
+            // button).
+            let dotsHtml = "";
+            if (narrowDots) {
+              const dayEvents = this.eventsOnDay(cell.gregorian.getTime());
+              const shown = dayEvents.slice(0, this.maxEvents);
+              dotsHtml = shown
+                .map((e) => {
+                  const color = normalizeEvent(e).event.color;
+                  const colorStyle = color ? ` style="--_ev-color:${escapeHtml(color)};"` : "";
+                  return `<span part="event dot"${colorStyle}></span>`;
+                })
+                .join("");
+              const overflowCount = dayEvents.length - shown.length;
+              if (overflowCount > 0) {
+                dotsHtml += `<span part="more-link">+${this.numG(overflowCount)}</span>`;
+              }
+            }
             return `<div class="${tokenStr}" part="${tokenStr}" data-cell="${i}"
-              style="--_col:${d}">${indicator}</div>`;
+              style="--_col:${d}">${indicator}${dotsHtml}</div>`;
           })
           .join("");
 
@@ -1121,7 +1252,11 @@ export class HijriCalendarElement extends HTMLElement {
             ]
               .filter(Boolean)
               .join(" ");
-            const label = `${formatHijri(cell.hijri, "D MMMM YYYY", { monthNames: this.nameSet.monthNames })} (${toIso(cell.gregorian)})`;
+            let label = `${formatHijri(cell.hijri, "D MMMM YYYY", { monthNames: this.nameSet.monthNames })} (${toIso(cell.gregorian)})`;
+            if (narrowDots) {
+              const n = this.eventsOnDay(cell.gregorian.getTime()).length;
+              if (n > 0) label += `, ${this.loc.moreDotsLabel(this.numG(n))}`;
+            }
             return `<button type="button" part="day" class="${cls}" role="gridcell"
               style="grid-column:${d + 1}" data-i="${i}" data-date="${toIso(cell.gregorian)}"
               aria-label="${escapeHtml(label)}" tabindex="-1" ${cell.disabled ? "disabled data-disabled" : ""}>
@@ -1130,54 +1265,66 @@ export class HijriCalendarElement extends HTMLElement {
           })
           .join("");
 
-        const chips = model.segments
-          .filter((s) => s.weekIndex === w)
-          .map((s) => {
-            const idx = this.lastSegments.indexOf(s);
-            // EventSegment.event is the raw, pre-sanitisation event (view-core's month builder
-            // keeps the original reference); re-normalize here so every rendered field
-            // (variant/style/subtitle/title/color) is read off the sanitized copy, never the
-            // raw stored one (Ruling P).
-            const n = normalizeEvent(s.event);
-            const ev = n.event;
-            const cls = [
-              "chip",
-              s.continuesBefore ? "continues-before" : "",
-              s.continuesAfter ? "continues-after" : "",
-            ]
-              .filter(Boolean)
-              .join(" ");
-            const styleToken = this.effectiveEventStyle(ev.style);
-            const variant = this.variantTokens(ev.variant);
-            const colorStyle = ev.color ? `--_ev-color:${escapeHtml(ev.color)};` : "";
-            const gridStyle = `grid-row:${s.lane + 2};grid-column:${s.startCol + 1} / span ${s.span}`;
-            const labels = this.normalizedLabels(n);
-            const ariaLabel = `${ev.title}, ${labels.start}`;
-            const inner = this.eventInnerHtml(ev, labels, "month-chip");
-            return `<button type="button" part="event ${styleToken}${variant.part}" class="${cls}" data-ev="${idx}"
+        // Dot mode (narrowDots) skips both the lane chips and the desktop more-link buttons
+        // entirely — the day-cell layer's dots/overflow-count span above are the only
+        // per-event UI at the narrow band.
+        const chips = narrowDots
+          ? ""
+          : model.segments
+              .filter((s) => s.weekIndex === w)
+              .map((s) => {
+                const idx = this.lastSegments.indexOf(s);
+                // EventSegment.event is the raw, pre-sanitisation event (view-core's month
+                // builder keeps the original reference); re-normalize here so every rendered
+                // field (variant/style/subtitle/title/color) is read off the sanitized copy,
+                // never the raw stored one (Ruling P).
+                const n = normalizeEvent(s.event);
+                const ev = n.event;
+                const cls = [
+                  "chip",
+                  s.continuesBefore ? "continues-before" : "",
+                  s.continuesAfter ? "continues-after" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
+                const styleToken = this.effectiveEventStyle(ev.style);
+                const variant = this.variantTokens(ev.variant);
+                const colorStyle = ev.color ? `--_ev-color:${escapeHtml(ev.color)};` : "";
+                const gridStyle = `grid-row:${s.lane + 2};grid-column:${s.startCol + 1} / span ${s.span}`;
+                const labels = this.normalizedLabels(n);
+                const ariaLabel = `${ev.title}, ${labels.start}`;
+                const inner = this.eventInnerHtml(ev, labels, "month-chip");
+                return `<button type="button" part="event ${styleToken}${variant.part}" class="${cls}" data-ev="${idx}"
               style="${colorStyle}${gridStyle}"${variant.dataAttr}
               aria-label="${escapeHtml(ariaLabel)}" title="${escapeHtml(ariaLabel)}">${inner}</button>`;
-          })
-          .join("");
+              })
+              .join("");
 
-        const mores = week
-          .map((cell, d) => {
-            const count = model.overflow[w]?.[d] ?? 0;
-            if (!count) return "";
-            return `<button type="button" part="more-link" class="more"
+        const mores = narrowDots
+          ? ""
+          : week
+              .map((cell, d) => {
+                const count = model.overflow[w]?.[d] ?? 0;
+                if (!count) return "";
+                return `<button type="button" part="more-link" class="more"
               style="grid-row:${this.maxEvents + 2};grid-column:${d + 1}"
               data-more="${w * 7 + d}">${escapeHtml(this.loc.moreLabel(count))}</button>`;
-          })
-          .join("");
+              })
+              .join("");
 
         return `<div class="week" role="row">${dayCells}${dayHeads}${chips}${mores}</div>`;
       })
       .join("");
 
-    const body = `<div class="month" role="grid" aria-label="${escapeHtml(title)}"${this.loading ? ' aria-busy="true"' : ""}>
+    const monthHtml = `<div class="month" role="grid" aria-label="${escapeHtml(title)}"${this.loading ? ' aria-busy="true"' : ""}>
       <div class="dow-row" role="row">${dowRow}</div>
       ${weeksHtml}
     </div>`;
+    // §5.9 (task 4): `narrow-events="scroll"` keeps the desktop chip layout at the `narrow`
+    // band and scrolls it horizontally instead of collapsing to dots — `.month` gets a
+    // `min-width` (styles.ts) inside this wrapper so it doesn't shrink below a usable width.
+    const narrowScroll = this._size === "narrow" && this.narrowEvents === "scroll";
+    const body = narrowScroll ? `<div part="scroll">${monthHtml}</div>` : monthHtml;
     const rangeStart = this.lastCells[0]!.gregorian;
     const rangeEnd = new Date(this.lastCells[this.lastCells.length - 1]!.gregorian.getTime() + DAY_MS);
     return { title, subtitle, body, range: { start: rangeStart, end: rangeEnd } };
@@ -1353,7 +1500,11 @@ export class HijriCalendarElement extends HTMLElement {
     const winEnd = this.dayEnd * 60;
     const total = winEnd - winStart;
     const slotMinutes = this.slotMinutes;
-    const cols = `var(--hcal-gutter-width) repeat(${dayCount}, 1fr)`;
+    // §5.9 (task 5): day columns get a `min-width` floor at `medium`/`narrow` only — `wide`
+    // keeps today's unconstrained `1fr` tracks (Global Constraint 1: the default/`wide` render
+    // must stay byte-for-byte what it was before this phase).
+    const colTrack = this._size === "wide" ? "1fr" : "minmax(var(--hcal-column-min-width), 1fr)";
+    const cols = `var(--hcal-gutter-width) repeat(${dayCount}, ${colTrack})`;
     const slotHeightVar = `--_slot-h:calc(var(--hcal-hour-height) * ${slotMinutes} / 60)`;
 
     const showBanner = dayCount === 1 && this.dayHeader === "banner";
@@ -1483,12 +1634,21 @@ export class HijriCalendarElement extends HTMLElement {
       ? this.dayBannerHtml(model.columns[0]!)
       : `<div class="tg-head" style="grid-template-columns:${cols}"><div></div>${heads}</div>`;
 
+    // §5.9 (task 5): `.tg-head`, `.tg-allday` (when present) and `.tg-body` share one
+    // `part="scroll"` horizontal-scroll container at every band — at `wide` the unconstrained
+    // `1fr` columns above never overflow it, so no scrollbar appears (Global Constraint 1); at
+    // `medium`/`narrow` the `minmax(var(--hcal-column-min-width), 1fr)` columns can exceed the
+    // host width, and this is the container that scrolls. The gutter/allday-label/head-first-
+    // cell sticky rules (styles.ts) rely on this being their scrolling ancestor. The vertical
+    // `--hcal-body-max-height` scroll stays entirely on `.tg-body`, untouched by this wrapper.
     const body = `<div class="timegrid"${this.loading ? ' aria-busy="true"' : ""}>
-      ${tgHead}
-      ${alldayHtml}
-      <div class="tg-body" style="grid-template-columns:${cols};${slotHeightVar}">
-        <div class="tg-gutter" part="time-gutter">${gutterSlots.join("")}</div>
-        ${dayCols}
+      <div part="scroll">
+        ${tgHead}
+        ${alldayHtml}
+        <div class="tg-body" style="grid-template-columns:${cols};${slotHeightVar}">
+          <div class="tg-gutter" part="time-gutter">${gutterSlots.join("")}</div>
+          ${dayCols}
+        </div>
       </div>
     </div>`;
     const rangeStart = first.gregorian;
@@ -1527,6 +1687,47 @@ export class HijriCalendarElement extends HTMLElement {
     if (this.lastColumns.some((c) => c.isToday)) {
       this.startNowTimer(() => this.render());
     }
+    this.wireStickyGutter();
+  }
+
+  /**
+   * §5.9 task 5 follow-up (verified in Chromium, not just asserted in jsdom — see
+   * task-5-report.md): `position: sticky` alone does not keep `.tg-gutter` pinned while
+   * `part="scroll"` scrolls horizontally, because `.tg-gutter` lives inside `.tg-body`, and
+   * `.tg-body`'s own `overflow-y: auto` (needed for the unrelated, pre-existing vertical
+   * `--hcal-body-max-height` scroll) makes the CSS engine treat `.tg-body` itself as
+   * `.tg-gutter`'s nearest scrolling ancestor — even though `.tg-body` never actually scrolls
+   * horizontally on its own. Sticky positioning resolves against *one* nearest scrolling
+   * ancestor for every inset it's given, so `inset-inline-start: 0` ends up computed against
+   * `.tg-body`'s (always-static-on-x) scrollport instead of `part="scroll"`'s — the gutter's
+   * sticky offset is therefore always zero, and it scrolls away with the content exactly like
+   * an ordinary grid cell would. `.tg-allday-label` and `.tg-head > :first-child` don't have
+   * this problem (neither lives inside an element with its own non-visible overflow), so only
+   * the gutter needs this assist. The CSS `position: sticky` declaration stays in styles.ts
+   * regardless — it's harmless (its own computed offset is always 0 here) and documents intent
+   * for any future restructuring that removes the nested scroll box.
+   *
+   * The fix measures the actual pixel gap between the scroll container's edge and the gutter's
+   * current edge and cancels it with a `transform: translateX()`, on every `scroll` event of
+   * `part="scroll"` — robust to jsdom (all rects are zero there, so this is a harmless no-op in
+   * unit tests) and to `dir="rtl"` (compares the *inline-start* edges via `direction`, not a
+   * hard-coded `left`/`scrollLeft` sign, since RTL `scrollLeft` sign conventions are not
+   * consistent across engines).
+   */
+  private wireStickyGutter(): void {
+    const scrollEl = this.root.querySelector<HTMLElement>('[part="scroll"]');
+    const gutter = this.root.querySelector<HTMLElement>(".tg-gutter");
+    if (!scrollEl || !gutter) return;
+    const rtl = getComputedStyle(this.root.querySelector(".cal")!).direction === "rtl";
+    const sync = (): void => {
+      gutter.style.transform = "";
+      const scrollRect = scrollEl.getBoundingClientRect();
+      const gutterRect = gutter.getBoundingClientRect();
+      const delta = rtl ? scrollRect.right - gutterRect.right : scrollRect.left - gutterRect.left;
+      if (delta) gutter.style.transform = `translateX(${delta}px)`;
+    };
+    sync();
+    scrollEl.addEventListener("scroll", sync, { passive: true });
   }
 
   // ---- agenda view ----
@@ -1807,7 +2008,7 @@ export class HijriCalendarElement extends HTMLElement {
       ? `<div part="loading"><slot name="loading">${escapeHtml(this.loc.loadingLabel)}</slot></div>`
       : "";
     this.root.innerHTML = `<style>${styles}</style>
-      <div class="cal" part="calendar" role="application" aria-label="Hijri calendar">
+      <div class="cal" part="calendar ${this._size}" data-size="${this._size}" role="application" aria-label="Hijri calendar">
         ${this.renderToolbar(title, subtitle)}
         <div class="body-wrap">${body}${overlay}</div>
       </div>`;
@@ -1816,5 +2017,6 @@ export class HijriCalendarElement extends HTMLElement {
     this.wireView();
     this.applyEventHooks();
     this.applyDayCellHooks();
+    this.hasRendered = true;
   }
 }
