@@ -57,6 +57,71 @@ describe("<hijri-calendar> range-change: initial fire", () => {
   });
 });
 
+describe("<hijri-calendar> range-change: disconnect -> reconnect (Finding 4, task-5 review)", () => {
+  it('emits exactly one range-change with reason "init" on reconnect, even when the reconnect crosses a size-band boundary in the same tick', () => {
+    // Minimal synchronous ResizeObserver stub (same shape as responsive.test.ts's), scoped to
+    // this test only: setupResizeObserver()'s callback must fire synchronously, in the same
+    // tick as connectedCallback(), to reproduce the race Finding 4 describes — a real
+    // ResizeObserver only fires asynchronously, so it can never observe this bug directly, but
+    // hosts moving the element to a differently-sized container on reconnect can still hit it.
+    class ResizeObserverStub {
+      static nextWidth = 400;
+      cb: ResizeObserverCallback;
+      constructor(cb: ResizeObserverCallback) {
+        this.cb = cb;
+      }
+      observe(): void {
+        this.cb(
+          [{ contentRect: { width: ResizeObserverStub.nextWidth } } as ResizeObserverEntry],
+          this as unknown as ResizeObserver
+        );
+      }
+      disconnect(): void {}
+    }
+    const restore = (globalThis as unknown as { ResizeObserver?: unknown }).ResizeObserver;
+    (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = ResizeObserverStub;
+
+    try {
+      const el = document.createElement("hijri-calendar") as HijriCalendarElement;
+      el.setAttribute("date", "2026-07-06");
+      ResizeObserverStub.nextWidth = 400; // narrow
+      document.body.appendChild(el); // first connect: establishes _size = "narrow"
+
+      el.remove(); // disconnect
+      // Change the visible range while disconnected: attributeChangedCallback still runs
+      // syncFromAttrs() (updates viewDate) but skips render() because !isConnected, so
+      // lastRangeDetail is NOT updated here — the pending range change is only picked up by
+      // whichever render fires first after reconnect.
+      el.setAttribute("date", "2026-08-06");
+      ResizeObserverStub.nextWidth = 900; // wide — crosses the narrow/medium/wide boundary
+
+      const events = listen(el);
+      document.body.appendChild(el); // reconnect: connectedCallback() re-runs
+
+      expect(events.length).toBe(1);
+      expect(events[0]!.reason).toBe("init");
+      expect(events[0]!.view).toBe("month");
+
+      // The range reflects the date set while disconnected (August), not the stale July range
+      // from before disconnect — confirms this is a real, correctly-reasoned emission and not
+      // a coincidental dedupe pass-through.
+      const cells = Array.from(sr(el).querySelectorAll<HTMLElement>("[data-date]"));
+      const firstDate = cells[0]!.dataset.date!;
+      const lastDate = cells[cells.length - 1]!.dataset.date!;
+      const expectedEnd = new Date(`${lastDate}T00:00:00Z`);
+      expectedEnd.setUTCDate(expectedEnd.getUTCDate() + 1);
+      expect(events[0]!.start).toBe(firstDate);
+      expect(events[0]!.end).toBe(expectedEnd.toISOString().slice(0, 10));
+      // Confirms it's genuinely the August grid, not a stale July one carried over from before
+      // disconnect (the risk this test guards against is a swallowed/misreasoned event, not a
+      // wrong date — but pinning the rendered month name makes the scenario unambiguous).
+      expect(sr(el).querySelector('[part="title-secondary"]')!.textContent).toContain("Aug");
+    } finally {
+      (globalThis as unknown as { ResizeObserver?: unknown }).ResizeObserver = restore;
+    }
+  });
+});
+
 describe("<hijri-calendar> range-change: navigation", () => {
   it('nav-next fires reason "navigate"', () => {
     const el = mount({ date: "2026-07-06" });

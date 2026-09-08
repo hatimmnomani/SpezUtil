@@ -85,7 +85,15 @@ ${arabicFontFace}
   min-width: 0;
   overflow: hidden;
 }
-.cal { background: var(--hcal-bg); border: 1px solid var(--hcal-border); border-radius: var(--hcal-radius); overflow: hidden; display: flex; flex-direction: column; }
+/* Finding 3 (task-5 review): overflow-x: auto is restored here (it was dropped to a bare
+   'overflow: hidden' during Phase 5, which silently clipped instead of scrolled at every band,
+   including wide). Task 7's "all overflow lives in part=scroll" principle covers the grid
+   regions this component owns, but not agenda content or renderEvent/renderDayCell hook output
+   (Phase 4 lets hosts return arbitrary text/nodes there), which sit in no scroll container of
+   their own — .cal is their fallback. Restoring the longhand costs nothing: content already
+   inside a part="scroll" descendant still scrolls there first, since overflow is resolved at the
+   nearest ancestor that actually overflows. */
+.cal { background: var(--hcal-bg); border: 1px solid var(--hcal-border); border-radius: var(--hcal-radius); overflow: hidden; overflow-x: auto; display: flex; flex-direction: column; }
 .body-wrap { position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0; }
 [part="loading"] { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: var(--hcal-event-font-size); color: var(--hcal-muted); background: color-mix(in srgb, var(--hcal-bg) 80%, transparent); }
 :host([loading]) .month, :host([loading]) .timegrid, :host([loading]) .agenda { pointer-events: none; }
@@ -189,9 +197,20 @@ ${arabicFontFace}
    [part="scroll"] rule above) also needs to lay them out in a column, same as .timegrid did
    directly before this wrapper existed. */
 .timegrid > [part="scroll"] { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-/* Sticky gutter (task 5, verbatim): the time gutter, the all-day row's label cell, and the
-   head row's leading (empty) cell stay pinned to the scroll container's inline-start edge
-   while [part="scroll"] scrolls horizontally; the head row itself stays pinned to the top. */
+/* Sticky gutter (task 5, verbatim CSS from the brief): the all-day row's label cell and the
+   head row's leading (empty) cell stay pinned to the scroll container's inline-start edge via
+   this rule alone, while [part="scroll"] scrolls horizontally; the head row itself stays pinned
+   to the top. '.tg-gutter' is the exception (Finding 2, task-5 review): this declaration's
+   'inset-inline-start: 0' on '.tg-gutter' is INERT on its own — always resolves to an offset of
+   0 — because '.tg-gutter' lives inside '.tg-body', and '.tg-body' has its own non-visible
+   overflow-x (see the '.tg-body' rule below), which per the CSS Overflow spec makes '.tg-body'
+   itself the nearest scrolling ancestor for the gutter's sticky-inset resolution, and '.tg-body'
+   never scrolls horizontally. The actual pin for '.tg-gutter' comes entirely from
+   'wireStickyGutter()' in hijri-calendar.ts (a 'scroll'-driven 'transform: translateX()'), not
+   from this CSS. This rule is kept anyway, verbatim, to satisfy the brief's literal
+   unit-acceptance bullet ("styles string contains 'position: sticky' for '.tg-gutter'") and to
+   document original intent — but if you are touching sticky/scroll CSS here, the gutter's real
+   behaviour is in the JS, not this file; do not "clean up" wireStickyGutter() as redundant. */
 .tg-gutter, .tg-allday-label, .tg-head > :first-child { position: sticky; inset-inline-start: 0; z-index: 3; background: var(--hcal-gutter-bg, var(--hcal-bg)); }
 .tg-head { position: sticky; top: 0; z-index: 4; }
 .tg-head { display: grid; border-bottom: 1px solid var(--hcal-border); background: var(--hcal-header-bg); }
@@ -213,13 +232,18 @@ ${arabicFontFace}
 /* overflow-x: clip (not the default "visible"): per the CSS Overflow spec, an element whose
    overflow-y is non-visible (here, "auto") has its overflow-x *computed value* silently
    promoted from "visible" to "auto" too, unless overflow-x is itself something other than
-   "visible" — "clip" is exempt from that promotion (unlike "hidden", it never establishes its
-   own scroll container). Without this, .tg-body quietly became a second horizontal scrolling
-   ancestor nested inside part="scroll", and position: sticky on .tg-gutter (a .tg-body grid
-   child) resolved against .tg-body's own (always-stationary, since nothing ever sets its
-   scrollLeft) scrollport instead of part="scroll"'s — so the gutter scrolled away with the
-   content instead of staying pinned. Caught by browser verification (Chromium), not jsdom,
-   which performs no layout and can't see this at all. */
+   "visible" — "clip" avoids that specific promotion (unlike "hidden", it never establishes a
+   *scrollable* overflow region of its own). This narrows the surface area of the problem, but
+   it does NOT fix the sticky gutter (Finding 2, task-5 review — an earlier version of this
+   comment implied it did, past tense, as though the bug were resolved here): per spec, a box
+   with non-"visible" overflow in *either* axis — "clip" included — is still a scroll container
+   for its descendants' sticky-inset resolution, so .tg-gutter's inset-inline-start still
+   resolves against .tg-body instead of part="scroll", and is still permanently 0. The actual
+   fix is wireStickyGutter() in hijri-calendar.ts; this declaration is retained because it is
+   still correct and harmless (and needed for reasons unrelated to sticky positioning — it keeps
+   any wide/oddly-sized hook content from pushing a second, redundant horizontal scrollbar onto
+   .tg-body itself). Caught by browser verification (Chromium), not jsdom, which performs no
+   layout and can't see this at all. */
 .tg-body { display: grid; position: relative; overflow-y: auto; overflow-x: clip; max-height: var(--hcal-body-max-height); }
 /* position comes from the sticky rule above (.tg-gutter, .tg-allday-label, .tg-head >
    :first-child) — not redeclared here so that rule's position: sticky isn't shadowed by a

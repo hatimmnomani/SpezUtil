@@ -411,4 +411,12 @@ describe("<hijri-calendar> :host containment (§5.9 task 7, CSS)", () => {
     expect(css).toMatch(/:host\s*\{[^}]*min-width:\s*0/);
     expect(css).toMatch(/:host\s*\{[^}]*overflow:\s*hidden/);
   });
+
+  it("keeps .cal's overflow-x: auto at every band (Finding 3, task-5 review) — agenda content and renderEvent/renderDayCell hook output have no scroll container of their own, so .cal is their fallback", () => {
+    for (const width of [900, 700, 400]) {
+      const el = mount({ date: "2026-07-06" }, width);
+      const css = sr(el).querySelector("style")!.textContent!;
+      expect(css).toMatch(/\.cal\s*\{[^}]*overflow-x:\s*auto/);
+    }
+  });
 });

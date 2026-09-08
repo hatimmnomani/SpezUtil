@@ -686,6 +686,17 @@ export class HijriCalendarElement extends HTMLElement {
   disconnectedCallback(): void {
     this.stopNowTimer();
     this.teardownResizeObserver();
+    // Finding 4 (task-5 review): reset the init-render guard on disconnect. Without this, a
+    // disconnect -> reconnect (a legitimate lifecycle — e.g. the element is moved to a new
+    // parent) re-enters connectedCallback() with `hasRendered` still true from the previous
+    // mount. setupResizeObserver() runs before the explicit render("init") call, and if its
+    // (possibly synchronous, e.g. the test stub) callback lands a band change in that window,
+    // handleResize() would see a stale `hasRendered === true` and fire an extra
+    // render()/"attribute"-reasoned range-change before "init" ever renders — which the
+    // existing same-range dedupe then swallows, silently violating §5.3's "exactly one
+    // range-change with reason init after the first render in connectedCallback()" on the
+    // reconnect path. See range-change.test.ts for the covering test.
+    this.hasRendered = false;
   }
 
   /**
@@ -1713,21 +1724,47 @@ export class HijriCalendarElement extends HTMLElement {
    * unit tests) and to `dir="rtl"` (compares the *inline-start* edges via `direction`, not a
    * hard-coded `left`/`scrollLeft` sign, since RTL `scrollLeft` sign conventions are not
    * consistent across engines).
+   *
+   * Finding 1 (task-5 review): the write (`gutter.style.transform = ""`) followed immediately by
+   * two `getBoundingClientRect()` reads is a layout-forcing style/layout flush, and it used to run
+   * synchronously on *every* `scroll` event with no throttling — exactly the interaction the
+   * medium/narrow bands' low-powered target devices are most likely to perform, and most likely to
+   * perform rapidly (a flick-scroll can fire dozens of `scroll` events per frame). The listener
+   * itself just schedules a single `requestAnimationFrame` callback (guarded by `scheduled` so a
+   * burst of events within one frame collapses into one read-and-write); the actual measurement
+   * only happens once per frame, right before the browser would have painted anyway. `render()`
+   * replaces `.cal`'s entire subtree via `innerHTML`, so a frame that was already queued when a
+   * re-render lands would otherwise run against a detached `gutter`/`scrollEl` — `sync()` bails
+   * out via `gutter.isConnected` in that case, so the queued callback is a harmless no-op rather
+   * than reading/writing a stale node (the fresh render calls `wireTimeGrid()` again, which
+   * attaches its own new listener to the new nodes).
    */
   private wireStickyGutter(): void {
     const scrollEl = this.root.querySelector<HTMLElement>('[part="scroll"]');
     const gutter = this.root.querySelector<HTMLElement>(".tg-gutter");
     if (!scrollEl || !gutter) return;
     const rtl = getComputedStyle(this.root.querySelector(".cal")!).direction === "rtl";
+    let scheduled = false;
     const sync = (): void => {
+      scheduled = false;
+      if (!gutter.isConnected) return; // stale node from a since-replaced render() subtree
       gutter.style.transform = "";
       const scrollRect = scrollEl.getBoundingClientRect();
       const gutterRect = gutter.getBoundingClientRect();
       const delta = rtl ? scrollRect.right - gutterRect.right : scrollRect.left - gutterRect.left;
       if (delta) gutter.style.transform = `translateX(${delta}px)`;
     };
+    const scheduleSync = (): void => {
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(sync);
+    };
     sync();
-    scrollEl.addEventListener("scroll", sync, { passive: true });
+    // Not removed on disconnect (matches this file's other `wire*` listeners) — a stale
+    // scroll listener on a detached `scrollEl` never fires (detached elements don't dispatch
+    // scroll events), and any frame it did manage to schedule bails out via the
+    // `gutter.isConnected` check above.
+    scrollEl.addEventListener("scroll", scheduleSync, { passive: true });
   }
 
   // ---- agenda view ----
