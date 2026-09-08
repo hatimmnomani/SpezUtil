@@ -427,6 +427,13 @@ export interface RangeChangeDetail {
   and the time-grid `.tg-col-head` (§5.5). One token driving both heads was chosen over a second
   token or a per-view default. Purely visual; parts unchanged. Ships in P2. A consumer who wants the
   old time-grid size restores it with a one-line override: `--hcal-day-primary-font-size: 15px`.
+- **D5 — event content order.** `event-time` renders **before** `event-title` inside every chip/
+  block/agenda item's inner content (`<span part="event-time">…</span><span part="event-title">…</span>`),
+  not after it. Because `event-time` defaults to `auto` (= `start` in week/day, none in month), this
+  changes the default look of every timed week/day block: the clock text now sits above/before the
+  title rather than after it. Purely visual; parts unchanged (`event-time` and `event-title` both
+  existed as concepts, just unordered, before this phase). Ships in P3. A consumer who wants the old
+  order has no escape hatch other than `renderEvent` (§5.2) — this is accepted, not configurable.
 
 ### 5.5 CSS custom properties
 
@@ -534,9 +541,17 @@ template adds `<ng-content select="[slot=toolbar-start]">` etc. inside `<hijri-c
 
 ### 5.8 Locale additions (`packages/hijri-calendar/src/locale.ts`)
 
-`durationLabel(mins)` ("60m" / "٦٠ د"), `nowLabel` ("Now"), `eventsCount(n)` ("2 events"),
-`hoursScheduled(h)` ("2.5 hours scheduled"), `loadingLabel` ("Loading…"), `moreDotsLabel(n)`
+`durationLabel(digits)` ("60m" / "٦٠ د"), `nowLabel` ("Now"), `eventsCount(digits)` ("2 events"),
+`hoursScheduled(digits)` ("2.5 hours scheduled"), `loadingLabel` ("Loading…"), `moreDotsLabel(digits)`
 (aria-label for dot-mode cells, "3 events"). Both `translit` and `ar`.
+
+**Execution correction:** each of these four functions takes a **digits string**, not a number.
+The caller (`hijri-calendar.ts`) formats the number through `numG()` (`numerals-gregorian`,
+per Ruling Y — duration/count/hour figures are clock-adjacent, so `locale` never decides their
+digit system) *before* calling the locale function; the locale function only supplies the
+fixed unit suffix around whatever digit string it receives (`` `${digits}m` ``,
+`` `${digits} events` ``, etc.). A locale function must not re-parse or re-format its argument
+as a number.
 
 ### 5.9 Responsive model (P5)
 
@@ -890,6 +905,21 @@ Tasks
    container; `.tg-gutter, .tg-allday-label, .tg-head > :first-child { position: sticky; inset-inline-start: 0; z-index: 3; background: var(--hcal-gutter-bg, var(--hcal-bg)) }`;
    `.tg-head { position: sticky; top: 0; z-index: 4 }`; day columns `min-width: var(--hcal-column-min-width)`
    at `medium`/`narrow`. The vertical `--hcal-body-max-height` scroll stays on `.tg-body`.
+
+   **Execution finding (post-hoc):** the `position: sticky; inset-inline-start: 0` rule above is
+   *inert* for `.tg-gutter` in real browsers — `.tg-gutter` lives inside `.tg-body`, and `.tg-body`'s
+   own pre-existing `overflow-y: auto` (needed for the unrelated vertical `--hcal-body-max-height`
+   scroll) makes `.tg-body` the nearest scrolling ancestor CSS resolves the gutter's sticky inset
+   against, even though `.tg-body` never scrolls horizontally itself — so the computed offset is
+   always 0 and the gutter scrolls away with the content. `.tg-allday-label` and `.tg-head > :first-child`
+   don't have this problem (neither lives inside a non-`visible`-overflow ancestor). The actual fix
+   shipped is `wireStickyGutter()` in `hijri-calendar.ts`: on every `scroll` event of `part="scroll"`
+   (rAF-throttled), it measures the pixel gap between the scroll container's edge and the gutter's
+   current edge and cancels it with an inline `transform: translateX()`, RTL-aware. The CSS
+   `position: sticky` declaration stays in `styles.ts` anyway — harmless, and documents intent for a
+   future restructuring that removes the nested scroll box — but it is not what pins the gutter today.
+   Any consumer-facing description of "the sticky time gutter" must describe the JS behaviour, not
+   the CSS rule.
 6. Day banner summary stacks at `narrow`; agenda date stacks at `narrow`.
 7. `:host { max-width: 100%; min-width: 0; overflow: hidden }` so the host never widens its
    container; all overflow lives in `part="scroll"`.
@@ -944,7 +974,9 @@ Tasks
    `editorial--month|week|day` × viewport `{1200×800, 768×1024, 420×900}` navigate to
    `/iframe.html?id=<story>&viewMode=story`, wait for `hijri-calendar` to have `part~="calendar"` with
    the expected band token, `await expect(page).toHaveScreenshot(`${story}-${width}.png`)`; for week at
-   768/420 also a second shot after `scrollLeft = 200` on `part="scroll"`. Total 21 images.
+   768/420 also a second shot after `scrollLeft = 200` on `part="scroll"`. Total: 3 stories × 3
+   viewports = 9, plus the 2 extra scrolled week shots (768 and 420) = **11 images** (a prior draft of
+   this section said 21 — arithmetic error; corrected here and in §9).
 3. Determinism: fonts. The `Editorial` stories must not load Google Fonts at test time. Vendor the
    OFL-licensed `Newsreader`, `Public Sans`, `JetBrains Mono` TTFs into `apps/storybook/public/fonts/`
    (Amiri is already embedded in the component) with `@font-face` in `.storybook/preview-head.html`,
@@ -972,6 +1004,13 @@ Acceptance
   changed images.
 
 Blocker note: P5's visual acceptance and §9 depend on this job existing; nothing in P0–P4 does.
+
+Execution note (post-hoc): the infrastructure (this phase's tasks 1, 3, 5, 6 — Playwright config,
+vendored OFL fonts, `ci.yml`) and the screenshot specs (task 2, `editorial.spec.ts`) landed in
+separate passes. No baseline images exist in the repository as of this writing — task 4 forbids a
+macOS-generated set, so the first run inside the pinned container generates them; until that run
+happens, the `visual` CI job fails with "A snapshot doesn't exist" for every test, which is the
+expected and verified local/pre-baseline state, not a regression.
 
 ### Phase 7 — Consumer migration, docs, release
 
@@ -1202,7 +1241,7 @@ resolution below is already propagated into §5 and §6; this section is the rec
 
 - P0–P5 merged; `pnpm -r test`, `pnpm -r build` and the new `ci.yml` `unit` job green; Angular
   wrapper builds; every new attribute/property/event/part/slot in §5 has at least one vitest.
-- P6 `visual` job green with 21 committed baselines; the `Editorial/*` 1200px baselines are visually
+- P6 `visual` job green with 11 committed baselines (§6 P6 task 2); the `Editorial/*` 1200px baselines are visually
   indistinguishable from the three reference screenshots (month / week / day), produced with **only**
   the §7.1 token block and attributes; the 768/420 baselines were reviewed once by the user (R4).
 - `apps/docs` API page lists every attribute, property, event, custom property, part and slot in §5,
