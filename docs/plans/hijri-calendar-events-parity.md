@@ -441,10 +441,16 @@ export interface RangeChangeDetail {
   `.week:last-child { border-bottom: none }` and **no vertical rules at all** (§3.2's gap table:
   "no cell borders"). Net for an existing 0.2.x consumer: 36 new vertical hairlines, plus a
   bottom hairline under the last week that abuts `.cal`'s own border and reads as a doubled edge.
-  The reference design requires the grid, so it ships — but unlike D1–D5 it *does* have a restore
-  path, because the colour is a token: `--hcal-grid-line: transparent` clears the month-cell
-  hairlines (that token drives only `.day-cell`'s two borders as shipped — see §5.5), and
-  `::part(day-cell) { border-block-end: none }` drops only the doubled bottom edge. Ships in P2.
+  The border also moved from `.week` (content-box) to `.day-cell` (border-box), so the month body
+  now renders roughly 5px shorter than 0.2.x at the same `--hcal-cell-min-height`. The reference
+  design requires the grid, so it ships — but unlike D1–D5 it *does* have a restore path, because
+  the colour is a token: `--hcal-grid-line: transparent` gives a fully borderless grid (that token
+  drives only `.day-cell`'s two borders as shipped — see §5.5) — not the 0.2.x look, which still
+  had horizontal rules between weeks. `::part(day-cell) { border-inline-end: none }` is the
+  closest approximation to 0.2.x: it drops the vertical rules and keeps a horizontal rule under
+  every week, including the last one, which 0.2.x didn't have. An exact 0.2.x grid isn't
+  reachable through the public API — `.day-cell` carries no per-week token, and `.week` isn't an
+  exposed part. Ships in P2.
 - **D7 — agenda items carry the `event` part token.** Agenda rows emit
   `part="agenda-item event <solid|tinted|outline> <allday|timed>"`; pre-branch it was
   `part="agenda-item"`. Existing `::part(agenda-item)` rules still match, but every existing

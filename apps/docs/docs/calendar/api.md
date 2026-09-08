@@ -466,11 +466,19 @@ look, not left configurable:
   a horizontal rule *between* weeks only (and none under the last one) and **no vertical rules at
   all**, so an existing consumer gains 36 vertical hairlines plus a horizontal hairline under the
   last week, which sits directly on top of the calendar's own outer border and reads as a doubled
-  bottom edge. This one *does* have a restore path, because the hairline colour is a token:
-  `hijri-calendar { --hcal-grid-line: transparent; }` removes the month-cell hairlines and
-  nothing else (the token drives only `part="day-cell"`'s two borders — the time-grid's slot
-  lines and gutter border are on `--hcal-border`). To keep the vertical rules but drop only the
-  doubled bottom edge: `hijri-calendar::part(day-cell) { border-block-end: none; }`.
+  bottom edge. The border also moved from `.week` (content-box, so each rule added 1px to the
+  row's outer height) to `.day-cell` (border-box), so the month body now renders roughly 5px
+  shorter than 0.2.x at the same `--hcal-cell-min-height`.
+  `hijri-calendar { --hcal-grid-line: transparent; }` gives a fully borderless month grid — this
+  is *not* the 0.2.x look, which still had horizontal rules between weeks; the token drives only
+  `part="day-cell"`'s two borders (the time-grid's slot lines and gutter border are on
+  `--hcal-border`). `hijri-calendar::part(day-cell) { border-inline-end: none; }` is the closest
+  approximation to 0.2.x: it removes the vertical rules and keeps a horizontal rule under every
+  week, including the last one, which 0.2.x did not have. (`::part(day-cell) { border-block-end:
+  none; }` instead removes every cell's bottom border, since the part matches all 42 cells — that
+  yields a verticals-only grid, not a bottom-edge fix.) An exact 0.2.x month grid is not reachable
+  through the public API: `.day-cell` carries no token encoding its week index, and `.week` is not
+  an exposed part.
 - **D7 — agenda items are `event` parts.** Agenda rows now emit
   `part="agenda-item event <solid|tinted|outline> <allday|timed>"`; in 0.2.x they were
   `part="agenda-item"` only. Existing `::part(agenda-item)` rules are unaffected, but an existing
@@ -516,10 +524,15 @@ re-renders at the measured band — a one-frame flash of the desktop layout on a
 This is inherent to measuring the host's own width rather than the viewport (a media query would
 be correct on frame one but wrong inside a narrow container, which is the case that matters here).
 If the flash is visible in your app, hide the component for that one frame — render it with
-`visibility: hidden` and reveal it from a `requestAnimationFrame` callback after mount, by which
-point `el.size` holds the measured band. There is no event for the band change itself: the
-correcting re-render emits no second `range-change` (the visible range hasn't changed, and
-`range-change` de-duplicates), so `size` is the thing to read.
+`visibility: hidden` and reveal it once the measured band has landed. A single
+`requestAnimationFrame` after mount is **not** enough: `ResizeObserver` notifications are
+delivered in the rendering update *after* animation-frame callbacks, so a callback scheduled at
+mount still runs before the first measurement arrives, and `el.size` is still the `wide` fallback.
+Nest a second `requestAnimationFrame` inside the first instead (so the reveal runs one frame
+later, after the observer has delivered), or reveal on the first change of `el.size` itself. There
+is no event for the band change itself: the correcting re-render emits no second `range-change`
+(the visible range hasn't changed, and `range-change` de-duplicates), so `size` is the thing to
+read.
 
 The host element itself never grows past its container (`max-width: 100%; overflow: hidden`) and
 never causes page-level horizontal overflow — every scrollable region lives inside
