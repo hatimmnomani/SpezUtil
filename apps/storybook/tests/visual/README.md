@@ -67,6 +67,20 @@ Mono) is vendored locally under `../../public/fonts/` with `@font-face` rules in
 `animations: "disabled"`, `caret: "hide"`) that keep comparisons stable against minor anti-aliasing
 noise.
 
+**Fixing `date` and hiding the now-line is not, by itself, enough to freeze the page.**
+`hijri-calendar.ts` computes `cell.isToday`/`col.isToday` from `zonedTodayUtc()`, which reads the
+real system clock (`new Date()` with no arguments) independently of the `date` attribute and of
+`now-indicator`. On any real day that falls inside the July-2026 grid these stories render
+(roughly late June through early August, every year, since the month grid includes leading/
+trailing days from adjacent months), an unfrozen page would render an extra `today`-tokened cell/
+dot the baseline doesn't have — a real, annually-recurring flake that `now-indicator="none"` does
+nothing to prevent. `editorial.spec.ts` freezes this with `freezeClock()`, which uses
+`page.addInitScript` to replace the page's global `Date` constructor with one pinned to a fixed
+instant (`2026-07-06T12:00:00Z`), called before every `page.goto()`. **Any new spec in this
+directory that screenshots something whose look depends on "today" must call the same pattern**
+— copy `freezeClock()` from `editorial.spec.ts` (or extract it to a shared helper if a third spec
+needs it) rather than relying on a fixed `date` attribute alone.
+
 The vendored `@font-face` rules use `font-display: block`, not the more common `swap`: `swap` lets the
 browser paint a fallback font first and swap in the real one once it loads, which is a race a
 screenshot can land on either side of — the opposite of what a baseline comparison wants. `block`
