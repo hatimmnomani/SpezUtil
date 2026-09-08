@@ -223,3 +223,120 @@ describe("<hijri-calendar> renderDayCell", () => {
     expect(placement).toBe("column-head");
   });
 });
+
+/**
+ * Review finding (Important): every test above either mounts a single event/cell or returns
+ * identical content for every item, so a post-render *keying* regression (e.g. `lastTimedCol[i]`
+ * swapped for `lastTimedCol[i+1]`, or the `lastCells[seg.weekIndex*7+seg.startCol]` lookup for
+ * month chips breaking) would pass the whole suite silently — the wrong event's content would
+ * render into the right event's button, a bug that looks like a data problem, not a rendering
+ * one. These tests make the hook output identity-bearing (`ctx.event.id` / the cell's own date)
+ * and cross-check it against an attribute the *default* renderer set independently at the
+ * initial `innerHTML` pass — `title`/`aria-label` for events, `data-date` for month cells — which
+ * the post-render hook pass never touches (it only replaces `innerHTML`, never attributes). A
+ * mis-keyed pass would make the hook-rendered identity disagree with that untouched attribute.
+ */
+describe("<hijri-calendar> render hook post-render keying (no cross-item mix-ups)", () => {
+  function idFromTitle(el: Element): string {
+    const title = el.getAttribute("title") ?? el.getAttribute("aria-label") ?? "";
+    const m = /^Event (\S+),/.exec(title);
+    expect(m, `expected a "Event <id>, ..." title, got ${JSON.stringify(title)}`).toBeTruthy();
+    return m![1]!;
+  }
+
+  it("month chips (data-ev): each button's hook-rendered event.id matches its own title, not a neighbour's", () => {
+    const el = mount({ date: "2026-07-06" });
+    el.events = [ev("a", "2026-07-06T10:00"), ev("b", "2026-07-20T14:00")];
+    el.renderEvent = (ctx) => ctx.event.id;
+    const chips = sr(el).querySelectorAll('[part~="event"]');
+    expect(chips.length).toBe(2);
+    const ids = new Set<string>();
+    chips.forEach((c) => {
+      const expected = idFromTitle(c);
+      expect(c.textContent).toBe(expected);
+      ids.add(expected);
+    });
+    expect(ids).toEqual(new Set(["a", "b"]));
+  });
+
+  it("all-day chips (data-aev): each button's hook-rendered event.id matches its own title, not a neighbour's", () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    el.events = [
+      ev("a", "2026-07-06", { allDay: true }),
+      ev("b", "2026-07-08", { allDay: true }),
+    ];
+    el.renderEvent = (ctx) => ctx.event.id;
+    const chips = sr(el).querySelectorAll("[data-aev]");
+    expect(chips.length).toBe(2);
+    const ids = new Set<string>();
+    chips.forEach((c) => {
+      const expected = idFromTitle(c);
+      expect(c.textContent).toBe(expected);
+      ids.add(expected);
+    });
+    expect(ids).toEqual(new Set(["a", "b"]));
+  });
+
+  it("timed blocks (data-tev): each button's hook-rendered event.id matches its own title, not a neighbour's", () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    el.events = [ev("a", "2026-07-06T09:00"), ev("b", "2026-07-07T14:00")];
+    el.renderEvent = (ctx) => ctx.event.id;
+    const blocks = sr(el).querySelectorAll("[data-tev]");
+    expect(blocks.length).toBe(2);
+    const ids = new Set<string>();
+    blocks.forEach((b) => {
+      const expected = idFromTitle(b);
+      expect(b.textContent).toBe(expected);
+      ids.add(expected);
+    });
+    expect(ids).toEqual(new Set(["a", "b"]));
+  });
+
+  it("agenda items (data-gev): each button's hook-rendered event.id matches its own title, not a neighbour's", () => {
+    const el = mount({ date: "2026-07-06", view: "agenda" });
+    el.events = [ev("a", "2026-07-06T10:00"), ev("b", "2026-07-08T09:00")];
+    el.renderEvent = (ctx) => ctx.event.id;
+    const items = sr(el).querySelectorAll('[part~="agenda-item"]');
+    expect(items.length).toBe(2);
+    const ids = new Set<string>();
+    items.forEach((i) => {
+      const expected = idFromTitle(i);
+      expect(i.textContent).toBe(expected);
+      ids.add(expected);
+    });
+    expect(ids).toEqual(new Set(["a", "b"]));
+  });
+
+  it("month-cell buttons (data-i): each button's hook-rendered cell date matches its own data-date, not a neighbour's", () => {
+    const el = mount({ date: "2026-07-06" });
+    el.renderDayCell = (ctx) => ctx.cell.gregorian.toISOString().slice(0, 10);
+    const buttons = sr(el).querySelectorAll<HTMLElement>("[data-i]");
+    expect(buttons.length).toBe(42);
+    const seen = new Set<string>();
+    buttons.forEach((b) => {
+      expect(b.textContent).toBe(b.dataset.date);
+      seen.add(b.textContent!);
+    });
+    // All 42 dates distinct confirms no two cells collapsed onto the same lookup by accident.
+    expect(seen.size).toBe(42);
+  });
+
+  it("time-grid column heads (data-col): each head's hook-rendered cell date matches its actual calendar-day position in the week, not a neighbour's", () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    el.renderDayCell = (ctx) => ctx.cell.gregorian.toISOString().slice(0, 10);
+    const heads = Array.from(sr(el).querySelectorAll<HTMLElement>(".tg-col-head"));
+    expect(heads.length).toBe(7);
+    // Ground truth computed independently of the component: 2026-07-06 is a Monday
+    // (getUTCDay()===1), and the default week-start is 0 (Sunday), so the week-start-aligned
+    // first day is Sunday 2026-07-05 — the same math range-change.test.ts and others rely on.
+    const weekStartIso = "2026-07-05";
+    const expectedDates = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(`${weekStartIso}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + i);
+      return d.toISOString().slice(0, 10);
+    });
+    heads.forEach((h, i) => {
+      expect(h.textContent!.trim()).toBe(expectedDates[i]);
+    });
+  });
+});

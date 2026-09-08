@@ -144,7 +144,14 @@ export type RenderDayCellHook = (ctx: RenderDayCellContext) => Node | string | n
  * once via `console.warn` (keyed on the hook function's own identity, so the same function
  * reused across many chips/cells in one render — or across many renders — warns only once),
  * and the default renderer is used instead. Module-level (not per-instance) so it survives
- * across re-renders of the same element.
+ * across re-renders of the same element. This is deliberate, not an oversight: because the key
+ * is the hook function's identity rather than a per-element token, two separate
+ * `<hijri-calendar>` instances that are handed the *same* function reference (e.g. a shared
+ * module-level hook, or one lifted out of a host framework's render so it's referentially
+ * stable) also share the one warning between them. That is stricter than the acceptance bullet
+ * requires and errs toward console quiet for something that fires per event — do not "fix" this
+ * into a per-instance warning; that would reintroduce the console-spam problem the identity key
+ * exists to prevent whenever a host reuses one hook across multiple calendars.
  */
 const warnedHooks = new WeakSet<object>();
 function warnHookOnce(hook: object, name: string, err: unknown): void {

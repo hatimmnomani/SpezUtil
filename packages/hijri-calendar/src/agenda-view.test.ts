@@ -91,6 +91,21 @@ describe("agenda-days", () => {
     expect(el.getAttribute("date")).toBe("2026-07-13");
   });
 
+  it('agenda-days="1" (the smallest valid value) shows only that single day and navigates by exactly 1 day', () => {
+    const el = mount({ date: "2026-07-06", view: "agenda", "agenda-days": "1" });
+    expect(el.agendaDays).toBe(1);
+    // rangeEnd is exclusive at viewDate + agendaDays days, so the boundary case (an event on
+    // the very next day) is exactly what would expose an off-by-one in the navigate() step.
+    el.events = [ev("in", "2026-07-06T09:00"), ev("next-day", "2026-07-07T09:00")];
+    const days = sr(el).querySelectorAll('[part="agenda-day"]');
+    expect(days.length).toBe(1);
+    expect(days[0]!.textContent).toContain("Event in");
+    expect(days[0]!.textContent).not.toContain("Event next-day");
+
+    (sr(el).querySelector('[part="nav-next"]') as HTMLButtonElement).click();
+    expect(el.getAttribute("date")).toBe("2026-07-07");
+  });
+
   it("an out-of-range agenda-days value falls back to the default of 30", () => {
     const el = mount({ date: "2026-07-06", view: "agenda", "agenda-days": "0" });
     expect(el.agendaDays).toBe(30);

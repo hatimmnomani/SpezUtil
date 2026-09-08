@@ -330,4 +330,16 @@ describe("<hijri-calendar> loading", () => {
     el.loading = false;
     expect(el.hasAttribute("loading")).toBe(false);
   });
+
+  it(".body-wrap (needed to give the loading overlay a positioning context) contributes no box of its own — no padding/border/margin — and carries the flex:1 its children (.month/.timegrid/.agenda) previously relied on directly under .cal", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    const rule = css.match(/\.body-wrap\s*\{([^}]*)\}/);
+    expect(rule).toBeTruthy();
+    const decls = rule![1]!;
+    expect(decls).toMatch(/flex:\s*1\b/);
+    expect(decls).not.toMatch(/padding/);
+    expect(decls).not.toMatch(/border/);
+    expect(decls).not.toMatch(/margin/);
+  });
 });
