@@ -2,6 +2,7 @@ export { HijriCalendarComponent } from "./hijri-calendar.component";
 export type {
   CalendarEvent,
   CalendarView,
+  EventFieldSource,
   EventClickDetail,
   DateClickDetail,
   SlotClickDetail,

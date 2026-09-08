@@ -48,6 +48,12 @@ import type {
       [dayNumberAlign]="dayNumberAlign"
       [monthMarker]="monthMarker"
       [todayMarker]="todayMarker"
+      [eventStyle]="eventStyle"
+      [eventTime]="eventTime"
+      [slotMinutes]="slotMinutes"
+      [alldayRow]="alldayRow"
+      [nowIndicator]="nowIndicator"
+      [timeLabelPosition]="timeLabelPosition"
       [eventFields]="eventFields"
       [events]="events"
       (event-click)="onEventClick($event)"
@@ -88,6 +94,12 @@ export class HijriCalendarComponent {
   @Input() dayNumberAlign: "center" | "start" | "end" | null = null;
   @Input() monthMarker: "gregorian" | "hijri" | "both" | "none" | null = null;
   @Input() todayMarker: "pill" | "dot" | "none" | null = null;
+  @Input() eventStyle: "solid" | "tinted" | "outline" | null = null;
+  @Input() eventTime: "auto" | "none" | "start" | "start-duration" | "range" | null = null;
+  @Input() slotMinutes = 30;
+  @Input() alldayRow: "always" | "auto" | "never" | null = null;
+  @Input() nowIndicator: "line" | "line-label" | "none" | null = null;
+  @Input() timeLabelPosition: "line" | "cell" | null = null;
   @Input() eventFields: EventFieldMap | null = null;
   @Input() events: CalendarEvent[] = [];
 

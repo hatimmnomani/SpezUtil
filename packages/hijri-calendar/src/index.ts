@@ -4,6 +4,12 @@ export { HijriCalendarElement } from "./hijri-calendar";
 export type {
   CalendarView,
   SecondaryPosition,
+  EventStyle,
+  EventTimeMode,
+  SlotMinutes,
+  AlldayRowMode,
+  NowIndicatorMode,
+  TimeLabelPosition,
   EventClickDetail,
   DateClickDetail,
   SlotClickDetail,
@@ -15,6 +21,7 @@ export type {
 export type {
   CalendarEvent,
   EventFieldMap,
+  EventFieldSource,
   HijriDate,
 } from "@spezutil/hijri-view-core";
 

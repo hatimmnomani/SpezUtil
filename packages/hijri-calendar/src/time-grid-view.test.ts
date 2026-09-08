@@ -125,6 +125,137 @@ describe("week view", () => {
   });
 });
 
+describe("slot-minutes", () => {
+  it('default (30) renders 24 [part~="slot"] per column for the default 0-24 window', () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    const col = sr(el).querySelectorAll('[part~="day-column"]')[0]!;
+    expect(col.querySelectorAll('[part~="slot"]').length).toBe(24 * 2);
+  });
+
+  it('slot-minutes="60" renders 12 slots per column for day-start=8 day-end=20, and slot-click coarsens to the hour start', () => {
+    const el = mount({
+      date: "2026-07-06",
+      view: "week",
+      "slot-minutes": "60",
+      "day-start": "8",
+      "day-end": "20",
+    });
+    const col = sr(el).querySelectorAll('[part~="day-column"]')[0]!;
+    expect(col.querySelectorAll('[part~="slot"]').length).toBe(12);
+
+    let detail: { gregorian: string } | null = null;
+    el.addEventListener("slot-click", (e) => (detail = (e as CustomEvent).detail));
+    const slot = sr(el).querySelector('[data-slot="2026-07-06T09:00"]') as HTMLElement;
+    expect(slot).toBeTruthy();
+    // With 60-minute slots there is no ...T09:30 slot to click at all.
+    expect(sr(el).querySelector('[data-slot="2026-07-06T09:30"]')).toBeNull();
+    slot.click();
+    expect(detail!.gregorian).toBe("2026-07-06T09:00");
+  });
+
+  it('slot-minutes="15" renders 48 slots per column for day-start=8 day-end=20, with the second slot of the hour at :15', () => {
+    const el = mount({
+      date: "2026-07-06",
+      view: "week",
+      "slot-minutes": "15",
+      "day-start": "8",
+      "day-end": "20",
+    });
+    const col = sr(el).querySelectorAll('[part~="day-column"]')[0]!;
+    expect(col.querySelectorAll('[part~="slot"]').length).toBe(48);
+    expect(sr(el).querySelector('[data-slot="2026-07-06T09:15"]')).toBeTruthy();
+  });
+
+  it("an out-of-range slot-minutes value falls back to the default of 30", () => {
+    const el = mount({ date: "2026-07-06", view: "week", "slot-minutes": "45" });
+    expect(el.slotMinutes).toBe(30);
+  });
+
+  it("sets --_slot-h on .tg-body from --hcal-hour-height and the current slot-minutes", () => {
+    const el = mount({ date: "2026-07-06", view: "week", "slot-minutes": "15" });
+    const body = sr(el).querySelector(".tg-body") as HTMLElement;
+    expect(body.getAttribute("style")).toContain("--_slot-h:calc(var(--hcal-hour-height) * 15 / 60)");
+  });
+});
+
+describe("--hcal-gutter-width", () => {
+  it("replaces the previously hard-coded 56px in the grid-template-columns of the head/allday/body rows", () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    for (const sel of [".tg-head", ".tg-allday", ".tg-body"]) {
+      const node = sr(el).querySelector(sel) as HTMLElement;
+      expect(node.getAttribute("style")).toContain("var(--hcal-gutter-width)");
+      expect(node.getAttribute("style")).not.toContain("56px");
+    }
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-gutter-width: 56px;");
+  });
+});
+
+describe("allday-row", () => {
+  it('"auto" hides the row when no all-day event is in the visible range', () => {
+    const el = mount({ date: "2026-07-06", view: "week", "allday-row": "auto" });
+    expect(sr(el).querySelector(".tg-allday")).toBeNull();
+  });
+
+  it('"auto" shows the row once an all-day event is in range', () => {
+    const el = mount({ date: "2026-07-06", view: "week", "allday-row": "auto" });
+    el.events = [ev("a", "2026-07-06", "2026-07-07")];
+    expect(sr(el).querySelector(".tg-allday")).toBeTruthy();
+  });
+
+  it('"never" hides the row even with an all-day event present', () => {
+    const el = mount({ date: "2026-07-06", view: "week", "allday-row": "never" });
+    el.events = [ev("a", "2026-07-06", "2026-07-07")];
+    expect(sr(el).querySelector(".tg-allday")).toBeNull();
+  });
+
+  it('"always" (default) shows the row even with no all-day events, matching today\'s behaviour', () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    expect(sr(el).querySelector(".tg-allday")).toBeTruthy();
+  });
+
+  it("carries part=allday-label on the row's text label", () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    expect(sr(el).querySelector('[part="allday-label"]')).toBeTruthy();
+  });
+});
+
+describe("now-indicator", () => {
+  it('"none" renders no now-line even in today\'s column', () => {
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const el = mount({ date: todayIso, view: "week", "now-indicator": "none" });
+    expect(sr(el).querySelectorAll(".now-line").length).toBe(0);
+  });
+
+  it("the now-line element carries no inline colour; the color comes from --hcal-now-color in styles", () => {
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const el = mount({ date: todayIso, view: "week" });
+    const nowLine = sr(el).querySelector(".now-line") as HTMLElement;
+    expect(nowLine).toBeTruthy();
+    expect(nowLine.style.getPropertyValue("background")).toBe("");
+    expect(nowLine.getAttribute("style")).not.toMatch(/background/);
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("var(--hcal-now-color)");
+    expect(css).toContain("--hcal-now-color: #ea4335;");
+  });
+});
+
+describe("time-label-position", () => {
+  it("carries part=time-label on gutter hour labels", () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    expect(sr(el).querySelectorAll('[part="time-label"]').length).toBeGreaterThan(0);
+  });
+
+  it('default ("line") and "cell" are both reachable, backed by a CSS variant selector', () => {
+    const line = mount({ date: "2026-07-06", view: "week" });
+    expect(line.timeLabelPosition).toBe("line");
+    const cell = mount({ date: "2026-07-06", view: "week", "time-label-position": "cell" });
+    expect(cell.timeLabelPosition).toBe("cell");
+    const css = sr(cell).querySelector("style")!.textContent!;
+    expect(css).toContain(':host([time-label-position="cell"])');
+  });
+});
+
 describe("day view", () => {
   it("renders a single column anchored at the date", () => {
     const el = mount({ date: "2026-07-06", view: "day" });

@@ -29,6 +29,7 @@ export const HijriCalendar = createComponent({
 export type {
   CalendarEvent,
   CalendarView,
+  EventFieldSource,
   EventClickDetail,
   DateClickDetail,
   SlotClickDetail,

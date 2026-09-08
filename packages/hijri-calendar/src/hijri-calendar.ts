@@ -83,6 +83,32 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 export type SecondaryPosition = "end" | "start" | "above" | "below" | "hidden";
 const SECONDARY_POSITIONS: SecondaryPosition[] = ["end", "start", "above", "below", "hidden"];
 
+export type EventStyle = "solid" | "tinted" | "outline";
+const EVENT_STYLES: EventStyle[] = ["solid", "tinted", "outline"];
+
+export type EventTimeMode = "auto" | "none" | "start" | "start-duration" | "range";
+const EVENT_TIME_MODES: EventTimeMode[] = ["auto", "none", "start", "start-duration", "range"];
+
+const SLOT_MINUTES_VALUES = [15, 30, 60] as const;
+export type SlotMinutes = (typeof SLOT_MINUTES_VALUES)[number];
+
+export type AlldayRowMode = "always" | "auto" | "never";
+const ALLDAY_ROW_MODES: AlldayRowMode[] = ["always", "auto", "never"];
+
+export type NowIndicatorMode = "line" | "line-label" | "none";
+const NOW_INDICATOR_MODES: NowIndicatorMode[] = ["line", "line-label", "none"];
+
+export type TimeLabelPosition = "line" | "cell";
+
+/**
+ * `variant` is interpolated into a `part="event variant-<v>"` attribute (and `data-variant`).
+ * `normalizeEvent` (hijri-view-core) already validates and drops an invalid `variant` before it
+ * reaches render code here, but this regex is re-checked at the interpolation site itself
+ * (`variantTokens()`) as defence in depth, so a later refactor that reintroduces a raw,
+ * unnormalized event at a render site cannot reopen an attribute-injection hole (Ruling P).
+ */
+const VARIANT_RE = /^[a-z0-9-]+$/;
+
 function toIso(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
@@ -135,6 +161,12 @@ export class HijriCalendarElement extends HTMLElement {
       "day-number-align",
       "month-marker",
       "today-marker",
+      "event-style",
+      "event-time",
+      "slot-minutes",
+      "allday-row",
+      "now-indicator",
+      "time-label-position",
     ];
   }
 
@@ -360,6 +392,65 @@ export class HijriCalendarElement extends HTMLElement {
     this.reflect("today-marker", v);
   }
 
+  /** Default chip/block rendering; a per-event `style` field overrides this. Default `"solid"` (today's behaviour). */
+  get eventStyle(): EventStyle {
+    const v = this.getAttribute("event-style");
+    return EVENT_STYLES.includes(v as EventStyle) ? (v as EventStyle) : "solid";
+  }
+  set eventStyle(v: string) {
+    this.reflect("event-style", v);
+  }
+  /**
+   * Time text shown on chips/blocks/agenda items. `"auto"` resolves per placement: no time on
+   * month-view chips or the all-day row (there is no meaningful clock time to show), and the
+   * start time on timed blocks and agenda items — today's behaviour either way.
+   */
+  get eventTime(): EventTimeMode {
+    const v = this.getAttribute("event-time");
+    return EVENT_TIME_MODES.includes(v as EventTimeMode) ? (v as EventTimeMode) : "auto";
+  }
+  set eventTime(v: string) {
+    this.reflect("event-time", v);
+  }
+  /**
+   * Time-grid slot granularity in minutes. **Also the granularity of `slot-click`**: with `60`,
+   * `detail.gregorian` is always the hour start (e.g. "…T09:00"), never a half-hour value —
+   * hosts needing finer times collect them in their own UI.
+   */
+  get slotMinutes(): SlotMinutes {
+    const n = Number(this.getAttribute("slot-minutes"));
+    return (SLOT_MINUTES_VALUES as readonly number[]).includes(n) ? (n as SlotMinutes) : 30;
+  }
+  set slotMinutes(v: number) {
+    this.reflect("slot-minutes", String(v));
+  }
+  /** `"auto"` hides the all-day row when no all-day event is in the visible range. Default `"always"` (today's behaviour). */
+  get alldayRow(): AlldayRowMode {
+    const v = this.getAttribute("allday-row");
+    return ALLDAY_ROW_MODES.includes(v as AlldayRowMode) ? (v as AlldayRowMode) : "always";
+  }
+  set alldayRow(v: string) {
+    this.reflect("allday-row", v);
+  }
+  /**
+   * Current-time line in week/day views. `"none"` hides it entirely. `"line-label"` is reserved
+   * for a future phase; until then it renders the same as `"line"` (the line, with no label).
+   */
+  get nowIndicator(): NowIndicatorMode {
+    const v = this.getAttribute("now-indicator");
+    return NOW_INDICATOR_MODES.includes(v as NowIndicatorMode) ? (v as NowIndicatorMode) : "line";
+  }
+  set nowIndicator(v: string) {
+    this.reflect("now-indicator", v);
+  }
+  /** Gutter label centred on the hour line (`"line"`, default) or top-aligned inside the hour cell (`"cell"`). */
+  get timeLabelPosition(): TimeLabelPosition {
+    return this.getAttribute("time-label-position") === "cell" ? "cell" : "line";
+  }
+  set timeLabelPosition(v: string) {
+    this.reflect("time-label-position", v);
+  }
+
   private parseWeekendDays(attr: string | null): number[] {
     if (attr === null) return [0, 6];
     const out: number[] = [];
@@ -493,11 +584,102 @@ export class HijriCalendarElement extends HTMLElement {
     return this.numG(`${h12}${mm} ${meridiem}`);
   }
 
-  private eventTimeLabel(event: CalendarEvent): string {
-    const n = normalizeEvent(event);
-    if (n.allDay) return this.loc.allDayLabel;
+  /**
+   * Clock-time labels for one event, computed once and reused across every render site that
+   * needs them (aria-label, `title`, and the `event-time` part span) rather than recomputed
+   * inline at each. All-day events collapse every field to `loc.allDayLabel` — there is no
+   * meaningful clock time to show, and this matches the pre-existing "All day" behaviour.
+   */
+  private timeLabels(
+    startMin: number,
+    endMin: number,
+    allDay: boolean
+  ): { start: string; end: string; duration: string; range: string } {
+    if (allDay) {
+      const s = this.loc.allDayLabel;
+      return { start: s, end: s, duration: s, range: s };
+    }
+    const norm = (m: number): number => ((m % 1440) + 1440) % 1440;
+    const start = this.formatTimeLabel(norm(startMin));
+    const end = this.formatTimeLabel(norm(endMin));
+    const minutes = Math.max(0, endMin - startMin);
+    const duration = this.loc.durationLabel(minutes);
+    return { start, end, duration, range: `${start} – ${end}` };
+  }
+
+  /** `timeLabels()` for a `NormalizedEvent` (month chips, all-day chips, agenda items). */
+  private normalizedLabels(n: NormalizedEvent): {
+    start: string;
+    end: string;
+    duration: string;
+    range: string;
+  } {
     const startMin = Math.round((n.startMs % DAY_MS) / 60000);
-    return this.formatTimeLabel(startMin);
+    const minutes = Math.round((n.endMs - n.startMs) / 60000);
+    return this.timeLabels(startMin, startMin + minutes, n.allDay);
+  }
+
+  /**
+   * Resolves `event-time` (honoring `"auto"`) into the text to show for one placement, or `""`
+   * when nothing should render. `"auto"` shows no time on month chips or all-day chips (there is
+   * no meaningful clock time on an all-day event, and today's month/all-day-row rendering never
+   * showed one); it shows the start time on timed blocks and agenda items, matching today's
+   * `<small>`/`.when` behaviour there.
+   */
+  private resolveEventTimeText(
+    labels: { start: string; end: string; duration: string; range: string },
+    placement: "month-chip" | "allday-chip" | "timed-block" | "agenda-item"
+  ): string {
+    let mode: EventTimeMode = this.eventTime;
+    if (mode === "auto") {
+      mode = placement === "month-chip" || placement === "allday-chip" ? "none" : "start";
+    }
+    switch (mode) {
+      case "start":
+        return labels.start;
+      case "start-duration":
+        return `${labels.start} · ${labels.duration}`;
+      case "range":
+        return labels.range;
+      default:
+        return "";
+    }
+  }
+
+  /**
+   * `variant` is re-validated here (not just trusted from an already-normalized event) as
+   * defence in depth for the `part`/`data-variant` attribute-injection boundary (Ruling P).
+   */
+  private variantTokens(variant: string | undefined): { part: string; dataAttr: string } {
+    if (!variant || !VARIANT_RE.test(variant)) return { part: "", dataAttr: "" };
+    return { part: ` variant-${variant}`, dataAttr: ` data-variant="${variant}"` };
+  }
+
+  /** Per-event `style` override, falling back to the component's `event-style` attribute. */
+  private effectiveEventStyle(perEvent: CalendarEvent["style"]): EventStyle {
+    return perEvent === "solid" || perEvent === "tinted" || perEvent === "outline"
+      ? perEvent
+      : this.eventStyle;
+  }
+
+  /**
+   * Builds the inner content shared by every chip/block/agenda item: an optional `event-time`
+   * span (per `resolveEventTimeText`), the `event-title` span, and an optional `event-subtitle`
+   * span when the event has one. `event` must already be the normalized/sanitized event (Ruling
+   * P) — callers pass `NormalizedEvent.event`, never a raw stored event.
+   */
+  private eventInnerHtml(
+    event: CalendarEvent,
+    labels: { start: string; end: string; duration: string; range: string },
+    placement: "month-chip" | "allday-chip" | "timed-block" | "agenda-item"
+  ): string {
+    const timeText = this.resolveEventTimeText(labels, placement);
+    const timeHtml = timeText ? `<span part="event-time">${escapeHtml(timeText)}</span>` : "";
+    const titleHtml = `<span part="event-title">${escapeHtml(event.title)}</span>`;
+    const subtitleHtml = event.subtitle
+      ? `<span part="event-subtitle">${escapeHtml(event.subtitle)}</span>`
+      : "";
+    return `${timeHtml}${titleHtml}${subtitleHtml}`;
   }
 
   /** Gregorian month/year subtitle ("May 2026"); routes the year digits through `numerals-gregorian`. */
@@ -722,6 +904,12 @@ export class HijriCalendarElement extends HTMLElement {
           .filter((s) => s.weekIndex === w)
           .map((s) => {
             const idx = this.lastSegments.indexOf(s);
+            // EventSegment.event is the raw, pre-sanitisation event (view-core's month builder
+            // keeps the original reference); re-normalize here so every rendered field
+            // (variant/style/subtitle/title/color) is read off the sanitized copy, never the
+            // raw stored one (Ruling P).
+            const n = normalizeEvent(s.event);
+            const ev = n.event;
             const cls = [
               "chip",
               s.continuesBefore ? "continues-before" : "",
@@ -729,10 +917,16 @@ export class HijriCalendarElement extends HTMLElement {
             ]
               .filter(Boolean)
               .join(" ");
-            const color = s.event.color ? ` style="--_ev-color:${escapeHtml(s.event.color)};grid-row:${s.lane + 2};grid-column:${s.startCol + 1} / span ${s.span}"` : ` style="grid-row:${s.lane + 2};grid-column:${s.startCol + 1} / span ${s.span}"`;
-            const label = `${s.event.title}, ${this.eventTimeLabel(s.event)}`;
-            return `<button type="button" part="event" class="${cls}" data-ev="${idx}"${color}
-              aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${escapeHtml(s.event.title)}</button>`;
+            const styleToken = this.effectiveEventStyle(ev.style);
+            const variant = this.variantTokens(ev.variant);
+            const colorStyle = ev.color ? `--_ev-color:${escapeHtml(ev.color)};` : "";
+            const gridStyle = `grid-row:${s.lane + 2};grid-column:${s.startCol + 1} / span ${s.span}`;
+            const labels = this.normalizedLabels(n);
+            const ariaLabel = `${ev.title}, ${labels.start}`;
+            const inner = this.eventInnerHtml(ev, labels, "month-chip");
+            return `<button type="button" part="event ${styleToken}${variant.part}" class="${cls}" data-ev="${idx}"
+              style="${colorStyle}${gridStyle}"${variant.dataAttr}
+              aria-label="${escapeHtml(ariaLabel)}" title="${escapeHtml(ariaLabel)}">${inner}</button>`;
           })
           .join("");
 
@@ -894,7 +1088,9 @@ export class HijriCalendarElement extends HTMLElement {
     const winStart = this.dayStart * 60;
     const winEnd = this.dayEnd * 60;
     const total = winEnd - winStart;
-    const cols = `56px repeat(${dayCount}, 1fr)`;
+    const slotMinutes = this.slotMinutes;
+    const cols = `var(--hcal-gutter-width) repeat(${dayCount}, 1fr)`;
+    const slotHeightVar = `--_slot-h:calc(var(--hcal-hour-height) * ${slotMinutes} / 60)`;
 
     const heads = model.columns
       .map((col) => {
@@ -917,24 +1113,38 @@ export class HijriCalendarElement extends HTMLElement {
       })
       .join("");
 
-    const allDayCols = model.columns
-      .map((col) => {
-        const chips = col.allDay
-          .map((n) => {
-            const idx = this.lastAllDayFlat.push(n) - 1;
-            const color = n.event.color ? `--_ev-color:${escapeHtml(n.event.color)};` : "";
-            const label = `${n.event.title}, ${this.loc.allDayLabel}`;
-            return `<button type="button" part="event" class="chip" data-aev="${idx}"
-              style="${color}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${escapeHtml(n.event.title)}</button>`;
+    const hasAllDay = model.columns.some((col) => col.allDay.length > 0);
+    const showAllDayRow =
+      this.alldayRow === "never" ? false : this.alldayRow === "auto" ? hasAllDay : true;
+
+    const allDayCols = !showAllDayRow
+      ? ""
+      : model.columns
+          .map((col) => {
+            const chips = col.allDay
+              .map((n) => {
+                const idx = this.lastAllDayFlat.push(n) - 1;
+                const ev = n.event;
+                const styleToken = this.effectiveEventStyle(ev.style);
+                const variant = this.variantTokens(ev.variant);
+                const colorStyle = ev.color ? `--_ev-color:${escapeHtml(ev.color)};` : "";
+                const labels = this.normalizedLabels(n);
+                const ariaLabel = `${ev.title}, ${labels.start}`;
+                const inner = this.eventInnerHtml(ev, labels, "allday-chip");
+                return `<button type="button" part="event ${styleToken}${variant.part}" class="chip" data-aev="${idx}"
+              style="${colorStyle}"${variant.dataAttr} aria-label="${escapeHtml(ariaLabel)}" title="${escapeHtml(ariaLabel)}">${inner}</button>`;
+              })
+              .join("");
+            return `<div class="tg-allday-col" part="allday-row">${chips}</div>`;
           })
           .join("");
-        return `<div class="tg-allday-col" part="allday-row">${chips}</div>`;
-      })
-      .join("");
 
     const gutterSlots: string[] = [];
-    for (let min = winStart; min < winEnd; min += 30) {
-      const label = min % 60 === 0 ? `<span>${escapeHtml(this.formatTimeLabel(min))}</span>` : "";
+    for (let min = winStart; min < winEnd; min += slotMinutes) {
+      const label =
+        min % 60 === 0
+          ? `<span part="time-label">${escapeHtml(this.formatTimeLabel(min))}</span>`
+          : "";
       gutterSlots.push(`<div class="tg-slot">${label}</div>`);
     }
 
@@ -943,12 +1153,15 @@ export class HijriCalendarElement extends HTMLElement {
       .map((col) => {
         const iso = toIso(col.gregorian);
         const slots: string[] = [];
-        for (let min = winStart; min < winEnd; min += 30) {
+        for (let min = winStart; min < winEnd; min += slotMinutes) {
           const hh = String(Math.floor(min / 60)).padStart(2, "0");
           const mm = String(min % 60).padStart(2, "0");
-          slots.push(
-            `<div class="tg-slot${min % 60 === 30 ? " hour-end" : ""}" part="slot" data-slot="${iso}T${hh}:${mm}"></div>`
-          );
+          const isHourEnd = (min + slotMinutes) % 60 === 0;
+          const isAltHour = Math.floor(min / 60) % 2 === 1;
+          const slotCls = ["tg-slot", isHourEnd ? "slot-hour-end" : "", isAltHour ? "tg-slot-alt" : ""]
+            .filter(Boolean)
+            .join(" ");
+          slots.push(`<div class="${slotCls}" part="slot" data-slot="${iso}T${hh}:${mm}"></div>`);
         }
 
         const blocks = col.timed
@@ -958,19 +1171,21 @@ export class HijriCalendarElement extends HTMLElement {
             const height = ((p.endMin - p.startMin) / total) * 100;
             const left = (p.col / p.colCount) * 100;
             const width = 100 / p.colCount;
-            const color = p.event.color ? `--_ev-color:${escapeHtml(p.event.color)};` : "";
-            const timeLabel = this.formatTimeLabel(p.startMin);
-            const label = `${p.event.title}, ${timeLabel}`;
-            return `<button type="button" part="event" class="tg-event" data-tev="${idx}"
-              style="${color}top:${top}%;height:${height}%;left:${left}%;width:${width}%"
-              aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">
-              ${escapeHtml(p.event.title)}<small>${escapeHtml(timeLabel)}</small>
-            </button>`;
+            const ev = p.event;
+            const styleToken = this.effectiveEventStyle(ev.style);
+            const variant = this.variantTokens(ev.variant);
+            const colorStyle = ev.color ? `--_ev-color:${escapeHtml(ev.color)};` : "";
+            const labels = this.timeLabels(p.startMin, p.endMin, false);
+            const ariaLabel = `${ev.title}, ${labels.start}`;
+            const inner = this.eventInnerHtml(ev, labels, "timed-block");
+            return `<button type="button" part="event ${styleToken}${variant.part}" class="tg-event" data-tev="${idx}"
+              style="${colorStyle}top:${top}%;height:${height}%;left:${left}%;width:${width}%"${variant.dataAttr}
+              aria-label="${escapeHtml(ariaLabel)}" title="${escapeHtml(ariaLabel)}">${inner}</button>`;
           })
           .join("");
 
         let nowLine = "";
-        if (col.isToday) {
+        if (col.isToday && this.nowIndicator !== "none") {
           if (nowMin >= winStart && nowMin < winEnd) {
             const top = ((nowMin - winStart) / total) * 100;
             nowLine = `<div class="now-line" part="now-indicator" style="top:${top}%"></div>`;
@@ -984,12 +1199,16 @@ export class HijriCalendarElement extends HTMLElement {
       })
       .join("");
 
+    const alldayHtml = showAllDayRow
+      ? `<div class="tg-allday" style="grid-template-columns:${cols}">
+        <div class="tg-allday-label" part="allday-label">${escapeHtml(this.loc.allDayLabel)}</div>${allDayCols}
+      </div>`
+      : "";
+
     const body = `<div class="timegrid">
       <div class="tg-head" style="grid-template-columns:${cols}"><div></div>${heads}</div>
-      <div class="tg-allday" style="grid-template-columns:${cols}">
-        <div class="tg-allday-label">${escapeHtml(this.loc.allDayLabel)}</div>${allDayCols}
-      </div>
-      <div class="tg-body" style="grid-template-columns:${cols}">
+      ${alldayHtml}
+      <div class="tg-body" style="grid-template-columns:${cols};${slotHeightVar}">
         <div class="tg-gutter" part="time-gutter">${gutterSlots.join("")}</div>
         ${dayCols}
       </div>
@@ -1060,15 +1279,14 @@ export class HijriCalendarElement extends HTMLElement {
         const items = day.items
           .map((n) => {
             const idx = this.lastAgendaFlat.push(n) - 1;
-            const color = n.event.color ? ` style="--_ev-color:${escapeHtml(n.event.color)}"` : "";
-            const when = n.allDay
-              ? this.loc.allDayLabel
-              : this.formatTimeLabel(Math.round((n.startMs % DAY_MS) / 60000));
-            const label = `${n.event.title}, ${when}`;
-            return `<button type="button" part="agenda-item" class="agenda-item" data-gev="${idx}" title="${escapeHtml(label)}">
+            const ev = n.event;
+            const color = ev.color ? ` style="--_ev-color:${escapeHtml(ev.color)}"` : "";
+            const labels = this.normalizedLabels(n);
+            const ariaLabel = `${ev.title}, ${labels.start}`;
+            const inner = this.eventInnerHtml(ev, labels, "agenda-item");
+            return `<button type="button" part="agenda-item" class="agenda-item" data-gev="${idx}" title="${escapeHtml(ariaLabel)}">
               <span class="dot"${color}></span>
-              <span class="when">${escapeHtml(when)}</span>
-              <span>${escapeHtml(n.event.title)}</span>
+              ${inner}
             </button>`;
           })
           .join("");

@@ -49,6 +49,25 @@ ${arabicFontFace}
   --hcal-day-secondary-font-family: var(--hcal-font-family-arabic);
   --hcal-month-marker-color: var(--hcal-muted);
   --hcal-transition: 0ms;
+  --hcal-gutter-bg: transparent;
+  --hcal-gutter-width: 56px;
+  --hcal-hour-height: 48px;
+  --hcal-slot-alt-bg: transparent;
+  --hcal-slot-hover-bg: color-mix(in srgb, var(--hcal-fg) 4%, transparent);
+  --hcal-today-column-bg: transparent;
+  --hcal-event-radius: 4px;
+  --hcal-chip-padding: 1px 6px;
+  --hcal-block-padding: 2px 6px;
+  --hcal-event-font-size: 11px;
+  --hcal-event-border-width: 2px;
+  --hcal-event-tint-alpha: 18%;
+  --hcal-event-hover-bg: none;
+  --hcal-event-hover-shadow: none;
+  --hcal-event-hover-transform: none;
+  --hcal-event-inset: 2px;
+  --hcal-now-color: #ea4335;
+  --hcal-now-width: 2px;
+  --hcal-now-dot-size: 8px;
   display: block;
   font-family: var(--hcal-font-family);
   color: var(--hcal-fg);
@@ -101,11 +120,21 @@ ${arabicFontFace}
 :host([today-marker="pill"]) .day-head.today .num-primary { background: var(--hcal-accent); color: var(--hcal-accent-fg); border-radius: 999px; padding: 1px 6px; }
 :host([today-marker="dot"]) .day-head.today .num-primary { color: var(--hcal-today-color); }
 .day-head[data-disabled] { cursor: not-allowed; opacity: 0.3; }
-.chip { border: none; cursor: pointer; font: inherit; font-size: 11px; text-align: start; color: var(--hcal-event-fg); background: var(--_ev-color, var(--hcal-accent)); border-radius: 4px; padding: 1px 6px; margin: 1px 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; position: relative; z-index: 1; }
+.chip { border: none; cursor: pointer; font: inherit; font-size: var(--hcal-event-font-size); text-align: start; color: var(--hcal-event-fg); background: var(--_ev-color, var(--hcal-accent)); border-radius: var(--hcal-event-radius); padding: var(--hcal-chip-padding); margin: 1px 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; position: relative; z-index: 1; }
 .chip.continues-before { border-start-start-radius: 0; border-end-start-radius: 0; }
 .chip.continues-after { border-start-end-radius: 0; border-end-end-radius: 0; }
 .more { border: none; background: none; cursor: pointer; font: inherit; font-size: 11px; color: var(--hcal-muted); text-align: start; padding: 0 6px; margin: 1px 2px; position: relative; z-index: 1; }
 .more:hover { color: var(--hcal-fg); }
+/* event-style (P3): "solid" is the default .chip/.tg-event background above; "tinted" and
+   "outline" are selected on the part attribute itself (only elements carrying part="event"
+   ever carry these tokens), so no extra class is needed. */
+[part~="event"][part~="tinted"] { background: color-mix(in srgb, var(--_ev-color, var(--hcal-accent)) var(--hcal-event-tint-alpha), transparent); color: var(--_ev-color, var(--hcal-accent)); border-inline-start: var(--hcal-event-border-width) solid var(--_ev-color, var(--hcal-accent)); }
+[part~="event"][part~="outline"] { background: transparent; color: var(--_ev-color, var(--hcal-accent)); border: 1px dashed var(--_ev-color, var(--hcal-accent)); border-inline-start: var(--hcal-event-border-width) solid var(--_ev-color, var(--hcal-accent)); }
+/* Hover affordances default to no-op: each var() below substitutes a value ("none") that is
+   invalid for its property, so per CSS custom-property semantics the whole declaration falls
+   back to its initial value (no shadow / no filter / no transform) until a host supplies a
+   real value — the chip's normal background is never touched, so it can never be regressed. */
+.chip:hover, .tg-event:hover { box-shadow: inset 0 0 0 999px var(--hcal-event-hover-bg); filter: drop-shadow(var(--hcal-event-hover-shadow)); transform: var(--hcal-event-hover-transform); }
 
 /* time grid (week/day) */
 .timegrid { display: flex; flex-direction: column; flex: 1; }
@@ -118,18 +147,21 @@ ${arabicFontFace}
 .tg-allday-label { font-size: 10px; color: var(--hcal-muted); display: flex; align-items: center; justify-content: center; }
 .tg-allday-col { border-inline-start: 1px solid var(--hcal-border); display: flex; flex-direction: column; }
 .tg-body { display: grid; position: relative; overflow-y: auto; max-height: var(--hcal-body-max-height); }
-.tg-gutter { position: relative; }
-.tg-slot { height: 24px; box-sizing: border-box; }
+.tg-gutter { position: relative; background: var(--hcal-gutter-bg); }
+.tg-slot { height: var(--_slot-h); box-sizing: border-box; }
 .tg-gutter .tg-slot { position: relative; }
 .tg-gutter .tg-slot span { position: absolute; top: -7px; inset-inline-end: 6px; font-size: 10px; color: var(--hcal-muted); white-space: nowrap; font-family: var(--hcal-font-family-mono); }
+:host([time-label-position="cell"]) .tg-gutter .tg-slot span { top: 2px; }
 .tg-day-col { border-inline-start: 1px solid var(--hcal-border); position: relative; }
+.tg-day-col.today { background: var(--hcal-today-column-bg); }
 .tg-day-col .tg-slot { cursor: pointer; }
-.tg-day-col .tg-slot.hour-end { border-bottom: 1px solid color-mix(in srgb, var(--hcal-border) 60%, transparent); }
-.tg-day-col .tg-slot:hover { background: color-mix(in srgb, var(--hcal-fg) 4%, transparent); }
-.tg-event { position: absolute; inset-inline: 2px; border: none; cursor: pointer; font: inherit; font-family: var(--hcal-font-family-display); font-size: 11px; text-align: start; color: var(--hcal-event-fg); background: var(--_ev-color, var(--hcal-accent)); border-radius: 4px; padding: 2px 6px; overflow: hidden; box-shadow: 0 0 0 1px var(--hcal-bg); }
-.tg-event small { display: block; opacity: 0.85; font-size: 10px; font-family: var(--hcal-font-family-mono); }
-.now-line { position: absolute; inset-inline: 0; height: 2px; background: #ea4335; pointer-events: none; }
-.now-line::before { content: ""; position: absolute; inset-inline-start: -4px; top: -3px; width: 8px; height: 8px; border-radius: 999px; background: #ea4335; }
+.tg-day-col .tg-slot.tg-slot-alt { background: var(--hcal-slot-alt-bg); }
+.tg-day-col .tg-slot.slot-hour-end { border-bottom: 1px solid color-mix(in srgb, var(--hcal-border) 60%, transparent); }
+.tg-day-col .tg-slot:hover { background: var(--hcal-slot-hover-bg); }
+.tg-event { position: absolute; inset-inline: var(--hcal-event-inset); border: none; cursor: pointer; font: inherit; font-family: var(--hcal-font-family-display); font-size: var(--hcal-event-font-size); text-align: start; color: var(--hcal-event-fg); background: var(--_ev-color, var(--hcal-accent)); border-radius: var(--hcal-event-radius); padding: var(--hcal-block-padding); overflow: hidden; box-shadow: 0 0 0 1px var(--hcal-bg); }
+.tg-event [part~="event-time"] { display: block; opacity: 0.85; font-size: 10px; font-family: var(--hcal-font-family-mono); }
+.now-line { position: absolute; inset-inline: 0; height: var(--hcal-now-width); background: var(--hcal-now-color); pointer-events: none; }
+.now-line::before { content: ""; position: absolute; inset-inline-start: calc(var(--hcal-now-dot-size) / -2); top: calc((var(--hcal-now-width) - var(--hcal-now-dot-size)) / 2); width: var(--hcal-now-dot-size); height: var(--hcal-now-dot-size); border-radius: 999px; background: var(--hcal-now-color); }
 
 /* agenda */
 .agenda { padding: 8px 0; overflow-y: auto; max-height: var(--hcal-body-max-height); }
@@ -141,7 +173,7 @@ ${arabicFontFace}
 .agenda-item { display: flex; gap: 10px; align-items: baseline; border: none; background: none; cursor: pointer; font: inherit; color: var(--hcal-fg); text-align: start; padding: 2px 4px; border-radius: 4px; }
 .agenda-item:hover { background: color-mix(in srgb, var(--hcal-fg) 6%, transparent); }
 .agenda-item .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--_ev-color, var(--hcal-accent)); flex: none; }
-.agenda-item .when { font-size: 11px; color: var(--hcal-muted); min-width: 96px; font-family: var(--hcal-font-family-mono); }
+.agenda-item [part~="event-time"] { font-size: 11px; color: var(--hcal-muted); min-width: 96px; font-family: var(--hcal-font-family-mono); }
 .agenda-empty { padding: 16px; text-align: center; color: var(--hcal-muted); }
 
 :host([dir="rtl"]) .cal { direction: rtl; }

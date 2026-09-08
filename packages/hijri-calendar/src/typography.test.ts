@@ -1,5 +1,11 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { arMonthNames, createCalendar, formatNumerals, translitMonthNames } from "@spezutil/hijri-core";
+import {
+  arMonthNames,
+  arWeekdayNames,
+  createCalendar,
+  formatNumerals,
+  translitMonthNames,
+} from "@spezutil/hijri-core";
 import { HijriCalendarElement } from "./hijri-calendar";
 
 const cal = createCalendar();
@@ -261,5 +267,55 @@ describe("<hijri-calendar> font-family custom properties", () => {
     );
     expect(css).toContain("--hcal-day-secondary-font-family: var(--hcal-font-family-arabic);");
     expect(css).not.toMatch(/\.num-secondary[^}]*font-family:\s*var\(--hcal-font-family-display\)/);
+  });
+});
+
+describe("<hijri-calendar> column order invariant (Arabic content must never reorder the grid)", () => {
+  it('keeps weekday header cells and day-cell layers in Sun..Sat DOM order under names="ar" numerals="arab" (week-start="0" default), and never puts dir="rtl" on the grid, its rows, or the weekday header', () => {
+    const el = mount({ date: "2026-07-06", names: "ar", numerals: "arab" });
+
+    // Weekday header cells: DOM order must be Sun..Sat regardless of the Arabic name set —
+    // column order is driven by week-start alone (`weekdayCellHtml((i + ws) % 7)`), never by
+    // the content/script/digit system of what's rendered inside each cell. The full,
+    // untruncated name lives in the cell's `title` attribute even under weekday-format="short"
+    // (the default), so it's a reliable per-column identity check independent of truncation.
+    const weekdayCells = Array.from(sr(el).querySelectorAll('[part~="weekday"]'));
+    expect(weekdayCells.length).toBe(7);
+    weekdayCells.forEach((cell, i) => {
+      expect(cell.getAttribute("title")).toBe(arWeekdayNames[i]);
+    });
+
+    // Day-cell background layers (month view): first week's --_col must ascend 0..6 in DOM
+    // order, unaffected by Arabic numerals/names.
+    const dayCellLayers = Array.from(sr(el).querySelectorAll<HTMLElement>('[part~="day-cell"]')).slice(
+      0,
+      7
+    );
+    expect(dayCellLayers.length).toBe(7);
+    dayCellLayers.forEach((cell, i) => {
+      expect(cell.style.getPropertyValue("--_col")).toBe(String(i));
+    });
+
+    // Rulings K/M: dir="rtl" belongs only on single-script inner spans, never on a grid
+    // container, a row, or the weekday header — those must stay direction-neutral so the
+    // column order itself is never subject to bidi reordering.
+    expect(sr(el).querySelector('[part="calendar"]')!.getAttribute("dir")).toBeNull();
+    expect(sr(el).querySelector(".dow-row")!.getAttribute("dir")).toBeNull();
+    const weeks = Array.from(sr(el).querySelectorAll(".week"));
+    expect(weeks.length).toBeGreaterThan(0);
+    weeks.forEach((week) => {
+      expect(week.getAttribute("dir")).toBeNull();
+    });
+  });
+
+  it("holds the same invariant for week-view weekday/column-head order under the same Arabic attributes", () => {
+    const el = mount({ date: "2026-07-06", view: "week", names: "ar", numerals: "arab" });
+    const heads = Array.from(sr(el).querySelectorAll(".tg-col-head"));
+    expect(heads.length).toBe(7);
+    heads.forEach((head, i) => {
+      expect(head.querySelector(".dow")!.getAttribute("title")).toBe(arWeekdayNames[i]);
+    });
+    expect(sr(el).querySelector('[part="calendar"]')!.getAttribute("dir")).toBeNull();
+    expect(sr(el).querySelector(".tg-head")!.getAttribute("dir")).toBeNull();
   });
 });

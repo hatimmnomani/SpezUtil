@@ -1,6 +1,7 @@
 import {
   arMonthNames,
   arWeekdayNames,
+  formatNumerals,
   translitMonthNames,
   weekdayNames,
 } from "@spezutil/hijri-core";
@@ -18,6 +19,8 @@ export interface CalendarLocale {
   allDayLabel: string;
   emptyLabel: string;
   viewLabels: Record<"month" | "week" | "day" | "agenda", string>;
+  /** Event duration on chips/blocks, e.g. "90m". Never routed through `numerals-gregorian`. */
+  durationLabel: (mins: number) => string;
 }
 
 const translit: CalendarLocale = {
@@ -26,6 +29,7 @@ const translit: CalendarLocale = {
   allDayLabel: "All day",
   emptyLabel: "No events",
   viewLabels: { month: "Month", week: "Week", day: "Day", agenda: "Agenda" },
+  durationLabel: (mins) => `${mins}m`,
 };
 
 const ar: CalendarLocale = {
@@ -34,6 +38,7 @@ const ar: CalendarLocale = {
   allDayLabel: "طوال اليوم",
   emptyLabel: "لا توجد أحداث",
   viewLabels: { month: "شهر", week: "أسبوع", day: "يوم", agenda: "جدول" },
+  durationLabel: (mins) => `${formatNumerals(mins, "arab")} د`,
 };
 
 export function resolveLocale(name: string | null): CalendarLocale {
