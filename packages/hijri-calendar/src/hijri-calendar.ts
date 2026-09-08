@@ -77,6 +77,12 @@ interface ViewRenderResult {
 }
 
 const DAY_MS = 86400000;
+/**
+ * Cap on the number of render passes one `render()` call will drain (see `render()`): a
+ * `range-change` listener that answers from a synchronous cache needs exactly one extra pass,
+ * so anything beyond a handful means a handler is re-triggering itself.
+ */
+const MAX_RENDER_PASSES = 5;
 const VIEWS: CalendarView[] = ["month", "week", "day", "agenda"];
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -283,6 +289,10 @@ export class HijriCalendarElement extends HTMLElement {
    * differently-reasoned render.
    */
   private hasRendered = false;
+  /** `true` while a `renderPass()` is in flight — see `render()`'s doc comment. */
+  private inRender = false;
+  /** Reason of the newest render request deferred by the `inRender` guard, else `null`. */
+  private pendingRenderReason: RangeChangeDetail["reason"] | null = null;
 
   public isDateDisabled?: (hijri: HijriDate, gregorian: Date) => boolean;
 
@@ -544,8 +554,9 @@ export class HijriCalendarElement extends HTMLElement {
     this.reflect("allday-row", v);
   }
   /**
-   * Current-time line in week/day views. `"none"` hides it entirely. `"line-label"` is reserved
-   * for a future phase; until then it renders the same as `"line"` (the line, with no label).
+   * Current-time line in week/day views. `"none"` hides it entirely. `"line-label"` adds a
+   * `<span part="now-label">` to the line, containing `` `${loc.nowLabel} · ${time}` `` (e.g.
+   * "Now · 13:30", the time formatted per `time-format`/`numerals-gregorian`).
    */
   get nowIndicator(): NowIndicatorMode {
     const v = this.getAttribute("now-indicator");
@@ -884,6 +895,17 @@ export class HijriCalendarElement extends HTMLElement {
   private variantTokens(variant: string | undefined): { part: string; dataAttr: string } {
     if (!variant || !VARIANT_RE.test(variant)) return { part: "", dataAttr: "" };
     return { part: ` variant-${variant}`, dataAttr: ` data-variant="${variant}"` };
+  }
+
+  /**
+   * `allday`/`timed` — a documented `::part()` token (§5.6) on every chip/block/agenda item, so
+   * a host can style an all-day chip differently from a timed one. Read off the *normalized*
+   * event (`NormalizedEvent.allDay`), which is where the "a bare `yyyy-mm-dd` start means
+   * all-day" inference lives, never off the raw `allDay` field. Purely additive: no shipped CSS
+   * rule targets either token, so the default look is unchanged.
+   */
+  private timingToken(n: { allDay: boolean }): "allday" | "timed" {
+    return n.allDay ? "allday" : "timed";
   }
 
   /** Per-event `style` override, falling back to the component's `event-style` attribute. */
@@ -1291,21 +1313,25 @@ export class HijriCalendarElement extends HTMLElement {
                 // never the raw stored one (Ruling P).
                 const n = normalizeEvent(s.event);
                 const ev = n.event;
-                const cls = [
-                  "chip",
+                const spanTokens = [
                   s.continuesBefore ? "continues-before" : "",
                   s.continuesAfter ? "continues-after" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ");
+                ].filter(Boolean);
+                const cls = ["chip", ...spanTokens].join(" ");
                 const styleToken = this.effectiveEventStyle(ev.style);
                 const variant = this.variantTokens(ev.variant);
+                // `continues-before`/`continues-after` are documented ::part() tokens (§5.6) —
+                // they were on `class` only until the final review pass, which made the
+                // documented multi-day-chip styling hook unreachable from outside the shadow
+                // root. Additive: no shipped CSS rule targets either token.
+                const spanPart = spanTokens.map((t) => ` ${t}`).join("");
+                const partAttr = `event ${styleToken} ${this.timingToken(n)}${variant.part}${spanPart}`;
                 const colorStyle = ev.color ? `--_ev-color:${escapeHtml(ev.color)};` : "";
                 const gridStyle = `grid-row:${s.lane + 2};grid-column:${s.startCol + 1} / span ${s.span}`;
                 const labels = this.normalizedLabels(n);
                 const ariaLabel = `${ev.title}, ${labels.start}`;
                 const inner = this.eventInnerHtml(ev, labels, "month-chip");
-                return `<button type="button" part="event ${styleToken}${variant.part}" class="${cls}" data-ev="${idx}"
+                return `<button type="button" part="${partAttr}" class="${cls}" data-ev="${idx}"
               style="${colorStyle}${gridStyle}"${variant.dataAttr}
               aria-label="${escapeHtml(ariaLabel)}" title="${escapeHtml(ariaLabel)}">${inner}</button>`;
               })
@@ -1562,7 +1588,7 @@ export class HijriCalendarElement extends HTMLElement {
                 const labels = this.normalizedLabels(n);
                 const ariaLabel = `${ev.title}, ${labels.start}`;
                 const inner = this.eventInnerHtml(ev, labels, "allday-chip");
-                return `<button type="button" part="event ${styleToken}${variant.part}" class="chip" data-aev="${idx}"
+                return `<button type="button" part="event ${styleToken} ${this.timingToken(n)}${variant.part}" class="chip" data-aev="${idx}"
               style="${colorStyle}"${variant.dataAttr} aria-label="${escapeHtml(ariaLabel)}" title="${escapeHtml(ariaLabel)}">${inner}</button>`;
               })
               .join("");
@@ -1610,7 +1636,10 @@ export class HijriCalendarElement extends HTMLElement {
             const labels = this.timeLabels(p.startMin, p.endMin, false);
             const ariaLabel = `${ev.title}, ${labels.start}`;
             const inner = this.eventInnerHtml(ev, labels, "timed-block");
-            return `<button type="button" part="event ${styleToken}${variant.part}" class="tg-event" data-tev="${idx}"
+            // `timed` is a literal here, not `timingToken()`: a PositionedEvent only ever comes
+            // out of `TimeGridColumn.timed`, so it is timed by construction (all-day events go
+            // to the separate `allDay` array and render in the all-day row above).
+            return `<button type="button" part="event ${styleToken} timed${variant.part}" class="tg-event" data-tev="${idx}"
               style="${colorStyle}top:${top}%;height:${height}%;left:${left}%;width:${width}%"${variant.dataAttr}
               aria-label="${escapeHtml(ariaLabel)}" title="${escapeHtml(ariaLabel)}">${inner}</button>`;
           })
@@ -1803,7 +1832,7 @@ export class HijriCalendarElement extends HTMLElement {
             // has no other color-bearing chrome; "tinted"/"outline" already color the whole
             // item via the shared [part~="event"][part~="tinted"|"outline"] rules (styles.ts).
             const dotHtml = styleToken === "solid" ? `<span class="dot"></span>` : "";
-            return `<button type="button" part="agenda-item event ${styleToken}${variant.part}" class="agenda-item" data-gev="${idx}"
+            return `<button type="button" part="agenda-item event ${styleToken} ${this.timingToken(n)}${variant.part}" class="agenda-item" data-gev="${idx}"
               style="${colorStyle}"${variant.dataAttr} title="${escapeHtml(ariaLabel)}">
               ${dotHtml}${inner}
             </button>`;
@@ -2037,8 +2066,63 @@ export class HijriCalendarElement extends HTMLElement {
     });
   }
 
+  /**
+   * Renders the current view, then emits `range-change` — and is **re-entrancy-safe**.
+   *
+   * Re-entrancy is reachable through the documented headline use of `range-change`: a host that
+   * keys its data fetching by `{start, end}` and answers from a synchronous cache assigns
+   * `el.events` (or an attribute) straight from its handler, which lands back here while the
+   * outer call is still mid-flight. Two things make that safe:
+   *
+   * 1. The emit is the **last** thing a pass does (see `renderPass`), so the subtree a pass
+   *    builds is already fully wired and hooked before any listener can see the event. Emitting
+   *    mid-pass (as this did before) let a re-entrant pass replace the subtree and wire it, after
+   *    which the outer pass wired that *same, new* subtree a second time — every listener bound
+   *    twice, so one click produced two `date-click`/`event-click` events and `renderEvent` ran
+   *    twice per chip (the second time receiving the first pass's own output as `fallbackHtml`).
+   * 2. `inRender` defers a nested call instead of running it inside the outer one, so passes are
+   *    strictly sequential even when the re-entry comes from somewhere other than the emit — a
+   *    `renderEvent`/`renderDayCell` hook that sets an attribute, say, whose
+   *    `attributeChangedCallback` reaches `render()` with `suppress` false.
+   *
+   * Only the *latest* deferred reason is kept: a pass renders from current state, so an older
+   * queued request is always subsumed by a newer one. The drain is capped
+   * (`MAX_RENDER_PASSES`) so a host handler that changes the visible range on every
+   * `range-change` degrades to a warning instead of hanging the tab (before this guard it blew
+   * the stack).
+   */
   protected render(reason: RangeChangeDetail["reason"] = "attribute"): void {
     if (!this.root) return;
+    if (this.inRender) {
+      this.pendingRenderReason = reason;
+      return;
+    }
+    this.inRender = true;
+    try {
+      this.renderPass(reason);
+      let passes = 0;
+      while (this.pendingRenderReason !== null) {
+        const next = this.pendingRenderReason;
+        this.pendingRenderReason = null;
+        if (++passes > MAX_RENDER_PASSES) {
+          console.warn(
+            `[@spezutil/hijri-calendar] a listener or render hook re-entered render() more than ` +
+              `${MAX_RENDER_PASSES} times in one pass — the last request (reason "${next}") was ` +
+              `dropped to avoid an infinite loop. Check for a "range-change" handler that changes ` +
+              `the visible range (date/view) instead of only loading data for it.`
+          );
+          break;
+        }
+        this.renderPass(next);
+      }
+    } finally {
+      this.inRender = false;
+      this.pendingRenderReason = null;
+    }
+  }
+
+  /** One render pass. Only ever called from `render()`, which serialises re-entrant calls. */
+  private renderPass(reason: RangeChangeDetail["reason"]): void {
     this.stopNowTimer();
     const { title, subtitle, body, range } = this.renderView();
     const overlay = this.loading
@@ -2050,10 +2134,13 @@ export class HijriCalendarElement extends HTMLElement {
         <div class="body-wrap">${body}${overlay}</div>
       </div>`;
     this.wireToolbar();
-    this.maybeEmitRangeChange(this.view, range.start, range.end, reason);
     this.wireView();
     this.applyEventHooks();
     this.applyDayCellHooks();
     this.hasRendered = true;
+    // Last, deliberately: see render()'s doc comment. `maybeEmitRangeChange` assigns
+    // `lastRangeDetail` before it dispatches, so `visibleRange` is already readable and correct
+    // by the time any listener runs.
+    this.maybeEmitRangeChange(this.view, range.start, range.end, reason);
   }
 }

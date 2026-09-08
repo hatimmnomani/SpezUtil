@@ -56,6 +56,21 @@ describe("<hijri-calendar> event-style", () => {
     expect(partTokens(chip)).not.toContain("tinted");
   });
 
+  it("falls back to the event-style attribute when a per-event style is not one of the three values", () => {
+    // effectiveEventStyle() is the sanitiser between host data and a `part` attribute value: an
+    // unknown string must neither reach the part attribute nor suppress the attribute default.
+    const el = mount({ date: "2026-07-06", "event-style": "tinted" });
+    el.events = [
+      { id: "a", title: "A", start: "2026-07-06T10:00", style: "bogus" } as unknown as CalendarEvent,
+    ];
+    const chip = sr(el).querySelector('[part~="event"]')!;
+    const tokens = partTokens(chip);
+    expect(tokens).toContain("tinted");
+    expect(tokens).not.toContain("bogus");
+    // No unexpected token at all: exactly the event/style/timing set, nothing smuggled through.
+    expect(tokens.slice().sort()).toEqual(["event", "timed", "tinted"]);
+  });
+
   it("applies to all-day chips too", () => {
     const el = mount({ date: "2026-07-06", view: "week", "event-style": "outline" });
     el.events = [{ id: "a", title: "A", start: "2026-07-06", allDay: true }];

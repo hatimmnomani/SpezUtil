@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { HijriCalendarElement, type RangeChangeDetail } from "./hijri-calendar";
 
 beforeAll(() => {
@@ -201,5 +201,117 @@ describe("<hijri-calendar> range-change: per-view range length", () => {
     const events = listen(el);
     (sr(el).querySelector('[data-view="agenda"]') as HTMLButtonElement).click();
     expect(daySpan(events[0]!)).toBe(30);
+  });
+});
+
+describe("<hijri-calendar> range-change: synchronous re-entrant handler (final-review finding 1)", () => {
+  // The documented headline use of range-change (getting-started.md: key your data fetching by
+  // {start, end}) plus a synchronous cache means a host assigns `events` from inside the handler,
+  // re-entering render() while the outer call is still mid-flight. Before the fix, render()
+  // emitted *before* wireView()/the hook passes, so the re-entrant pass built AND wired a fresh
+  // subtree and the outer pass then wired that same subtree a second time — every listener bound
+  // twice (one click => two date-click/event-click events, renderEvent run twice per chip).
+  const seenStarts: string[] = [];
+
+  function mountWithSyncCache(): HijriCalendarElement {
+    const el = document.createElement("hijri-calendar") as HijriCalendarElement;
+    el.setAttribute("date", "2026-07-06");
+    el.addEventListener("range-change", (e) => {
+      seenStarts.push((e as CustomEvent<RangeChangeDetail>).detail.start);
+      // Answering synchronously from a cache — the exact shape of the reported bug.
+      el.events = [{ id: "a", title: "Event a", start: "2026-07-06T10:00" }];
+    });
+    document.body.appendChild(el);
+    return el;
+  }
+
+  beforeEach(() => {
+    seenStarts.length = 0;
+  });
+
+  it("fires exactly one date-click per day-button click", () => {
+    const el = mountWithSyncCache();
+    const clicks: unknown[] = [];
+    el.addEventListener("date-click", (e) => clicks.push((e as CustomEvent).detail));
+    sr(el).querySelector<HTMLButtonElement>("[data-date]")!.click();
+    expect(clicks.length).toBe(1);
+  });
+
+  it("fires exactly one event-click per chip click", () => {
+    const el = mountWithSyncCache();
+    const clicks: unknown[] = [];
+    el.addEventListener("event-click", (e) => clicks.push((e as CustomEvent).detail));
+    const chip = sr(el).querySelector<HTMLButtonElement>('[part~="event"]');
+    expect(chip).toBeTruthy();
+    chip!.click();
+    expect(clicks.length).toBe(1);
+  });
+
+  it("invokes renderEvent exactly once per rendered chip", () => {
+    // Mount empty, then navigate: the "navigate" range-change is answered from the cache, which
+    // re-enters render(). Before the fix this ran the hook twice per chip (once from the
+    // re-entrant pass, once from the outer pass finishing on the same, replaced subtree — the
+    // second call receiving the first's output as its fallbackHtml).
+    const el = mount({ date: "2026-07-06" });
+    const hook = vi.fn(() => null);
+    el.renderEvent = hook;
+    el.addEventListener("range-change", () => {
+      el.events = [
+        { id: "a", title: "Event a", start: "2026-08-10T10:00" },
+        { id: "b", title: "Event b", start: "2026-08-11T10:00" },
+      ];
+    });
+    hook.mockClear();
+    (sr(el).querySelector('[part="nav-next"]') as HTMLButtonElement).click();
+    expect(sr(el).querySelectorAll('[part~="event"]').length).toBe(2);
+    expect(hook).toHaveBeenCalledTimes(2);
+  });
+
+  it('still emits exactly one range-change with reason "init" on the first render', () => {
+    const el = mountWithSyncCache();
+    expect(seenStarts.length).toBe(1);
+    expect(el.visibleRange!.reason).toBe("init");
+  });
+
+  it("exposes a correct visibleRange to the handler itself, before the handler returns", () => {
+    const seen: (RangeChangeDetail | null)[] = [];
+    const el = document.createElement("hijri-calendar") as HijriCalendarElement;
+    el.setAttribute("date", "2026-07-06");
+    el.addEventListener("range-change", (e) => {
+      seen.push(el.visibleRange);
+      expect(el.visibleRange).toEqual((e as CustomEvent<RangeChangeDetail>).detail);
+      el.events = [{ id: "a", title: "Event a", start: "2026-07-06T10:00" }];
+    });
+    document.body.appendChild(el);
+    expect(seen.length).toBe(1);
+    expect(seen[0]).not.toBeNull();
+  });
+
+  it("navigating from inside the handler settles with a warning instead of recursing forever", () => {
+    // Pathological host: changes the visible range on every range-change. Before the guard this
+    // blew the stack; now the drain is capped (MAX_RENDER_PASSES) and the last request is
+    // dropped with one warning.
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const el = document.createElement("hijri-calendar") as HijriCalendarElement;
+      el.setAttribute("date", "2026-07-06");
+      let n = 0;
+      el.addEventListener("range-change", (e) => {
+        n += 1;
+        // Ping-pong between two views so every pass really does produce a different range (the
+        // {view,start,end} dedupe would otherwise stop the loop by itself).
+        const view = (e as CustomEvent<RangeChangeDetail>).detail.view;
+        el.setAttribute("view", view === "month" ? "week" : "month");
+      });
+      document.body.appendChild(el);
+      // One initial pass plus MAX_RENDER_PASSES (5) drained passes, then the cap trips once.
+      expect(n).toBe(6);
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(String(warn.mock.calls[0]![0])).toContain("re-entered render()");
+      // Still alive and rendering after the cap tripped.
+      expect(sr(el).querySelector('[part~="calendar"]')).toBeTruthy();
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

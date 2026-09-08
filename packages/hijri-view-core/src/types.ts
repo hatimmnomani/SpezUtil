@@ -16,7 +16,11 @@ export interface CalendarEvent {
   color?: string;
   /** Second text line (e.g. location). Rendered as part="event-subtitle" in week/day/agenda. */
   subtitle?: string;
-  /** Short label (e.g. event type). Rendered as part="event-tag" in day banner cards / renderEvent ctx. */
+  /**
+   * Short label (e.g. event type). Carried through to hosts on `renderEvent`'s `ctx.event.tag`
+   * and never rendered by the built-in chip/block/agenda renderers — a host that wants it
+   * visible draws it in a `renderEvent` hook.
+   */
   tag?: string;
   /** Per-event override of the component's `event-style`. */
   style?: "solid" | "tinted" | "outline";
