@@ -4,6 +4,12 @@ Playwright screenshot tests against the built Storybook (`editorial.spec.ts` —
 dispatch that adds it; this README covers the workflow around it, which already applies to any spec
 placed in this directory).
 
+Not every spec in this directory takes screenshots. `day-cell-height.spec.ts` is a non-screenshot
+regression check (Ruling R, task-6b): it asserts, via `getBoundingClientRect()` in a real browser,
+that the month view's `.day-cell` background layer always renders at the same height as its `.week`
+row. It has no baseline images and needs none of the workflow below — it runs (and must pass) on a
+plain developer machine exactly the same as in CI.
+
 ## Why baselines are never generated locally
 
 Playwright's screenshot comparison is sensitive to the OS font-rendering stack (subpixel hinting,
