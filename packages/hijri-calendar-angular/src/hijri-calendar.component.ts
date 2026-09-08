@@ -15,6 +15,8 @@ import type {
   EventFieldMap,
   MoreClickDetail,
   RangeChangeDetail,
+  RenderDayCellContext,
+  RenderEventContext,
   SlotClickDetail,
   ViewChangeDetail,
 } from "@spezutil/hijri-calendar";
@@ -54,6 +56,11 @@ import type {
       [alldayRow]="alldayRow"
       [nowIndicator]="nowIndicator"
       [timeLabelPosition]="timeLabelPosition"
+      [dayHeader]="dayHeader"
+      [agendaDays]="agendaDays"
+      [loading]="loading"
+      [renderEvent]="renderEvent"
+      [renderDayCell]="renderDayCell"
       [eventFields]="eventFields"
       [events]="events"
       (event-click)="onEventClick($event)"
@@ -100,6 +107,11 @@ export class HijriCalendarComponent {
   @Input() alldayRow: "always" | "auto" | "never" | null = null;
   @Input() nowIndicator: "line" | "line-label" | "none" | null = null;
   @Input() timeLabelPosition: "line" | "cell" | null = null;
+  @Input() dayHeader: "column" | "banner" | null = null;
+  @Input() agendaDays = 30;
+  @Input() loading = false;
+  @Input() renderEvent: ((ctx: RenderEventContext) => Node | string | null) | null = null;
+  @Input() renderDayCell: ((ctx: RenderDayCellContext) => Node | string | null) | null = null;
   @Input() eventFields: EventFieldMap | null = null;
   @Input() events: CalendarEvent[] = [];
 

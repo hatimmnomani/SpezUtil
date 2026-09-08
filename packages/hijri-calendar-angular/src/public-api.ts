@@ -10,5 +10,7 @@ export type {
   ViewChangeDetail,
   DateChangeDetail,
   RangeChangeDetail,
+  RenderEventContext,
+  RenderDayCellContext,
   HijriDate,
 } from "@spezutil/hijri-calendar";

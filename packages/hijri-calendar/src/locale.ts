@@ -20,6 +20,18 @@ export interface CalendarLocale {
    * start/end clock labels). This function supplies only the locale-fixed unit suffix.
    */
   durationLabel: (digits: string) => string;
+  /** "Now" prefix for the `now-indicator="line-label"` `part="now-label"` span. */
+  nowLabel: string;
+  /**
+   * Day-banner summary event count, e.g. "2 events". Takes the digits already transliterated
+   * by the caller (same Ruling Y contract as `durationLabel`: `numerals-gregorian`, not
+   * `locale`, decides the digit system).
+   */
+  eventsCount: (digits: string) => string;
+  /** Day-banner summary hours, e.g. "2.5 hours scheduled". Same digit contract as `eventsCount`. */
+  hoursScheduled: (digits: string) => string;
+  /** Default text of the `loading` overlay (`part="loading"`, `slot="loading"`). */
+  loadingLabel: string;
 }
 
 const translit: CalendarLocale = {
@@ -29,6 +41,10 @@ const translit: CalendarLocale = {
   emptyLabel: "No events",
   viewLabels: { month: "Month", week: "Week", day: "Day", agenda: "Agenda" },
   durationLabel: (digits) => `${digits}m`,
+  nowLabel: "Now",
+  eventsCount: (digits) => `${digits} events`,
+  hoursScheduled: (digits) => `${digits} hours scheduled`,
+  loadingLabel: "Loading…",
 };
 
 const ar: CalendarLocale = {
@@ -38,6 +54,10 @@ const ar: CalendarLocale = {
   emptyLabel: "لا توجد أحداث",
   viewLabels: { month: "شهر", week: "أسبوع", day: "يوم", agenda: "جدول" },
   durationLabel: (digits) => `${digits} د`,
+  nowLabel: "الآن",
+  eventsCount: (digits) => `${digits} أحداث`,
+  hoursScheduled: (digits) => `${digits} ساعة مجدولة`,
+  loadingLabel: "جارٍ التحميل…",
 };
 
 export function resolveLocale(name: string | null): CalendarLocale {

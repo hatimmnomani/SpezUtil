@@ -238,6 +238,54 @@ describe("now-indicator", () => {
     expect(css).toContain("var(--hcal-now-color)");
     expect(css).toContain("--hcal-now-color: #ea4335;");
   });
+
+  it('"line-label" renders part="now-label" with "Now · <time>", honoring time-format, and is re-rendered by the minute timer', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(Date.UTC(2026, 6, 6, 13, 30)));
+      const el = mount({
+        date: "2026-07-06",
+        view: "week",
+        "now-indicator": "line-label",
+        timezone: "UTC",
+      });
+      expect(sr(el).querySelector('[part="now-label"]')!.textContent).toBe("Now · 1:30 PM");
+
+      const el24 = mount({
+        date: "2026-07-06",
+        view: "week",
+        "now-indicator": "line-label",
+        timezone: "UTC",
+        "time-format": "24",
+      });
+      expect(sr(el24).querySelector('[part="now-label"]')!.textContent).toBe("Now · 13:30");
+
+      // Advancing the mocked clock by exactly one minute-timer tick (rather than calling
+      // setSystemTime again) keeps Date.now() and the fake timer engine in sync.
+      vi.advanceTimersByTime(60000);
+      expect(sr(el).querySelector('[part="now-label"]')!.textContent).toBe("Now · 1:31 PM");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('"line" (default) and "none" render no now-label', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(Date.UTC(2026, 6, 6, 13, 30)));
+      const line = mount({ date: "2026-07-06", view: "week", timezone: "UTC" });
+      expect(sr(line).querySelector('[part="now-label"]')).toBeNull();
+      const none = mount({
+        date: "2026-07-06",
+        view: "week",
+        "now-indicator": "none",
+        timezone: "UTC",
+      });
+      expect(sr(none).querySelector('[part="now-label"]')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe("time-label-position", () => {

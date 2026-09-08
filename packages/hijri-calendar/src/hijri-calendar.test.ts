@@ -242,7 +242,7 @@ describe("<hijri-calendar> Phase 0 native title on events", () => {
   it("carries a title on agenda items", () => {
     const el = mount({ date: "2026-07-06", view: "agenda" });
     el.events = [{ id: "a", title: "Event a", start: "2026-07-06T10:00" }];
-    const item = sr(el).querySelector('[part="agenda-item"]') as HTMLElement;
+    const item = sr(el).querySelector('[part~="agenda-item"]') as HTMLElement;
     expect(item.getAttribute("title")).toBe("Event a, 10 AM");
   });
 });
@@ -284,5 +284,50 @@ describe("<hijri-calendar> eventFields mapping", () => {
     el.addEventListener("event-click", (e) => (detail = (e as CustomEvent).detail));
     (sr(el).querySelector('[part~="event"]') as HTMLButtonElement).click();
     expect(detail!.event.data).toBe(raw);
+  });
+});
+
+describe("<hijri-calendar> loading", () => {
+  it('sets aria-busy="true" on the grid and renders a part="loading" overlay', () => {
+    const el = mount({ date: "2026-07-06", loading: "" });
+    expect(el.loading).toBe(true);
+    expect(sr(el).querySelector('[role="grid"]')!.getAttribute("aria-busy")).toBe("true");
+    const overlay = sr(el).querySelector('[part="loading"]');
+    expect(overlay).toBeTruthy();
+    expect(overlay!.textContent).toBe("Loading…");
+  });
+
+  it("removing the attribute removes aria-busy and the overlay", () => {
+    const el = mount({ date: "2026-07-06", loading: "" });
+    el.removeAttribute("loading");
+    expect(el.loading).toBe(false);
+    expect(sr(el).querySelector('[role="grid"]')!.hasAttribute("aria-busy")).toBe(false);
+    expect(sr(el).querySelector('[part="loading"]')).toBeNull();
+  });
+
+  it("applies aria-busy to .timegrid and .agenda bodies too", () => {
+    const week = mount({ date: "2026-07-06", view: "week", loading: "" });
+    expect(sr(week).querySelector(".timegrid")!.getAttribute("aria-busy")).toBe("true");
+    const agenda = mount({ date: "2026-07-06", view: "agenda", loading: "" });
+    expect(sr(agenda).querySelector(".agenda")!.getAttribute("aria-busy")).toBe("true");
+  });
+
+  it("the loading slot falls back to loc.loadingLabel and can be overridden by light-DOM slotting", () => {
+    const el = mount({ date: "2026-07-06", loading: "" });
+    const slot = sr(el).querySelector('slot[name="loading"]') as HTMLSlotElement;
+    expect(slot).toBeTruthy();
+    const span = document.createElement("span");
+    span.slot = "loading";
+    span.textContent = "Fetching…";
+    el.appendChild(span);
+    expect(slot.assignedNodes()[0]!.textContent).toBe("Fetching…");
+  });
+
+  it("reflects the loading property to the attribute", () => {
+    const el = mount({ date: "2026-07-06" });
+    el.loading = true;
+    expect(el.getAttribute("loading")).toBe("");
+    el.loading = false;
+    expect(el.hasAttribute("loading")).toBe(false);
   });
 });

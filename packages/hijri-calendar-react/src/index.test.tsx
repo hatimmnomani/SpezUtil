@@ -71,4 +71,35 @@ describe("HijriCalendar (React)", () => {
     expect(onRangeChange).toHaveBeenCalledTimes(1);
     expect((onRangeChange.mock.calls[0]![0] as CustomEvent).detail.reason).toBe("navigate");
   });
+
+  // renderEvent/renderDayCell are properties, not attributes (§5.1: "Property only") — @lit/react's
+  // createComponent detects them via `"renderEvent" in element` (they're getters/setters on the
+  // custom element class) and sets them as JS properties from a useLayoutEffect, so they reach the
+  // shadow DOM without any special-casing in this wrapper.
+  it("renderEvent reaches the shadow DOM and replaces chip content", () => {
+    const { container } = render(
+      React.createElement(HijriCalendar, {
+        date: "2026-07-06",
+        events: [{ id: "a", title: "Event a", start: "2026-07-06T10:00" }],
+        renderEvent: () => Object.assign(document.createElement("b"), { textContent: "X" }),
+      })
+    );
+    const el = container.querySelector("hijri-calendar")!;
+    const chip = el.shadowRoot!.querySelector('[part~="event"]')!;
+    expect(chip.querySelector("b")).toBeTruthy();
+    expect(chip.querySelector("b")!.textContent).toBe("X");
+  });
+
+  it("renderDayCell reaches the shadow DOM and replaces day-cell content", () => {
+    const { container } = render(
+      React.createElement(HijriCalendar, {
+        date: "2026-07-06",
+        renderDayCell: () => Object.assign(document.createElement("b"), { textContent: "D" }),
+      })
+    );
+    const el = container.querySelector("hijri-calendar")!;
+    const dayButtons = el.shadowRoot!.querySelectorAll('[part~="day"]');
+    expect(dayButtons.length).toBeGreaterThan(0);
+    dayButtons.forEach((btn) => expect(btn.querySelector("b")).toBeTruthy());
+  });
 });

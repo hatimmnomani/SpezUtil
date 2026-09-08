@@ -100,6 +100,63 @@ const NOW_INDICATOR_MODES: NowIndicatorMode[] = ["line", "line-label", "none"];
 
 export type TimeLabelPosition = "line" | "cell";
 
+export type DayHeaderMode = "column" | "banner";
+const DAY_HEADER_MODES: DayHeaderMode[] = ["column", "banner"];
+
+/**
+ * Size band the calendar is rendered at. Phase 5 measures the host with a `ResizeObserver`
+ * and exposes this properly (as a reflected read-only property plus a `part="calendar"`
+ * token); until then every render context reports the `ResizeObserver`-unavailable fallback
+ * ("wide") — see `currentSize()`.
+ */
+export type SizeBand = "wide" | "medium" | "narrow";
+
+/** Context passed to the `renderEvent` hook for every chip/block/agenda item. */
+export interface RenderEventContext {
+  event: CalendarEvent;
+  view: CalendarView;
+  placement: "month-chip" | "allday-chip" | "timed-block" | "agenda-item";
+  hijri: HijriDate;
+  /** Pre-formatted labels honouring time-format / numerals-gregorian / locale. */
+  labels: { start: string; end: string; duration: string; range: string };
+  continuesBefore: boolean;
+  continuesAfter: boolean;
+  size: SizeBand;
+}
+export type RenderEventHook = (ctx: RenderEventContext) => Node | string | null;
+
+/** Context passed to the `renderDayCell` hook for every month-cell button and column head. */
+export interface RenderDayCellContext {
+  cell: DayCell;
+  /** `"month"` for month cells, `"week"`/`"day"` for time-grid column heads. */
+  view: CalendarView;
+  placement: "month-cell" | "column-head";
+  /** Events overlapping this day (all, including overflow), already field-mapped. */
+  events: CalendarEvent[];
+  /** Pre-formatted labels honouring primary / numerals / numerals-gregorian / month-marker. */
+  labels: { primary: string; secondary: string; monthMarker: string | null; weekday: string };
+  size: SizeBand;
+}
+export type RenderDayCellHook = (ctx: RenderDayCellContext) => Node | string | null;
+
+/**
+ * Hooks never break the calendar (design principle 7): a hook that throws is caught, logged
+ * once via `console.warn` (keyed on the hook function's own identity, so the same function
+ * reused across many chips/cells in one render — or across many renders — warns only once),
+ * and the default renderer is used instead. Module-level (not per-instance) so it survives
+ * across re-renders of the same element.
+ */
+const warnedHooks = new WeakSet<object>();
+function warnHookOnce(hook: object, name: string, err: unknown): void {
+  if (warnedHooks.has(hook)) return;
+  warnedHooks.add(hook);
+  console.warn(
+    `[@spezutil/hijri-calendar] ${name} threw and will be ignored (falling back to the ` +
+      `default renderer) for this and every other element using the same function:`,
+    err
+  );
+}
+
 /**
  * `variant` is interpolated into a `part="event variant-<v>"` attribute (and `data-variant`).
  * `normalizeEvent` (hijri-view-core) already validates and drops an invalid `variant` before it
@@ -167,6 +224,9 @@ export class HijriCalendarElement extends HTMLElement {
       "allday-row",
       "now-indicator",
       "time-label-position",
+      "day-header",
+      "agenda-days",
+      "loading",
     ];
   }
 
@@ -180,6 +240,8 @@ export class HijriCalendarElement extends HTMLElement {
   private loc: CalendarLocale = resolveLocale(null);
   private nameSet: NameSet = resolveNames(null);
   private lastRangeDetail: RangeChangeDetail | null = null;
+  private _renderEvent: RenderEventHook | undefined;
+  private _renderDayCell: RenderDayCellHook | undefined;
 
   public isDateDisabled?: (hijri: HijriDate, gregorian: Date) => boolean;
 
@@ -450,6 +512,61 @@ export class HijriCalendarElement extends HTMLElement {
   set timeLabelPosition(v: string) {
     this.reflect("time-label-position", v);
   }
+  /**
+   * Day view only: `"column"` (default) keeps the compact time-grid column head; `"banner"`
+   * replaces it with a full-width `part="day-banner"` header carrying a bigger date and an
+   * events/hours summary. No effect in week/month/agenda views.
+   */
+  get dayHeader(): DayHeaderMode {
+    const v = this.getAttribute("day-header");
+    return DAY_HEADER_MODES.includes(v as DayHeaderMode) ? (v as DayHeaderMode) : "column";
+  }
+  set dayHeader(v: string) {
+    this.reflect("day-header", v);
+  }
+  /** Agenda window length in days, from `date`. Default `30` (today's hard-coded behaviour). */
+  get agendaDays(): number {
+    const n = Number(this.getAttribute("agenda-days"));
+    return Number.isInteger(n) && n >= 1 && n <= 366 ? n : 30;
+  }
+  set agendaDays(v: number) {
+    this.reflect("agenda-days", String(v));
+  }
+  /**
+   * Sets `aria-busy="true"` on the grid/timegrid/agenda body and renders a `part="loading"`
+   * overlay (`slot="loading"` for host content, `loc.loadingLabel` by default). The body
+   * itself gets `pointer-events: none` so clicks can't reach through the overlay.
+   */
+  get loading(): boolean {
+    return this.hasAttribute("loading");
+  }
+  set loading(v: boolean) {
+    if (v) this.setAttribute("loading", "");
+    else this.removeAttribute("loading");
+  }
+  /**
+   * Replaces the inner content of every chip/block/agenda item (`part="event …"`). Returning
+   * `null` keeps the default renderer; a `string` is inserted as a text node (never parsed as
+   * HTML); a `Node` is appended as-is. Property only — see `RenderEventContext`.
+   */
+  get renderEvent(): RenderEventHook | undefined {
+    return this._renderEvent;
+  }
+  set renderEvent(fn: RenderEventHook | undefined) {
+    this._renderEvent = fn;
+    if (this.root) this.render();
+  }
+  /**
+   * Replaces the inner content of the month-cell number button and the time-grid column head
+   * (`part="day …"`). Same return contract as `renderEvent` — see `RenderDayCellContext`.
+   */
+  get renderDayCell(): RenderDayCellHook | undefined {
+    return this._renderDayCell;
+  }
+  set renderDayCell(fn: RenderDayCellHook | undefined) {
+    this._renderDayCell = fn;
+    if (this.root) this.render();
+  }
 
   private parseWeekendDays(attr: string | null): number[] {
     if (attr === null) return [0, 6];
@@ -556,7 +673,7 @@ export class HijriCalendarElement extends HTMLElement {
       this.setViewDate(this.cal.hijriToGregorian({ year, month, day: 1 }));
       return;
     }
-    const days = this.view === "week" ? 7 : this.view === "day" ? 1 : 30;
+    const days = this.view === "week" ? 7 : this.view === "day" ? 1 : this.agendaDays;
     this.setViewDate(new Date(this.viewDate.getTime() + delta * days * DAY_MS));
   }
 
@@ -679,7 +796,11 @@ export class HijriCalendarElement extends HTMLElement {
     placement: "month-chip" | "allday-chip" | "timed-block" | "agenda-item"
   ): string {
     const timeText = this.resolveEventTimeText(labels, placement);
-    const timeHtml = timeText ? `<span part="event-time">${escapeHtml(timeText)}</span>` : "";
+    // Agenda items additionally carry "agenda-when" on the same span (space-separated part
+    // tokens, design principle 5) so hosts can select the agenda time text specifically
+    // without touching event-time everywhere else.
+    const timePart = placement === "agenda-item" ? "event-time agenda-when" : "event-time";
+    const timeHtml = timeText ? `<span part="${timePart}">${escapeHtml(timeText)}</span>` : "";
     const titleHtml = `<span part="event-title">${escapeHtml(event.title)}</span>`;
     const subtitleHtml = event.subtitle
       ? `<span part="event-subtitle">${escapeHtml(event.subtitle)}</span>`
@@ -710,14 +831,24 @@ export class HijriCalendarElement extends HTMLElement {
   }
 
   /**
+   * The Hijri month-name marker text (`month-marker="hijri"|"both"`), on the first day of a
+   * Hijri month, or `null` when no marker applies. Shared by `monthMarkerHtml()` (HTML, for the
+   * default renderer) and `dayCellLabels()` (plain text, for the `renderDayCell` hook context).
+   */
+  private monthMarkerText(hijri: HijriDate): string | null {
+    if (hijri.day !== 1) return null;
+    if (this.monthMarker !== "hijri" && this.monthMarker !== "both") return null;
+    return this.nameSet.monthNames[hijri.month - 1] ?? "";
+  }
+
+  /**
    * The Hijri month-name marker (`month-marker="hijri"|"both"`), rendered on the first day of
    * a Hijri month. Bare month names, so no numeral formatting; the rtl gate is content-based
    * (`namesDirAttr`), not a property of `numerals`.
    */
   private monthMarkerHtml(hijri: HijriDate): string {
-    if (hijri.day !== 1) return "";
-    if (this.monthMarker !== "hijri" && this.monthMarker !== "both") return "";
-    const name = this.nameSet.monthNames[hijri.month - 1] ?? "";
+    const name = this.monthMarkerText(hijri);
+    if (name === null) return "";
     return `<span part="day-month-marker"${this.namesDirAttr()}>${escapeHtml(name)}</span>`;
   }
 
@@ -755,22 +886,109 @@ export class HijriCalendarElement extends HTMLElement {
     return `<span part="day-numbers">${numbers}</span>${this.monthMarkerHtml(hijri)}`;
   }
 
+  /**
+   * The primary weekday label text honoring `weekday-format` (full name for `long`/`bilingual`,
+   * a 3-letter abbreviation for `short`). Shared by `weekdayCellHtml()` (HTML) and
+   * `dayCellLabels()` (plain text, for the `renderDayCell` hook context's `labels.weekday`).
+   */
+  private weekdayPrimaryText(dow: number): string {
+    const full = this.nameSet.weekdayNames[dow] ?? "";
+    return this.weekdayFormat === "bilingual" || this.weekdayFormat === "long"
+      ? full
+      : full.slice(0, 3);
+  }
+
   /** Weekday header cell honoring `weekday-format` and `weekend-days`. Shared by month and time-grid views. */
   private weekdayCellHtml(dow: number): string {
     const full = this.nameSet.weekdayNames[dow] ?? "";
     const isWeekend = this.weekendDays.includes(dow);
     const partTokens = ["weekday", isWeekend ? "weekend" : ""].filter(Boolean).join(" ");
     const dirAttr = this.namesDirAttr();
-    let inner: string;
+    let inner = `<span part="weekday-primary"${dirAttr}>${escapeHtml(this.weekdayPrimaryText(dow))}</span>`;
     if (this.weekdayFormat === "bilingual") {
       const secondary = (enWeekdayNames[dow] ?? "").slice(0, 3);
-      inner = `<span part="weekday-primary"${dirAttr}>${escapeHtml(full)}</span><span part="weekday-secondary">${escapeHtml(secondary)}</span>`;
-    } else if (this.weekdayFormat === "long") {
-      inner = `<span part="weekday-primary"${dirAttr}>${escapeHtml(full)}</span>`;
-    } else {
-      inner = `<span part="weekday-primary"${dirAttr}>${escapeHtml(full.slice(0, 3))}</span>`;
+      inner += `<span part="weekday-secondary">${escapeHtml(secondary)}</span>`;
     }
     return `<div class="dow" part="${partTokens}" role="columnheader" title="${escapeHtml(full)}">${inner}</div>`;
+  }
+
+  /**
+   * Plain-text primary/secondary/monthMarker/weekday labels for the `renderDayCell` hook
+   * context — mirrors `dayNumbersHtml()`'s primary/secondary selection and `weekdayCellHtml()`'s
+   * primary text, but without HTML/`dir` (the hook receives plain strings; the wrapping
+   * button/column-head is component-owned).
+   */
+  private dayCellLabels(
+    hijri: HijriDate,
+    g: Date
+  ): { primary: string; secondary: string; monthMarker: string | null; weekday: string } {
+    const gregLabel = this.gregDayLabel(g);
+    const hijriLabel = this.numH(hijri.day);
+    const [primary, secondary] =
+      this.primary === "gregorian" ? [gregLabel, hijriLabel] : [hijriLabel, gregLabel];
+    return {
+      primary,
+      secondary,
+      monthMarker: this.monthMarkerText(hijri),
+      weekday: this.weekdayPrimaryText(g.getUTCDay()),
+    };
+  }
+
+  /**
+   * Full Gregorian date ("14 May 2026"), day-month-year regardless of locale ordering (unlike
+   * `toLocaleDateString`, which would render "May 14, 2026" for en-US). Day/year digits route
+   * through `numerals-gregorian`; the month name is never transliterated.
+   */
+  private gregFullDateLabel(g: Date): string {
+    const month = g.toLocaleDateString("en-US", { month: "long", timeZone: "UTC" });
+    return `${this.numG(g.getUTCDate())} ${month} ${this.numG(g.getUTCFullYear())}`;
+  }
+
+  /**
+   * Size band the calendar is rendered at, for `RenderEventContext`/`RenderDayCellContext`.
+   * Phase 5 measures the host with a `ResizeObserver`; until then this always returns the
+   * documented no-`ResizeObserver` fallback, "wide" (see `SizeBand`).
+   */
+  private currentSize(): SizeBand {
+    return "wide";
+  }
+
+  /**
+   * Shared implementation for `renderEvent`/`renderDayCell`: calls `hook(ctx)`, and
+   * - a `Node` is appended to `target`,
+   * - a `string` is inserted as a **text node** (never parsed as HTML — this is the whole
+   *   difference between a render hook and an HTML-injection sink),
+   * - `null`/`undefined` (or any other return value) restores `fallbackHtml` (the default
+   *   renderer's output, already present in `target` from the initial `innerHTML` render).
+   * A throwing hook is caught, warned once (`warnHookOnce`), and also falls back.
+   */
+  private applyHook<C>(
+    hook: ((ctx: C) => Node | string | null) | undefined,
+    ctx: C,
+    target: HTMLElement,
+    fallbackHtml: string,
+    hookName: string
+  ): void {
+    if (!hook) return;
+    let result: Node | string | null;
+    try {
+      result = hook(ctx);
+    } catch (err) {
+      warnHookOnce(hook, hookName, err);
+      target.innerHTML = fallbackHtml;
+      return;
+    }
+    if (typeof result === "string") {
+      target.innerHTML = "";
+      target.appendChild(document.createTextNode(result));
+      return;
+    }
+    if (result instanceof Node) {
+      target.innerHTML = "";
+      target.appendChild(result);
+      return;
+    }
+    target.innerHTML = fallbackHtml;
   }
 
   private eventsOnDay(dayStartMs: number): CalendarEvent[] {
@@ -949,7 +1167,7 @@ export class HijriCalendarElement extends HTMLElement {
       })
       .join("");
 
-    const body = `<div class="month" role="grid" aria-label="${escapeHtml(title)}">
+    const body = `<div class="month" role="grid" aria-label="${escapeHtml(title)}"${this.loading ? ' aria-busy="true"' : ""}>
       <div class="dow-row" role="row">${dowRow}</div>
       ${weeksHtml}
     </div>`;
@@ -1057,7 +1275,11 @@ export class HijriCalendarElement extends HTMLElement {
   // ---- week/day time-grid views ----
 
   private lastTimedFlat: PositionedEvent[] = [];
+  /** `TimeGridColumn` each `lastTimedFlat` entry was drawn under, same index — for renderEvent's `hijri`. */
+  private lastTimedCol: TimeGridColumn[] = [];
   private lastAllDayFlat: NormalizedEvent[] = [];
+  /** `TimeGridColumn` each `lastAllDayFlat` entry was drawn under, same index. */
+  private lastAllDayCol: TimeGridColumn[] = [];
   private lastColumns: TimeGridColumn[] = [];
 
   private hijriRangeTitle(first: HijriDate, last: HijriDate): string {
@@ -1070,6 +1292,34 @@ export class HijriCalendarElement extends HTMLElement {
     return `${a} ${this.numH(first.year)} – ${b} ${this.numH(last.year)}`;
   }
 
+  /**
+   * `day-header="banner"` full-width header for the day view (`renderTimeGrid(1)` only): a
+   * bigger Hijri/Gregorian/weekday date plus an events/hours summary, replacing the compact
+   * `.tg-col-head`. Summary counts timed+all-day events and sums timed-event duration in
+   * hours to one decimal — both routed through `loc.eventsCount`/`loc.hoursScheduled` with
+   * digits via `numG` (Ruling Y: clock-adjacent numbers are `numerals-gregorian`, not `locale`).
+   */
+  private dayBannerHtml(col: TimeGridColumn): string {
+    const totalEvents = col.timed.length + col.allDay.length;
+    const totalMinutes = col.timed.reduce((sum, p) => sum + (p.endMin - p.startMin), 0);
+    const hours = (totalMinutes / 60).toFixed(1);
+    const summary = `${this.loc.eventsCount(this.numG(totalEvents))} · ${this.loc.hoursScheduled(this.numG(hours))}`;
+    const primary = `${this.numH(col.hijri.day)} ${this.nameSet.monthNames[col.hijri.month - 1] ?? ""} ${this.numH(col.hijri.year)}`;
+    const secondary = this.gregFullDateLabel(col.gregorian);
+    const weekday = col.gregorian.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+    const tokens = ["day-banner", col.isToday ? "today" : ""].filter(Boolean).join(" ");
+    return `<div part="${tokens}">
+      <div>
+        <span part="day-banner-primary"${this.namesDirAttr()}>${escapeHtml(primary)}</span>
+        <span part="day-banner-secondary">${escapeHtml(secondary)}</span>
+        <span part="day-banner-weekday">${escapeHtml(weekday)}</span>
+      </div>
+      <div part="day-banner-summary">
+        <slot name="day-summary">${escapeHtml(summary)}</slot>
+      </div>
+    </div>`;
+  }
+
   private renderTimeGrid(dayCount: number): ViewRenderResult {
     const model = buildTimeGridModel(this.cal, this.viewDate, dayCount, this._events, {
       dayStartHour: this.dayStart,
@@ -1080,7 +1330,9 @@ export class HijriCalendarElement extends HTMLElement {
     });
     this.lastColumns = model.columns;
     this.lastTimedFlat = [];
+    this.lastTimedCol = [];
     this.lastAllDayFlat = [];
+    this.lastAllDayCol = [];
 
     const first = model.columns[0]!;
     const last = model.columns[model.columns.length - 1]!;
@@ -1097,26 +1349,30 @@ export class HijriCalendarElement extends HTMLElement {
     const cols = `var(--hcal-gutter-width) repeat(${dayCount}, 1fr)`;
     const slotHeightVar = `--_slot-h:calc(var(--hcal-hour-height) * ${slotMinutes} / 60)`;
 
-    const heads = model.columns
-      .map((col) => {
-        const cls = ["tg-col-head", col.isToday ? "today" : "", col.isWeekend ? "weekend" : ""]
-          .filter(Boolean)
-          .join(" ");
-        // D2: `day` keeps matching existing ::part(day) selectors; `column-head` is additive.
-        const partTokens = [
-          "day",
-          "column-head",
-          col.isToday ? "today" : "",
-          col.isWeekend ? "weekend" : "",
-        ]
-          .filter(Boolean)
-          .join(" ");
-        return `<div class="${cls}" part="${partTokens}">
+    const showBanner = dayCount === 1 && this.dayHeader === "banner";
+    const heads = showBanner
+      ? ""
+      : model.columns
+          .map((col, i) => {
+            const cls = ["tg-col-head", col.isToday ? "today" : "", col.isWeekend ? "weekend" : ""]
+              .filter(Boolean)
+              .join(" ");
+            // D2: `day` keeps matching existing ::part(day) selectors; `column-head` is additive.
+            const partTokens = [
+              "day",
+              "column-head",
+              col.isToday ? "today" : "",
+              col.isWeekend ? "weekend" : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
+            // `data-col` keys the renderDayCell post-render pass (see applyDayCellHooks()).
+            return `<div class="${cls}" part="${partTokens}" data-col="${i}">
           ${this.weekdayCellHtml(col.gregorian.getUTCDay())}
           ${this.dayNumbersHtml(col.hijri, col.gregorian)}
         </div>`;
-      })
-      .join("");
+          })
+          .join("");
 
     const hasAllDay = model.columns.some((col) => col.allDay.length > 0);
     const showAllDayRow =
@@ -1129,6 +1385,7 @@ export class HijriCalendarElement extends HTMLElement {
             const chips = col.allDay
               .map((n) => {
                 const idx = this.lastAllDayFlat.push(n) - 1;
+                this.lastAllDayCol.push(col);
                 const ev = n.event;
                 const styleToken = this.effectiveEventStyle(ev.style);
                 const variant = this.variantTokens(ev.variant);
@@ -1172,6 +1429,7 @@ export class HijriCalendarElement extends HTMLElement {
         const blocks = col.timed
           .map((p) => {
             const idx = this.lastTimedFlat.push(p) - 1;
+            this.lastTimedCol.push(col);
             const top = ((p.startMin - winStart) / total) * 100;
             const height = ((p.endMin - p.startMin) / total) * 100;
             const left = (p.col / p.colCount) * 100;
@@ -1193,7 +1451,11 @@ export class HijriCalendarElement extends HTMLElement {
         if (col.isToday && this.nowIndicator !== "none") {
           if (nowMin >= winStart && nowMin < winEnd) {
             const top = ((nowMin - winStart) / total) * 100;
-            nowLine = `<div class="now-line" part="now-indicator" style="top:${top}%"></div>`;
+            const nowLabel =
+              this.nowIndicator === "line-label"
+                ? `<span part="now-label">${escapeHtml(`${this.loc.nowLabel} · ${this.formatTimeLabel(nowMin)}`)}</span>`
+                : "";
+            nowLine = `<div class="now-line" part="now-indicator" style="top:${top}%">${nowLabel}</div>`;
           }
         }
 
@@ -1210,8 +1472,12 @@ export class HijriCalendarElement extends HTMLElement {
       </div>`
       : "";
 
-    const body = `<div class="timegrid">
-      <div class="tg-head" style="grid-template-columns:${cols}"><div></div>${heads}</div>
+    const tgHead = showBanner
+      ? this.dayBannerHtml(model.columns[0]!)
+      : `<div class="tg-head" style="grid-template-columns:${cols}"><div></div>${heads}</div>`;
+
+    const body = `<div class="timegrid"${this.loading ? ' aria-busy="true"' : ""}>
+      ${tgHead}
       ${alldayHtml}
       <div class="tg-body" style="grid-template-columns:${cols};${slotHeightVar}">
         <div class="tg-gutter" part="time-gutter">${gutterSlots.join("")}</div>
@@ -1258,21 +1524,17 @@ export class HijriCalendarElement extends HTMLElement {
 
   // ---- agenda view ----
 
-  private static readonly AGENDA_DAYS = 30;
   private lastAgendaFlat: NormalizedEvent[] = [];
+  /** Hijri date of the day-group each `lastAgendaFlat` entry was rendered under, same index. */
+  private lastAgendaHijri: HijriDate[] = [];
 
   private renderAgenda(): ViewRenderResult {
-    const model = buildAgendaModel(
-      this.cal,
-      this.viewDate,
-      HijriCalendarElement.AGENDA_DAYS,
-      this._events
-    );
+    const agendaDays = this.agendaDays;
+    const model = buildAgendaModel(this.cal, this.viewDate, agendaDays, this._events);
     this.lastAgendaFlat = [];
+    this.lastAgendaHijri = [];
 
-    const windowEnd = new Date(
-      this.viewDate.getTime() + (HijriCalendarElement.AGENDA_DAYS - 1) * DAY_MS
-    );
+    const windowEnd = new Date(this.viewDate.getTime() + (agendaDays - 1) * DAY_MS);
     const title = this.hijriRangeTitle(
       this.cal.gregorianToHijri(this.viewDate),
       this.cal.gregorianToHijri(windowEnd)
@@ -1284,14 +1546,21 @@ export class HijriCalendarElement extends HTMLElement {
         const items = day.items
           .map((n) => {
             const idx = this.lastAgendaFlat.push(n) - 1;
+            this.lastAgendaHijri.push(day.hijri);
             const ev = n.event;
-            const color = ev.color ? ` style="--_ev-color:${escapeHtml(ev.color)}"` : "";
+            const styleToken = this.effectiveEventStyle(ev.style);
+            const variant = this.variantTokens(ev.variant);
+            const colorStyle = ev.color ? `--_ev-color:${escapeHtml(ev.color)};` : "";
             const labels = this.normalizedLabels(n);
             const ariaLabel = `${ev.title}, ${labels.start}`;
             const inner = this.eventInnerHtml(ev, labels, "agenda-item");
-            return `<button type="button" part="agenda-item" class="agenda-item" data-gev="${idx}" title="${escapeHtml(ariaLabel)}">
-              <span class="dot"${color}></span>
-              ${inner}
+            // "dot stays for solid": the per-item color dot is only meaningful when the item
+            // has no other color-bearing chrome; "tinted"/"outline" already color the whole
+            // item via the shared [part~="event"][part~="tinted"|"outline"] rules (styles.ts).
+            const dotHtml = styleToken === "solid" ? `<span class="dot"></span>` : "";
+            return `<button type="button" part="agenda-item event ${styleToken}${variant.part}" class="agenda-item" data-gev="${idx}"
+              style="${colorStyle}"${variant.dataAttr} title="${escapeHtml(ariaLabel)}">
+              ${dotHtml}${inner}
             </button>`;
           })
           .join("");
@@ -1305,7 +1574,7 @@ export class HijriCalendarElement extends HTMLElement {
           })
         );
         return `<div class="agenda-day" part="agenda-day">
-          <div class="agenda-date">
+          <div class="agenda-date" part="agenda-date">
             <div class="hijri">${escapeHtml(hijriLabel)}</div>
             <div class="greg">${escapeHtml(gregLabel)}</div>
           </div>
@@ -1314,11 +1583,11 @@ export class HijriCalendarElement extends HTMLElement {
       })
       .join("");
 
-    const body = `<div class="agenda">${
+    const body = `<div class="agenda"${this.loading ? ' aria-busy="true"' : ""}>${
       daysHtml || `<div class="agenda-empty">${escapeHtml(this.loc.emptyLabel)}</div>`
     }</div>`;
     const rangeStart = this.viewDate;
-    const rangeEnd = new Date(this.viewDate.getTime() + HijriCalendarElement.AGENDA_DAYS * DAY_MS);
+    const rangeEnd = new Date(this.viewDate.getTime() + agendaDays * DAY_MS);
     return { title, subtitle, body, range: { start: rangeStart, end: rangeEnd } };
   }
 
@@ -1389,17 +1658,156 @@ export class HijriCalendarElement extends HTMLElement {
     this.emit<RangeChangeDetail>("range-change", detail);
   }
 
+  // ---- render hooks (post-render pass) ----
+
+  /**
+   * `renderEvent` post-render pass: `render()` builds every chip/block/agenda item's *default*
+   * content via `innerHTML` first, so this pass runs afterwards and keys off the same
+   * `data-ev`/`data-aev`/`data-tev`/`data-gev` indices `wire*()` uses, reusing the flat arrays
+   * those already populate (`lastSegments`/`lastAllDayFlat`+`lastAllDayCol`/
+   * `lastTimedFlat`+`lastTimedCol`/`lastAgendaFlat`+`lastAgendaHijri`). No-ops entirely when no
+   * hook is set, leaving the default `innerHTML` output untouched.
+   */
+  private applyEventHooks(): void {
+    const hook = this._renderEvent;
+    if (!hook) return;
+    const apply = (
+      btn: HTMLButtonElement,
+      event: CalendarEvent,
+      placement: RenderEventContext["placement"],
+      hijri: HijriDate,
+      labels: RenderEventContext["labels"],
+      continuesBefore: boolean,
+      continuesAfter: boolean
+    ): void => {
+      const ctx: RenderEventContext = {
+        event,
+        view: this.view,
+        placement,
+        hijri,
+        labels,
+        continuesBefore,
+        continuesAfter,
+        size: this.currentSize(),
+      };
+      this.applyHook(hook, ctx, btn, btn.innerHTML, "renderEvent");
+    };
+
+    this.root.querySelectorAll<HTMLButtonElement>("[data-ev]").forEach((btn) => {
+      const seg = this.lastSegments[Number(btn.dataset.ev)];
+      if (!seg) return;
+      const n = normalizeEvent(seg.event);
+      const hijri = this.lastCells[seg.weekIndex * 7 + seg.startCol]?.hijri;
+      if (!hijri) return;
+      apply(
+        btn,
+        n.event,
+        "month-chip",
+        hijri,
+        this.normalizedLabels(n),
+        seg.continuesBefore,
+        seg.continuesAfter
+      );
+    });
+    this.root.querySelectorAll<HTMLButtonElement>("[data-aev]").forEach((btn) => {
+      const n = this.lastAllDayFlat[Number(btn.dataset.aev)];
+      const col = this.lastAllDayCol[Number(btn.dataset.aev)];
+      if (!n || !col) return;
+      apply(btn, n.event, "allday-chip", col.hijri, this.normalizedLabels(n), false, false);
+    });
+    this.root.querySelectorAll<HTMLButtonElement>("[data-tev]").forEach((btn) => {
+      const p = this.lastTimedFlat[Number(btn.dataset.tev)];
+      const col = this.lastTimedCol[Number(btn.dataset.tev)];
+      if (!p || !col) return;
+      apply(
+        btn,
+        p.event,
+        "timed-block",
+        col.hijri,
+        this.timeLabels(p.startMin, p.endMin, false),
+        false,
+        false
+      );
+    });
+    this.root.querySelectorAll<HTMLButtonElement>("[data-gev]").forEach((btn) => {
+      const n = this.lastAgendaFlat[Number(btn.dataset.gev)];
+      const hijri = this.lastAgendaHijri[Number(btn.dataset.gev)];
+      if (!n || !hijri) return;
+      apply(btn, n.event, "agenda-item", hijri, this.normalizedLabels(n), false, false);
+    });
+  }
+
+  /**
+   * `renderDayCell` post-render pass: keys off `data-i` (month-cell number buttons) and
+   * `data-col` (time-grid column heads, week/day views). The target's *entire* current
+   * content is what gets replaced in both cases — for a month button that's exactly
+   * `dayNumbersHtml()`'s output (nothing else is in there); for a column head it's
+   * `weekdayCellHtml()` + `dayNumbersHtml()` together, which is why `RenderDayCellContext`
+   * carries `labels.weekday` too. The `day-cell` background layer, `today-indicator`,
+   * `more-link` and chips are separate sibling elements, never touched by this pass.
+   */
+  private applyDayCellHooks(): void {
+    const hook = this._renderDayCell;
+    if (!hook) return;
+    this.root.querySelectorAll<HTMLButtonElement>("[data-i]").forEach((btn) => {
+      const cell = this.lastCells[Number(btn.dataset.i)];
+      if (!cell) return;
+      const ctx: RenderDayCellContext = {
+        cell,
+        view: "month",
+        placement: "month-cell",
+        events: this.eventsOnDay(cell.gregorian.getTime()),
+        labels: this.dayCellLabels(cell.hijri, cell.gregorian),
+        size: this.currentSize(),
+      };
+      this.applyHook(hook, ctx, btn, btn.innerHTML, "renderDayCell");
+    });
+    this.root.querySelectorAll<HTMLElement>("[data-col]").forEach((div) => {
+      const col = this.lastColumns[Number(div.dataset.col)];
+      if (!col) return;
+      // TimeGridColumn has no selection/range/disabled concept — a column head is never any
+      // of those, so the DayCell shape is filled in with the fixed values that make it "just
+      // a plain, enabled, in-range day" for context purposes.
+      const cell: DayCell = {
+        hijri: col.hijri,
+        gregorian: col.gregorian,
+        inCurrentMonth: true,
+        selected: false,
+        disabled: false,
+        isToday: col.isToday,
+        rangeStart: false,
+        rangeEnd: false,
+        inRange: false,
+        isWeekend: col.isWeekend,
+      };
+      const ctx: RenderDayCellContext = {
+        cell,
+        view: this.view,
+        placement: "column-head",
+        events: this.eventsOnDay(col.gregorian.getTime()),
+        labels: this.dayCellLabels(col.hijri, col.gregorian),
+        size: this.currentSize(),
+      };
+      this.applyHook(hook, ctx, div, div.innerHTML, "renderDayCell");
+    });
+  }
+
   protected render(reason: RangeChangeDetail["reason"] = "attribute"): void {
     if (!this.root) return;
     this.stopNowTimer();
     const { title, subtitle, body, range } = this.renderView();
+    const overlay = this.loading
+      ? `<div part="loading"><slot name="loading">${escapeHtml(this.loc.loadingLabel)}</slot></div>`
+      : "";
     this.root.innerHTML = `<style>${styles}</style>
       <div class="cal" part="calendar" role="application" aria-label="Hijri calendar">
         ${this.renderToolbar(title, subtitle)}
-        ${body}
+        <div class="body-wrap">${body}${overlay}</div>
       </div>`;
     this.wireToolbar();
     this.maybeEmitRangeChange(this.view, range.start, range.end, reason);
     this.wireView();
+    this.applyEventHooks();
+    this.applyDayCellHooks();
   }
 }
