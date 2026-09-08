@@ -73,6 +73,31 @@ describe("<hijri-calendar> event-style", () => {
     expect(css).toContain("--hcal-event-tint-alpha: 18%;");
     expect(css).toContain("--hcal-event-border-width: 2px;");
   });
+
+  it("hover tokens default to inert values (none), and the CSS mechanism that consumes them cannot regress the chip's normal background", () => {
+    // --hcal-event-hover-bg/-shadow/-transform must default such that hovering a chip/block
+    // changes nothing today. box-shadow/filter are used (not background) precisely because
+    // "none" is invalid at computed-value time for those two, which makes the whole declaration
+    // fall back to its own initial value (no shadow / no filter) rather than clobbering the
+    // chip's actual background-color the way `background: none` would. This test pins the exact
+    // declarations and their :host defaults so a future edit that "simplifies" this mechanism
+    // (e.g. switching to a plain `background:` override) fails here instead of silently
+    // reintroducing a hover regression.
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-event-hover-bg: none;");
+    expect(css).toContain("--hcal-event-hover-shadow: none;");
+    expect(css).toContain("--hcal-event-hover-transform: none;");
+    expect(css).toMatch(
+      /\.chip:hover,\s*\.tg-event:hover\s*\{[^}]*box-shadow:\s*inset 0 0 0 999px var\(--hcal-event-hover-bg\)/
+    );
+    expect(css).toMatch(
+      /\.chip:hover,\s*\.tg-event:hover\s*\{[^}]*filter:\s*drop-shadow\(var\(--hcal-event-hover-shadow\)\)/
+    );
+    expect(css).toMatch(
+      /\.chip:hover,\s*\.tg-event:hover\s*\{[^}]*transform:\s*var\(--hcal-event-hover-transform\)/
+    );
+  });
 });
 
 describe("<hijri-calendar> variant", () => {
@@ -161,7 +186,7 @@ describe("<hijri-calendar> event-time", () => {
     expect(timeEl!.textContent).toBe("10:00 · 90m");
   });
 
-  it('...with numerals-gregorian="arab" transliterates the clock digits but leaves the duration unit as loc.durationLabel defines it, and never sets dir on the mixed-content span (Ruling K/M)', () => {
+  it('...with numerals-gregorian="arab" transliterates both the clock digits AND the duration digits (Ruling Y: duration is clock-adjacent, decided by numerals-gregorian, not locale), leaving only the locale-fixed unit suffix ("m") untransliterated, and never sets dir on the mixed-content span (Ruling K/M)', () => {
     const el = mount({
       date: "2026-07-06",
       view: "week",
@@ -171,8 +196,23 @@ describe("<hijri-calendar> event-time", () => {
     });
     el.events = [{ id: "a", title: "A", start: "2026-07-06T10:00", durationMinutes: 90 }];
     const timeEl = sr(el).querySelector('[part="event-time"]')!;
-    expect(timeEl.textContent).toBe("١٠:٠٠ · 90m");
+    expect(timeEl.textContent).toBe("١٠:٠٠ · ٩٠m");
     expect(timeEl.getAttribute("dir")).toBeNull();
+  });
+
+  it('locale="ar" alone (numerals-gregorian left at its "latn" default) leaves the duration digits Latin — only numerals-gregorian decides the digit system, never locale', () => {
+    const el = mount({
+      date: "2026-07-06",
+      view: "week",
+      "event-time": "start-duration",
+      "time-format": "24",
+      locale: "ar",
+    });
+    el.events = [{ id: "a", title: "A", start: "2026-07-06T10:00", durationMinutes: 90 }];
+    const timeEl = sr(el).querySelector('[part="event-time"]')!;
+    // Clock digits Latin (numerals-gregorian default), duration digits Latin too, but the
+    // locale-fixed Arabic unit suffix ("د") still applies since locale="ar".
+    expect(timeEl.textContent).toBe("10:00 · 90 د");
   });
 
   it('event-time="range" shows "<start> – <end>"', () => {

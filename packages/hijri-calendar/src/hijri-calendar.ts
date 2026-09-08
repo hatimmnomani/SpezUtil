@@ -589,6 +589,11 @@ export class HijriCalendarElement extends HTMLElement {
    * needs them (aria-label, `title`, and the `event-time` part span) rather than recomputed
    * inline at each. All-day events collapse every field to `loc.allDayLabel` — there is no
    * meaningful clock time to show, and this matches the pre-existing "All day" behaviour.
+   *
+   * Ruling Y: duration is a clock-adjacent number, so its *digits* are routed through `numG`
+   * (`numerals-gregorian`) exactly like the start/end clock labels — `locale` never decides a
+   * digit system. Only the unit suffix ("m" / "د") is locale-fixed, supplied by
+   * `loc.durationLabel`.
    */
   private timeLabels(
     startMin: number,
@@ -603,7 +608,7 @@ export class HijriCalendarElement extends HTMLElement {
     const start = this.formatTimeLabel(norm(startMin));
     const end = this.formatTimeLabel(norm(endMin));
     const minutes = Math.max(0, endMin - startMin);
-    const duration = this.loc.durationLabel(minutes);
+    const duration = this.loc.durationLabel(this.numG(minutes));
     return { start, end, duration, range: `${start} – ${end}` };
   }
 

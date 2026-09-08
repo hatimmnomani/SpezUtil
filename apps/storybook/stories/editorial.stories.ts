@@ -9,13 +9,17 @@ import type { CalendarEvent } from "@spezutil/hijri-calendar";
  * phases (see plan §7.1 / task-6). Token values below come from the reference `tokens.css`
  * (plan §2.1): warm cream surfaces, crimson accent, a display/sans/mono/Arabic type ramp.
  *
- * Every story also sets the reference's *structural* attributes, not just its color tokens:
- * Arabic-Indic Hijri numerals (`numerals="arab"`), genuine Arabic month/weekday names
+ * `Month`, `Week`, and `Day` also set the reference's *structural* attributes, not just its color
+ * tokens: Arabic-Indic Hijri numerals (`numerals="arab"`), genuine Arabic month/weekday names
  * (`names="ar"`), a bilingual weekday header, an inline Gregorian sub-title, start-aligned day
- * numbers, a Hijri month marker, and a dotted today indicator. Column order (Sun..Sat,
- * left-to-right) is driven by `week-start` alone and is never affected by the Arabic name set or
- * numeral system — see the "column order invariant" test in typography.test.ts, which pins this
- * down so a later phase can't regress it.
+ * numbers, a Hijri month marker (Month only), and a dotted today indicator (Month only). Column
+ * order (Sun..Sat, left-to-right) is driven by `week-start` alone and is never affected by the
+ * Arabic name set or numeral system — see the "column order invariant" test in
+ * typography.test.ts, which pins this down so a later phase can't regress it.
+ *
+ * `EventStyles` deliberately does *not* set that structural set: its whole point is to compare
+ * `event-style="solid"|"tinted"|"outline"` side by side, so it keeps every other attribute at
+ * its default and only varies `event-style` across its three columns.
  */
 export default {
   title: "Editorial",

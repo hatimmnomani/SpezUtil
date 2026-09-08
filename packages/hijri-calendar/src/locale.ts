@@ -1,10 +1,4 @@
-import {
-  arMonthNames,
-  arWeekdayNames,
-  formatNumerals,
-  translitMonthNames,
-  weekdayNames,
-} from "@spezutil/hijri-core";
+import { arMonthNames, arWeekdayNames, translitMonthNames, weekdayNames } from "@spezutil/hijri-core";
 
 export type LocaleName = "translit" | "ar";
 
@@ -19,8 +13,13 @@ export interface CalendarLocale {
   allDayLabel: string;
   emptyLabel: string;
   viewLabels: Record<"month" | "week" | "day" | "agenda", string>;
-  /** Event duration on chips/blocks, e.g. "90m". Never routed through `numerals-gregorian`. */
-  durationLabel: (mins: number) => string;
+  /**
+   * Event duration on chips/blocks, e.g. "90m" / "90 د". Takes the digits **already
+   * transliterated by the caller** (Ruling Y: duration is a clock-adjacent number, so
+   * `numerals-gregorian` — not `locale` — is what decides its digit system, exactly like the
+   * start/end clock labels). This function supplies only the locale-fixed unit suffix.
+   */
+  durationLabel: (digits: string) => string;
 }
 
 const translit: CalendarLocale = {
@@ -29,7 +28,7 @@ const translit: CalendarLocale = {
   allDayLabel: "All day",
   emptyLabel: "No events",
   viewLabels: { month: "Month", week: "Week", day: "Day", agenda: "Agenda" },
-  durationLabel: (mins) => `${mins}m`,
+  durationLabel: (digits) => `${digits}m`,
 };
 
 const ar: CalendarLocale = {
@@ -38,7 +37,7 @@ const ar: CalendarLocale = {
   allDayLabel: "طوال اليوم",
   emptyLabel: "لا توجد أحداث",
   viewLabels: { month: "شهر", week: "أسبوع", day: "يوم", agenda: "جدول" },
-  durationLabel: (mins) => `${formatNumerals(mins, "arab")} د`,
+  durationLabel: (digits) => `${digits} د`,
 };
 
 export function resolveLocale(name: string | null): CalendarLocale {
