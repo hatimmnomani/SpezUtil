@@ -33,6 +33,43 @@ const VIEWPORTS: Record<Band, { width: number; height: number }> = {
 const STORIES: Story[] = ["month", "week", "day"];
 const BANDS: Band[] = ["wide", "medium", "narrow"];
 
+// Time-freeze (task-6-brief.md task 3 / Ruling E's time-freeze half): the Editorial stories fix
+// `date="2026-07-06"` and hide the now-line via `now-indicator="none"`, but that is NOT the whole
+// story. hijri-calendar.ts computes `cell.isToday` / `col.isToday` from `zonedTodayUtc()`
+// (hijri-core `zone.ts`), which reads the real system clock via `new Date()` with no arguments —
+// independent of the `date` attribute and independent of `now-indicator`. That flag drives a
+// `today` part token on `day-cell` / `day-banner` / `tg-col-head` / `day-column`, plus (since the
+// Month story sets `today-marker="dot"`) a rendered `part="today-indicator"` dot. So on any day
+// whose real date falls inside the July-2026 grid these stories render (month's leading/trailing
+// days included, so roughly late June through early August, every year), the baseline would show
+// an extra highlighted cell/dot that would NOT be there on other days — a real annual screenshot
+// flake `now-indicator="none"` does nothing to prevent (see task-6b-report.md). Frozen here via an
+// init script overriding the page's global `Date` (rather than Playwright's `page.clock`, which
+// also fakes setTimeout/rAF/setInterval — more than this needs and a larger surface to reason
+// about for an unrelated ResizeObserver-driven suite).
+const FROZEN_NOW = new Date("2026-07-06T12:00:00Z").getTime();
+
+async function freezeClock(page: Page): Promise<void> {
+  await page.addInitScript((fixedMs) => {
+    const OriginalDate = Date;
+    class FrozenDate extends OriginalDate {
+      constructor(...args: ConstructorParameters<typeof Date>) {
+        if (args.length === 0) {
+          super(fixedMs);
+        } else {
+          // @ts-expect-error - spreading a variable-length tuple into the Date constructor
+          super(...args);
+        }
+      }
+      static now(): number {
+        return fixedMs;
+      }
+    }
+    // @ts-expect-error - intentionally replacing the global constructor for this page only
+    window.Date = FrozenDate;
+  }, FROZEN_NOW);
+}
+
 /**
  * Locates the shadow-internal `.cal` root that carries `part="calendar <band>"` (§5.9). Waiting
  * for this — rather than a fixed delay — is the real readiness signal: the component classifies
@@ -49,6 +86,7 @@ function calendarRoot(page: Page, band: Band): Locator {
 }
 
 async function openStory(page: Page, story: Story, band: Band): Promise<void> {
+  await freezeClock(page);
   await page.setViewportSize(VIEWPORTS[band]);
   await page.goto(`/iframe.html?id=editorial--${story}&viewMode=story`);
   await expect(calendarRoot(page, band)).toHaveCount(1);
