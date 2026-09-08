@@ -102,7 +102,7 @@ for (const story of STORIES) {
 
     test(`editorial--${story} @ ${width}x${height} (${band} band) matches baseline`, async ({ page }) => {
       await openStory(page, story, band);
-      await expect(page).toHaveScreenshot(`${story}-${width}.png`);
+      await expect(page).toHaveScreenshot(`editorial--${story}-${width}.png`);
     });
   }
 }
@@ -126,6 +126,6 @@ for (const band of ["medium", "narrow"] as const) {
     // measures a non-zero gap on the container's `scroll` event; wait for that transform to land
     // instead of a fixed delay, so the shot is never taken mid-sync.
     await expect(page.locator('[part~="time-gutter"]')).not.toHaveCSS("transform", "none");
-    await expect(page).toHaveScreenshot(`week-${width}-scrolled.png`);
+    await expect(page).toHaveScreenshot(`editorial--week-${width}-scrolled.png`);
   });
 }

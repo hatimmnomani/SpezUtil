@@ -28,7 +28,8 @@ plan turns every one of those traits into first-class, documented API: ~50 new `
 properties, 21 new attributes/properties, 1 new DOM event (`range-change`), 2 render hooks
 (`renderEvent`, `renderDayCell`), 5 slots, and ~30 new `::part()` names/tokens — all additive, shipped in
 eight phases (six package phases, one CI/visual-regression phase, one consumer-migration phase), with the
-default look unchanged for existing 0.2.x consumers except the four accepted changes in §5.4.
+default look unchanged for existing 0.2.x consumers except the accepted changes catalogued in §5.4
+(D1–D7 as shipped).
 
 ---
 
@@ -183,7 +184,7 @@ possible → new feature. **Ref** cites the reference CSS selector (`events.css`
 | --- | --- | --- | --- | --- | --- |
 | D1 | **Banner header** on warm surface: Hijri full date 36px Amiri crimson-deep; `14 May 2026` display 18px + `WEDNESDAY` mono; right side **"2 events · 2.5 hours scheduled"** | `.day-head`, `.day-meta` | Same small centred column head as week view | c | `day-header="column" (default) \| "banner"`; parts `day-banner`, `day-banner-primary`, `day-banner-secondary`, `day-banner-weekday`, `day-banner-summary`; built-in summary with locale strings; slot `day-summary` to override |
 | D2 | 80px gutter, 72px per hour, alternating hour-row shading | `.day-hours`, `.hour-slot:nth-child(odd)` | 56px / 48px / none | b | `--hcal-gutter-width`, `--hcal-hour-height`, `--hcal-slot-alt-bg` (host scopes per view via `hijri-calendar[view="day"]` — `view` already reflects) |
-| D3 | Event card: 16px side insets, 3px left border, radius 8, padding 12/16; head row mono `10:30 · 90m` + **type tag** right (mono uppercase); title 18px display; `loc · N attendees` line | `.day-ev .head .time/.type`, `.title`, `.loc` | Same block as week | c | `CalendarEvent.tag` (+ `eventFields.tag`), part `event-tag`; `--hcal-event-inset`; the fully custom layout is the motivating case for the `renderEvent` hook |
+| D3 | Event card: 16px side insets, 3px left border, radius 8, padding 12/16; head row mono `10:30 · 90m` + **type tag** right (mono uppercase); title 18px display; `loc · N attendees` line | `.day-ev .head .time/.type`, `.title`, `.loc` | Same block as week | c | `CalendarEvent.tag` (+ `eventFields.tag`) — hook-only, no part of its own as shipped (§5.6); `--hcal-event-inset`; the fully custom layout is the motivating case for the `renderEvent` hook |
 | D4 | Now line with **"Now · 13:30" label** | `.day-now .label` | line only | c | `now-indicator="line" (default) \| "line-label" \| "none"`; part `now-label` |
 
 ### 3.5 Cross-cutting
@@ -295,7 +296,7 @@ export interface CalendarEvent {
   color?: string;
   /** Second text line (e.g. location). Rendered as part="event-subtitle" in week/day/agenda. */
   subtitle?: string;                        // P3
-  /** Short label (e.g. event type). Rendered as part="event-tag" in day banner cards / renderEvent ctx. */
+  /** Short label (e.g. event type). Hook-only: reaches hosts as ctx.event.tag, never rendered (§5.6). */
   tag?: string;                             // P3
   /** Per-event override of the component's `event-style`. */
   style?: "solid" | "tinted" | "outline";   // P3
@@ -412,7 +413,7 @@ export interface RangeChangeDetail {
 6. Emitted **before** any timers start (the now-indicator interval) and independently of `timezone`;
    ranges are UTC-day based like the rest of the component.
 
-### 5.4 Accepted default/visual changes (decided — no escape hatch)
+### 5.4 Accepted default/visual changes (decided — no escape hatch, except D6's token)
 
 - **D1 — toolbar order** becomes `‹ Today ›` (prev / today / next). Purely visual; parts unchanged.
   Ships in P0. Changeset text: "Toolbar navigation is now ‹ Today › (was Today ‹ ›) to match common
@@ -434,6 +435,27 @@ export interface RangeChangeDetail {
   title rather than after it. Purely visual; parts unchanged (`event-time` and `event-title` both
   existed as concepts, just unordered, before this phase). Ships in P3. A consumer who wants the old
   order has no escape hatch other than `renderEvent` (§5.2) — this is accepted, not configurable.
+- **D6 — month-grid hairlines.** `part="day-cell"` carries `border-inline-end` and
+  `border-block-end: 1px solid var(--hcal-grid-line)` (default `var(--hcal-border)`, i.e.
+  visible), where pre-branch the month grid had `.week { border-bottom }` with
+  `.week:last-child { border-bottom: none }` and **no vertical rules at all** (§3.2's gap table:
+  "no cell borders"). Net for an existing 0.2.x consumer: 36 new vertical hairlines, plus a
+  bottom hairline under the last week that abuts `.cal`'s own border and reads as a doubled edge.
+  The reference design requires the grid, so it ships — but unlike D1–D5 it *does* have a restore
+  path, because the colour is a token: `--hcal-grid-line: transparent` clears the month-cell
+  hairlines (that token drives only `.day-cell`'s two borders as shipped — see §5.5), and
+  `::part(day-cell) { border-block-end: none }` drops only the doubled bottom edge. Ships in P2.
+- **D7 — agenda items carry the `event` part token.** Agenda rows emit
+  `part="agenda-item event <solid|tinted|outline> <allday|timed>"`; pre-branch it was
+  `part="agenda-item"`. Existing `::part(agenda-item)` rules still match, but every existing
+  `hijri-calendar::part(event)` rule now *also* matches agenda rows, which have a different
+  internal layout — and `::part(event)` is the first example in the docs' styling section, so it
+  is the part a consumer is most likely to have styled. The token is load-bearing: the
+  `[part~="event"][part~="tinted"|"outline"]` rules must reach agenda items for `event-style` to
+  work there, so it stays. A host wanting the old scoping writes
+  `hijri-calendar:not([view="agenda"])::part(event)` for chips/blocks and uses
+  `::part(agenda-item)` for the row; adding a style token does *not* exclude agenda rows, since
+  they carry it too. Ships in P3.
 
 ### 5.5 CSS custom properties
 
@@ -444,9 +466,9 @@ Defaults are today's literal values unless marked **new**. All declared on `:hos
 | `--hcal-bg`, `--hcal-fg`, `--hcal-muted`, `--hcal-accent`, `--hcal-accent-fg`, `--hcal-border`, `--hcal-radius`, `--hcal-event-fg`, `--hcal-font-family-arabic` | existing | — | unchanged |
 | `--hcal-today-bg` | `color-mix(in srgb, var(--hcal-accent) 10%, transparent)` | P2 | **Now actually used**: month day-cell background, week/day column-head background when today |
 | `--hcal-font-family` | `system-ui, sans-serif` **(declare; was referenced but undefined)** | P0 | base font |
-| `--hcal-font-family-display` | `var(--hcal-font-family)` **new** | P1 | `title-secondary`, day-banner secondary, time-grid event title (Gregorian day-number spans are governed by `--hcal-day-secondary-font-family` instead, whose default preserves the Arabic family — see §7.1 for overriding it to the display serif) |
+| `--hcal-font-family-display` | `var(--hcal-font-family)` **new** | P1 | `title-secondary`, day-banner secondary, time-grid event title, the `agenda-date` Gregorian sub-label (Gregorian day-number spans are governed by `--hcal-day-secondary-font-family` instead, whose default preserves the Arabic family — see §7.1 for overriding it to the display serif) |
 | `--hcal-font-family-mono` | `var(--hcal-font-family)` **new** | P1 | gutter labels, `event-time`, `weekday-secondary`, day-banner weekday |
-| `--hcal-grid-line` | `var(--hcal-border)` **new** | P2 | inner hairlines (cell borders, slot lines, gutter border) — outer border stays `--hcal-border` |
+| `--hcal-grid-line` | `var(--hcal-border)` **new** | P2 | month-cell hairlines (`part="day-cell"`'s `border-inline-end`/`border-block-end`) — as shipped this is its only use: the time-grid slot lines, gutter border and outer border all stay on `--hcal-border` |
 | `--hcal-header-bg` | `transparent` **new** | P1 | weekday row, time-grid head row, all-day row background |
 | `--hcal-gutter-bg` | `transparent` **new** | P3 | time gutter |
 | `--hcal-gutter-width` | `56px` | P3 | time gutter |
@@ -516,13 +538,21 @@ Existing (kept): `toolbar`, `title`, `nav-today`, `nav-prev`, `nav-next`, `view-
 New parts: `calendar` (the root `.cal`, carries the size token), `nav-group`, `title-primary`,
 `title-secondary`, `subheader`, `weekday-primary`, `weekday-secondary`, `day-cell`, `day-numbers`,
 `day-month-marker`, `today-indicator`, `column-head`, `day-column`, `time-label`, `allday-label`,
-`event-time`, `event-title`, `event-subtitle`, `event-tag`, `event-dot`, `now-label`, `day-banner`,
+`event-time`, `event-title`, `event-subtitle`, `now-label`, `day-banner`,
 `day-banner-primary`, `day-banner-secondary`, `day-banner-weekday`, `day-banner-summary`,
 `agenda-date`, `agenda-when`, `loading`, `scroll` (the week/day horizontal scroll container).
 
+No part for `CalendarEvent.tag` (§5.2): it is **hook-only**, surfaced as `ctx.event.tag` on
+`renderEvent` and never rendered by the built-in renderers — an earlier draft of this section
+listed `event-tag`, which nothing ever emitted; rendering it would have added visible text to
+every tagged chip (another accepted deviation) for a feature no consumer has asked for. Likewise
+there is no `event-dot` part: the `narrow-events="dots"` marker is an `event` part with a `dot`
+token, `::part(event dot)` (final-review finding 4).
+
 Tokens appended to parts where applicable: `today`, `out`, `weekend`, `disabled`,
-`continues-before`, `continues-after`, `allday`, `timed`, `solid|tinted|outline`, `variant-<x>`,
-and on `calendar`: `wide|medium|narrow`.
+`continues-before`, `continues-after` (month chips of a multi-day event), `allday`/`timed` (every
+chip, block and agenda item), `dot` (the `narrow-events="dots"` marker),
+`solid|tinted|outline`, `variant-<x>`, and on `calendar`: `wide|medium|narrow`.
 Examples: `hijri-calendar::part(event outline variant-draft) { border-color: #9a8e85; }`,
 `hijri-calendar::part(calendar narrow) { --hcal-radius: 0; }`.
 
@@ -1033,8 +1063,8 @@ Tasks
    → confirm `hijri-calendar 0.3.0`, `hijri-view-core 0.2.0`, `hijri-core 0.2.0`, both wrappers
    `0.2.0`. Watch the peer-dependency note: the Angular wrapper declares
    `@spezutil/hijri-calendar >=0.1.0 <2.0.0`, so a minor bump must **not** force-major it — verify in
-   the status output before `pnpm version-packages`. CHANGELOG entries must include D1, D2, D3, D4 and
-   the "1.0 will default `event-style` to `tinted`" notice (§8.2).
+   the status output before `pnpm version-packages`. CHANGELOG entries must include D1 through D7
+   (§5.4) and the "1.0 will default `event-style` to `tinted`" notice (§8.2).
 6. **`da-office-management-fe`** (separate repo; git-ignored here as a local clone):
    - Bump `@spezutil/hijri-calendar-react` to `^0.2.0` (pulls `hijri-calendar ^0.3.0`).
    - **Range-based fetching (blocked on backend filter, see below).** In `src/api/events.js` add
@@ -1206,7 +1236,7 @@ resolution below is already propagated into §5 and §6; this section is the rec
 | Q1 | **Range-driven fetching is in scope.** The component guarantees the `range-change` contract in §5.3 (initial `init` fire, dedupe on identical ranges, no internal debounce, per-view range definitions). The app replaces the paginated unfiltered call with `useEventsInRange` keyed by range. The backend `start_at__gte/lt` filter is a blocker for the **app-side task only**. | §5.3, P0 task 7, P7 task 6 |
 | Q2 | **D1 and D2 accepted as-is**, no `nav-order` escape hatch. Changeset + CHANGELOG notes. | §5.4, P0 task 6, P2 task 8, P7 task 5 |
 | Q3 | **`event-style` default stays `solid` in 0.3.x; flips to `tinted` at 1.0** (breaking visual change, sequenced). Recorded in §8.2 with the consumer migration note; announced in the 0.3.0 CHANGELOG. | §5.1, §8.2, P7 task 5 |
-| Q4 | **Real responsive behaviour in scope** as its own phase: `ResizeObserver` size bands (900 / 600 px), month dot mode, week/day horizontal scroll with sticky gutter + sticky heads, acceptance at 1200 / 768 / 420. New tokens `--hcal-cell-min-height-medium/-narrow`, `--hcal-column-min-width`, `--hcal-event-dot-size`; new attribute `narrow-events`; read-only `size`; parts `calendar`, `scroll`, `event-dot`. | §5.9, P5 |
+| Q4 | **Real responsive behaviour in scope** as its own phase: `ResizeObserver` size bands (900 / 600 px), month dot mode, week/day horizontal scroll with sticky gutter + sticky heads, acceptance at 1200 / 768 / 420. New tokens `--hcal-cell-min-height-medium/-narrow`, `--hcal-column-min-width`, `--hcal-event-dot-size`; new attribute `narrow-events`; read-only `size`; parts `calendar`, `scroll`, and a `dot` token on `event` (§5.6). | §5.9, P5 |
 | Q5 | **`weekend-days` attribute in scope** (default `"0 6"`), plumbed through `DayCell.isWeekend` / `TimeGridColumn.isWeekend` with `weekendDays` options in `hijri-view-core`; Fri/Sat tests; Angular input. | §5.1, §5.2, P1 task 8 |
 | Q6 | **`renderDayCell` in scope**, same `Node`/`string`/`null` contract and safety rules as `renderEvent`; content-only inside the component-owned `<button part="day">`; interaction with the P2 cell layer and focus/z-index rules specified. | §5.2, P4 task 4 |
 | Q7 | **`numerals-gregorian` in scope**, independent of `numerals`; truth table in §5.1; both share `formatNumerals()` in `hijri-core`; clock digits follow `numerals-gregorian`; month abbreviations and AM/PM never transliterated. | §5.1, P1 tasks 1 & 3 |
@@ -1247,8 +1277,8 @@ resolution below is already propagated into §5 and §6; this section is the rec
 - `apps/docs` API page lists every attribute, property, event, custom property, part and slot in §5,
   the numerals truth table, the `range-change` contract, the `slot-minutes` note, and the size-band
   table.
-- Changesets applied; versions as in the header; CHANGELOGs mention D1, D2, D3, D4 and the 1.0
-  `event-style` default change.
+- Changesets applied; versions as in the header; CHANGELOGs mention D1, D2, D3, D4, D5, D6, D7 and
+  the 1.0 `event-style` default change.
 - `da-office-management-fe` PR deletes the five dead calendar sections of `events.css`, ships
   `calendar-theme.css` + the rewritten `my-calendar.jsx`, and fetches by visible range via
   `useEventsInRange` (merged once the backend filter exists; the token/markup parts of the PR can

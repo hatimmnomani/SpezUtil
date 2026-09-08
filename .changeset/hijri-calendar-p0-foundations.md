@@ -29,11 +29,11 @@ chrome (filter chips, a "New event" button, etc.) alongside the calendar.
   `--hcal-switch-*`) are now overridable custom properties, all defaulting to their previous
   literal values.
 
-### Accepted visual changes (D1–D5)
+### Accepted visual changes (D1–D7)
 
-Five small, deliberate visual changes ship across this 0.3.0 release (landing in different phases
-of the same underlying work; listed together here for visibility). None have a configuration
-escape hatch — each was judged an improvement, not left as a choice:
+Seven small, deliberate visual changes ship across this 0.3.0 release (landing in different phases
+of the same underlying work; listed together here for visibility). Only D6 has a configuration
+escape hatch — the others were each judged an improvement, not left as a choice:
 
 - **D1 — toolbar order** is now `‹ Today ›` (prev / today / next), was `Today ‹ ›`.
   `::part(nav-prev|nav-today|nav-next)` selectors are unaffected.
@@ -50,11 +50,18 @@ escape hatch — each was judged an improvement, not left as a choice:
   chip/block/agenda item. Since `event-time` defaults to showing the start time in week/day views,
   this moves the clock text above/before the title in every timed block by default. Use
   `renderEvent` if you need a different order.
+- **D6 — month-grid hairlines.** Month cells now draw a full grid (vertical rules between columns
+  and a horizontal rule under every week, `1px solid var(--hcal-grid-line)`), where 0.2.x had a
+  rule between weeks only and no vertical rules at all. `hijri-calendar { --hcal-grid-line:
+  transparent; }` takes the month-cell hairlines back off. See the P2 entry for the details.
+- **D7 — agenda items are `event` parts.** Agenda rows now emit
+  `part="agenda-item event <style> <allday|timed>"`, so an existing `::part(event)` rule also
+  matches agenda rows. See the P3 entry for the details.
 
 ### Looking ahead to 1.0
 
 `event-style` defaults to `"solid"` throughout the 0.3.x line — this release is visually inert
-apart from D1–D5 above. **At 1.0, the default becomes `"tinted"`** (a soft tinted background with
+apart from D1–D7 above. **At 1.0, the default becomes `"tinted"`** (a soft tinted background with
 a left accent border). If you depend on the current solid-fill look, start setting
 `event-style="solid"` explicitly now; it already is the default, so this costs nothing today and
 keeps your look unchanged after the 1.0 upgrade.

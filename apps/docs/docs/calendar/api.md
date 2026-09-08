@@ -28,7 +28,7 @@ Every attribute has a matching camelCase property (`weekStart`, `dayStart`, `day
 ## New attributes (events-parity API)
 
 All of these are additive: every default reproduces today's (pre-parity) behaviour, **except** the
-five accepted visual changes listed in [Accepted visual changes](#accepted-visual-changes-d1d5)
+seven accepted visual changes listed in [Accepted visual changes](#accepted-visual-changes-d1d7)
 below. A 0.2.x consumer upgrading to 0.3.0 sees no other visual difference.
 
 | Attribute (property) | Type | Default | Description |
@@ -84,7 +84,7 @@ interface CalendarEvent {
   allDay?: boolean;            // derived from `start` when omitted
   color?: string;              // chip/block background (any CSS color)
   subtitle?: string;           // second text line (e.g. location); part="event-subtitle" in week/day/agenda
-  tag?: string;                // short label (e.g. event type); part="event-tag" in day-banner cards / renderEvent ctx
+  tag?: string;                // short label (e.g. event type); hook-only — reaches you as ctx.event.tag, never rendered
   style?: "solid" | "tinted" | "outline"; // per-event override of the `event-style` attribute
   variant?: string;             // free token → part="event variant-<x>" + data-variant; must match /^[a-z0-9-]+$/
   data?: unknown;               // your payload, passed back in event details
@@ -274,7 +274,7 @@ hijri-calendar {
 
   /* Fonts — the font-family trio (new: -display, -mono) */
   --hcal-font-family: system-ui, sans-serif;                 /* base; was referenced but undeclared before P0 */
-  --hcal-font-family-display: var(--hcal-font-family);       /* title-secondary, day-banner secondary, timed-block event title */
+  --hcal-font-family-display: var(--hcal-font-family);       /* title-secondary, day-banner secondary, timed-block event title, agenda-date Gregorian sub-label */
   --hcal-font-family-mono: var(--hcal-font-family);          /* gutter labels, event-time, weekday-secondary, day-banner weekday */
 
   /* Today */
@@ -284,7 +284,7 @@ hijri-calendar {
   --hcal-today-column-bg: transparent;
 
   /* Grid / cells */
-  --hcal-grid-line: var(--hcal-border);
+  --hcal-grid-line: var(--hcal-border);   /* month-cell hairlines (part="day-cell"); see D6 */
   --hcal-header-bg: transparent;
   --hcal-cell-min-height: 96px;
   --hcal-cell-min-height-medium: 72px;    /* month at the `medium` size band */
@@ -386,10 +386,15 @@ Existing (kept): `toolbar`, `title`, `nav-today`, `nav-prev`, `nav-next`, `view-
 New: `calendar` (the root `.cal`, carries the size-band token), `nav-group`, `title-primary`,
 `title-secondary`, `subheader`, `weekday-primary`, `weekday-secondary`, `day-cell`,
 `day-numbers`, `day-month-marker`, `today-indicator`, `column-head`, `day-column`,
-`time-label`, `allday-label`, `event-time`, `event-title`, `event-subtitle`, `event-tag`,
-`event-dot`, `now-label`, `day-banner`, `day-banner-primary`, `day-banner-secondary`,
-`day-banner-weekday`, `day-banner-summary`, `agenda-date`, `agenda-when`, `loading`, `scroll`
+`time-label`, `allday-label`, `event-time`, `event-title`, `event-subtitle`, `now-label`,
+`day-banner`, `day-banner-primary`, `day-banner-secondary`, `day-banner-weekday`,
+`day-banner-summary`, `agenda-date`, `agenda-when`, `loading`, `scroll`
 (the week/day horizontal scroll container).
+
+`CalendarEvent.tag` has **no part of its own** — it is hook-only, reaching you as
+`ctx.event.tag` inside `renderEvent`, and the built-in renderers never draw it. The
+`narrow-events="dots"` marker is not a part of its own either: it is an `event` part with a
+`dot` token (`::part(event dot)`), listed below.
 
 Parts use **space-separated tokens** (design principle: existing single-token parts keep their
 names), so hosts can select a specific combination:
@@ -408,8 +413,9 @@ hijri-calendar::part(calendar narrow) {
 ```
 
 Tokens appended where applicable: `today`, `out`, `weekend`, `disabled`, `continues-before`,
-`continues-after`, `allday`, `timed`, `solid|tinted|outline`, `variant-<x>`, and on `calendar`:
-`wide|medium|narrow`.
+`continues-after` (month chips of a multi-day event), `allday`/`timed` (on every chip, block and
+agenda item), `dot` (the `narrow-events="dots"` marker), `solid|tinted|outline`, `variant-<x>`,
+and on `calendar`: `wide|medium|narrow`.
 
 Per-event colors come from the `color` field on the event itself (surfaced as the `--_ev-color`
 custom property internally; use the event's own `color` rather than trying to select individual
@@ -428,10 +434,11 @@ chips by content).
 React: children with `slot="…"` pass through `createComponent` unchanged. Angular: the wrapper
 template exposes `<ng-content select="[slot=toolbar-start]">` etc. inside `<hijri-calendar-ng>`.
 
-## Accepted visual changes (D1–D5)
+## Accepted visual changes (D1–D7)
 
-Five default/visual changes ship with 0.3.0 and have **no escape hatch** other than `::part()`/
-render hooks — they were accepted as improvements over the 0.2.x look, not left configurable:
+Seven default/visual changes ship with 0.3.0 and have **no escape hatch** other than `::part()`/
+render hooks (D6 has a one-line restore) — they were accepted as improvements over the 0.2.x
+look, not left configurable:
 
 - **D1 — toolbar order.** Navigation is now `‹ Today ›` (prev / today / next), was `Today ‹ ›`.
   Purely visual; `::part(nav-prev|nav-today|nav-next)` selectors are unaffected.
@@ -453,6 +460,28 @@ render hooks — they were accepted as improvements over the 0.2.x look, not lef
   default look of every timed week/day block: the clock text sits above/before the title, not
   after it. There is no attribute to restore the old order — use `renderEvent` if you need a
   different layout.
+- **D6 — month-grid hairlines.** Month cells now draw a real grid: `part="day-cell"` carries
+  `border-inline-end` and `border-block-end: 1px solid var(--hcal-grid-line)`, and
+  `--hcal-grid-line` defaults to `var(--hcal-border)` — i.e. visible. In 0.2.x the month grid had
+  a horizontal rule *between* weeks only (and none under the last one) and **no vertical rules at
+  all**, so an existing consumer gains 36 vertical hairlines plus a horizontal hairline under the
+  last week, which sits directly on top of the calendar's own outer border and reads as a doubled
+  bottom edge. This one *does* have a restore path, because the hairline colour is a token:
+  `hijri-calendar { --hcal-grid-line: transparent; }` removes the month-cell hairlines and
+  nothing else (the token drives only `part="day-cell"`'s two borders — the time-grid's slot
+  lines and gutter border are on `--hcal-border`). To keep the vertical rules but drop only the
+  doubled bottom edge: `hijri-calendar::part(day-cell) { border-block-end: none; }`.
+- **D7 — agenda items are `event` parts.** Agenda rows now emit
+  `part="agenda-item event <solid|tinted|outline> <allday|timed>"`; in 0.2.x they were
+  `part="agenda-item"` only. Existing `::part(agenda-item)` rules are unaffected, but an existing
+  `::part(event)` rule — chip/block styling — **now also matches agenda rows**, whose internal
+  layout is a horizontal row rather than a chip. The token is load-bearing: it is what lets
+  `event-style` (and its `::part(event tinted)` styling) reach the agenda view at all. To get the
+  old scoping back, scope your chip rule to the views that have chips —
+  `hijri-calendar:not([view="agenda"])::part(event) { … }` (`view` is reflected, and agenda items
+  only exist in the agenda view) — and style the agenda row through `::part(agenda-item)`, which
+  means exactly what it always did. Note that adding style tokens does *not* narrow the match:
+  `::part(event solid)` still matches an agenda row, because the row carries the style token too.
 
 ## `event-style` will default to `tinted` at 1.0
 
@@ -480,6 +509,17 @@ Thresholds are fixed literals (a CSS container query cannot read a custom proper
 `SIZE_BANDS = { medium: 600, wide: 900 }` for hosts that want to mirror them. When
 `ResizeObserver` is unavailable (very old browsers; also the default in jsdom-based unit tests),
 the component falls back to `wide`.
+
+**The first paint is always at `wide`.** A real `ResizeObserver` delivers its first measurement
+*after* layout, asynchronously, so every mount renders once at the `wide` fallback and then
+re-renders at the measured band — a one-frame flash of the desktop layout on a phone-width host.
+This is inherent to measuring the host's own width rather than the viewport (a media query would
+be correct on frame one but wrong inside a narrow container, which is the case that matters here).
+If the flash is visible in your app, hide the component for that one frame — render it with
+`visibility: hidden` and reveal it from a `requestAnimationFrame` callback after mount, by which
+point `el.size` holds the measured band. There is no event for the band change itself: the
+correcting re-render emits no second `range-change` (the visible range hasn't changed, and
+`range-change` de-duplicates), so `size` is the thing to read.
 
 The host element itself never grows past its container (`max-width: 100%; overflow: hidden`) and
 never causes page-level horizontal overflow — every scrollable region lives inside

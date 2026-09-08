@@ -46,6 +46,14 @@ binaries don't match the version driving them).
 5. Commit the updated baselines in their own commit, prefixed `test(visual):`, with no changeset (this
    phase carries no package version).
 
+## Baseline naming
+
+Screenshot names mirror the Storybook story id they capture, plus the viewport width:
+`editorial--<story>-<width>.png` (and `editorial--week-<width>-scrolled.png` for the sticky-gutter
+shots) — so `editorial--month-1200.png` is the `editorial--month` story at 1200px. Keep the prefix
+in sync with the story id when adding a spec: a baseline is addressed by name, so renaming one
+after the container has committed it orphans the old PNG.
+
 ## Running the suite
 
 - `pnpm --filter @spezutil/storybook test:visual` — run once against whatever is already at

@@ -18,6 +18,19 @@ now-line.
   `"tinted"` at 1.0** — see below.
 - **`event-time`** (`"auto"` default = none in month / start in week-day, `"none"`, `"start"`,
   `"start-duration"`, `"range"`) controls the time text rendered on chips/blocks.
+- Every chip, block and agenda item now also carries an `allday` or `timed` `part` token (and
+  month chips of a multi-day event carry `continues-before`/`continues-after`), so `::part()` can
+  tell them apart. `CalendarEvent.tag` is **hook-only**: it reaches you as `ctx.event.tag` in
+  `renderEvent` and is never rendered by the built-in renderers.
+- **D7**: agenda rows are now `event` parts —
+  `part="agenda-item event <solid|tinted|outline> <allday|timed>"`, where 0.2.x emitted
+  `part="agenda-item"` alone. `::part(agenda-item)` rules are unaffected, but an existing
+  `::part(event)` rule written for chips/blocks **now also matches agenda rows**, which have a
+  different internal layout. The token is what lets `event-style` reach the agenda view, so it
+  stays; scope a chips-only rule by view instead —
+  `hijri-calendar:not([view="agenda"])::part(event)` — and style the row itself through
+  `::part(agenda-item)`. Adding a style token does not narrow the match: `::part(event solid)`
+  matches agenda rows too.
 - **D5**: inside every chip/block/agenda item, `event-time` now renders **before**
   `event-title` (`<span part="event-time">…</span><span part="event-title">…</span>`), not after.
   Because `event-time` defaults to showing the start time in week/day views, this changes the

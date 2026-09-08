@@ -125,7 +125,7 @@ overridable:
 hijri-calendar {
   --hcal-font-family: "Inter", system-ui, sans-serif;              /* base: toolbar, weekday header, body text */
   --hcal-font-family-arabic: "My Custom Arabic Font", serif;       /* Hijri numerals/day numbers, Arabic-name spans */
-  --hcal-font-family-display: "Newsreader", Georgia, serif;        /* title-secondary, day-banner secondary, timed-block event title */
+  --hcal-font-family-display: "Newsreader", Georgia, serif;        /* title-secondary, day-banner secondary, timed-block event title, agenda-date Gregorian sub-label */
   --hcal-font-family-mono: "JetBrains Mono", ui-monospace, monospace; /* gutter labels, event-time, weekday-secondary, day-banner weekday */
 }
 ```

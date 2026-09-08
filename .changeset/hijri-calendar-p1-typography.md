@@ -8,8 +8,9 @@ Typography, independent Hijri/Gregorian numeral systems, decoupled name sets, a 
 header, and configurable weekend days.
 
 - **`@spezutil/hijri-core`**: new `formatNumerals(value, "latn" | "arab")` utility, transliterating
-  ASCII digits to Arabic-Indic digits (and back) without touching any other character. Shared by
-  every numeral-formatting call site in `hijri-calendar`.
+  ASCII digits to Arabic-Indic digits without touching any other character (`"latn"` returns the
+  value unchanged — it is an output formatter, not a two-way converter). Shared by every
+  numeral-formatting call site in `hijri-calendar`.
 - **`numerals`** (Hijri digits) and **`numerals-gregorian`** (Gregorian digits *and all
   clock-adjacent numbers* — time labels, event duration, day-banner counts) are independent
   attributes, both defaulting to `"latn"` so existing output is unchanged. Neither is decided by
