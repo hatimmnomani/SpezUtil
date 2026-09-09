@@ -10,8 +10,8 @@
     "test:visual:update": "playwright test --update-snapshots"
   },
   "dependencies": {
-    "@spezutil/hijri-datepicker": "workspace:*",
     "@spezutil/hijri-calendar": "workspace:*",
+    "@spezutil/hijri-datepicker": "workspace:*",
     "@spezutil/richtext-editor": "workspace:*"
   },
   "devDependencies": {
@@ -20,10 +20,11 @@
     "@storybook/addon-essentials": "^8.3.0",
     "@storybook/web-components": "^8.3.0",
     "@storybook/web-components-vite": "^8.3.0",
+    "axe-core": "4.12.1",
     "http-server": "^14.1.1",
     "lit": "^3.2.0",
-    "storybook": "^8.3.0",
     "lit-html": "^3.2.0",
+    "storybook": "^8.3.0",
     "vite": "^5.4.0"
   }
 }

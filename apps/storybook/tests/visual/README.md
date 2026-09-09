@@ -4,11 +4,19 @@ Playwright screenshot tests against the built Storybook (`editorial.spec.ts` —
 dispatch that adds it; this README covers the workflow around it, which already applies to any spec
 placed in this directory).
 
-Not every spec in this directory takes screenshots. `day-cell-height.spec.ts` is a non-screenshot
-regression check (Ruling R, task-6b): it asserts, via `getBoundingClientRect()` in a real browser,
-that the month view's `.day-cell` background layer always renders at the same height as its `.week`
-row. It has no baseline images and needs none of the workflow below — it runs (and must pass) on a
-plain developer machine exactly the same as in CI.
+Not every spec in this directory takes screenshots. Two are pure assertions — no baseline images,
+none of the workflow below — and both run (and must pass) on a plain developer machine exactly the
+same as in CI:
+
+- `day-cell-height.spec.ts` (Ruling R, task-6b) asserts, via `getBoundingClientRect()` in a real
+  browser, that the month view's `.day-cell` background layer always renders at the same height as
+  the week wrapper (`.week-wrap`) it is positioned inside, and that the wrapper is genuinely taller
+  than the day-number row alone.
+- `aria.spec.ts` runs the real `axe-core` audit (`cat.aria` rules only) over the calendar's shadow
+  DOM in every view and size band, so the month grid's `grid`/`rowgroup`/`row`/`gridcell` structure
+  is verified by the tool that found the original Critical violation, not only by the hand-written
+  walkers in `packages/hijri-calendar/src/aria-structure.test.ts`. `axe-core` is an exact-pinned
+  devDependency of this app and is injected into the page with `page.addScriptTag`.
 
 ## Why baselines are never generated locally
 
