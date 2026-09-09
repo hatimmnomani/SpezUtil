@@ -13,16 +13,28 @@ month-boundary markers, and a "today" mode that doesn't require a pill.
   `part="more-link"` buttons and the `part="day-cell"` layers, none of which is a permitted child
   of a row. The month grid is now `grid` → one `rowgroup` per week → a day `row` of exactly seven
   `gridcell`s (each holding that day's background layer and `part="day"` button) plus, for weeks
-  that have events, a second `row` whose `gridcell`s carry the chips and more-link — so every
-  event stays a focusable, announced `<button>` (hiding that layer with `aria-hidden` would have
-  silenced the audit at the cost of keyboard access). Chip cells report the days they cover via
-  `aria-colindex`/`aria-colspan`, against `aria-colcount="7"` on the grid. Two consequences for
-  hosts: the `part="day"` button no longer carries `role="gridcell"` itself (its wrapper does, so
-  the button reports its native `button` role), and in week/day views the weekday label is no
+  that have events, **one `row` per event lane and one for the more-links**, whose `gridcell`s
+  carry the chips — so every event stays a focusable, announced `<button>` (hiding that layer with
+  `aria-hidden` would have silenced the audit at the cost of keyboard access). Chip cells report
+  the days they cover via `aria-colindex`/`aria-colspan`, against `aria-colcount="7"` on the grid;
+  a row per lane is what keeps those indices increasing and non-overlapping within each row, as
+  ARIA 1.2 requires. Every row also declares its `aria-rowindex` against `aria-rowcount` on the
+  grid, because the number of body rows varies with how many weeks have events. Two consequences
+  for hosts: the `part="day"` button no longer carries `role="gridcell"` itself (its wrapper does,
+  so the button reports its native `button` role), and in week/day views the weekday label is no
   longer a `role="columnheader"` — those views have no grid/table semantics for a `columnheader`
   to belong to, which was a second Critical violation (`aria-required-parent`). No `::part()`
   name, token, attribute, event or rendered pixel changes: every element's rendered box was
   measured identical in Chromium before and after, at wide/medium/narrow, LTR and RTL.
+- **Fixed: keyboard activation of month-view event chips and "+N more" links.** The month grid's
+  arrow-key handler listens on the grid, so keys from the chips and more-link buttons bubbled to
+  it; it treated any event that did not originate in a day cell as if the roving day button were
+  focused, so `Enter` or `Space` on a focused chip called `preventDefault()` and emitted
+  `date-click` for an unrelated day instead of letting the chip's own activation fire
+  `event-click`. Chips and more-links were reachable by <kbd>Tab</kbd> and impossible to activate
+  by keyboard. The handler now ignores keys that do not come from a day cell, and no longer
+  default-prevents keys it does not handle. Day-cell arrow navigation and `Enter`/`Space` are
+  unchanged.
 - **`day-number-align`** (`"center"` default, `"start"`, `"end"`) controls day-number alignment in
   month cells and time-grid column heads.
 - **`month-marker`** (`"gregorian"` default, `"hijri"`, `"both"`, `"none"`) controls which

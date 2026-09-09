@@ -48,8 +48,10 @@ weekday header, an inline Gregorian sub-title) is reachable entirely through pub
 `::part()` required. It needs **both** halves of the API, not just the color tokens:
 `--hcal-*` custom properties for appearance, and a set of structural attributes for what DOM
 renders. A tokens-only theme (just recoloring the default layout) does **not** reproduce this
-look — the Arabic-Indic numerals, bilingual header, inline title and start-aligned numbers are
-all attribute-driven, not CSS-driven.
+look — the bilingual header, inline title and start-aligned numbers are all attribute-driven, not
+CSS-driven. (The Arabic-Indic Hijri numerals are the one part you get for free: `numerals`
+defaults to `"arab"`. `numerals="arab"` is still written out below, because a reference recipe
+should say what it depends on rather than lean on a default.)
 
 <CalendarDemo
   date="2026-07-06"

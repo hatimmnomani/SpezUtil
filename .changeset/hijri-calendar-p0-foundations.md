@@ -60,7 +60,9 @@ judged an improvement, not left as a choice:
   `part="agenda-item event <style> <allday|timed>"`, so an existing `::part(event)` rule also
   matches agenda rows. See the P3 entry for the details.
 - **D8 — WCAG 2 AA color-contrast fix.** An accessibility audit found the default theme failing
-  color contrast (WCAG 1.4.3) in ~40 places, traced to our own default token values.
+  color contrast (WCAG 1.4.3) at ~40 element instances in the audited page, traced to our own
+  default token values; reduced to the distinct text/background pairs behind them, 20 of the 21
+  pairs we then checked in the default theme were failing and all 20 now pass.
   `--hcal-muted` darkens `#9aa0a6` → `#5b6572` (was ≈2.64:1 on `--hcal-bg`, now ≈5.92:1, and
   ≈5.16:1 on the default `--hcal-today-bg` tint, which several `--hcal-muted` consumers also
   render on). `--hcal-now-color` darkens `#ea4335` → `#c5321f` (the `part="now-label"` text was
@@ -68,8 +70,14 @@ judged an improvement, not left as a choice:
   longer use `opacity` for de-emphasis — opacity multiplies whatever contrast deficit the
   underlying color already has (the audit measured out-of-month numbers as low as 1.44:1) — and
   instead use a new **`--hcal-cell-out-fg`** token (default `var(--hcal-muted)`) applied as a
-  solid color. `hijri-calendar { --hcal-muted: #9aa0a6; --hcal-now-color: #ea4335; }` restores
-  the old look but reintroduces the AA failure; not recommended. **Deviation:**
+  solid color. `hijri-calendar { --hcal-muted: #9aa0a6; --hcal-now-color: #ea4335; }` puts the two
+  old **color values** back (reintroducing their AA failures; not recommended). It does **not**
+  restore the old out-of-month rendering, and nothing can: `opacity: 0.45` applied over a subtree
+  containing two different base colors, so the primary number rendered as an effective `#989898`
+  and the secondary as `#d2d4d7`, and one `--hcal-cell-out-fg` token cannot produce two different
+  values. Set `--hcal-cell-out-fg` to pick a single out-of-month text color instead. The same goes
+  for the `opacity: 0.8` removed from `weekday-secondary` — the opacity-based de-emphasis has no
+  restore path. **Deviation:**
   `--hcal-cell-out-opacity` (default `0.45`) stays declared for compatibility but is no longer
   consumed anywhere in `styles.ts` — a host tuning out-of-month dimming via that property should
   switch to `--hcal-cell-out-fg` instead. `--hcal-day-secondary-font-size` stays at its 9px
@@ -90,7 +98,7 @@ judged an improvement, not left as a choice:
 ### Looking ahead to 1.0
 
 `event-style` defaults to `"solid"` throughout the 0.3.x line — this release is visually inert
-apart from D1–D7 above. **At 1.0, the default becomes `"tinted"`** (a soft tinted background with
+apart from D1–D9 above. **At 1.0, the default becomes `"tinted"`** (a soft tinted background with
 a left accent border). If you depend on the current solid-fill look, start setting
 `event-style="solid"` explicitly now; it already is the default, so this costs nothing today and
 keeps your look unchanged after the 1.0 upgrade.

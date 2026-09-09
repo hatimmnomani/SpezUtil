@@ -467,9 +467,12 @@ export interface RangeChangeDetail {
   `::part(agenda-item)` for the row; adding a style token does *not* exclude agenda rows, since
   they carry it too. Ships in P3.
 - **D8 — WCAG 2 AA color-contrast fix (post-launch, not part of P0–P5).** An accessibility audit
-  (axe) against a real host surfaced ~40 "Serious" contrast violations in the default theme,
-  traced to our own default token values, not the host's palette. Three changes, all in
-  `styles.ts` only:
+  (axe) against a real host surfaced ~40 "Serious" contrast violations in the default theme —
+  that is ~40 **element instances** flagged on the audited page, which reduce to 21 distinct
+  text/background **pairs** in the default theme, 20 of which were failing and all 20 of which now
+  pass at ≥5.16:1 (the two counts are the same finding at two granularities; every disclosure site
+  states which one it is quoting). All traced to our own default token values, not the host's
+  palette. Three changes, all in `styles.ts` only:
   - `--hcal-muted` darkens `#9aa0a6` → `#5b6572`. `#9aa0a6` measured ≈2.64:1 against `--hcal-bg`
     (`#fff`); AA requires 4.5:1 for normal text, and every consumer of this token (weekday
     labels, title secondary, day-secondary numbers, month marker, loading label, more-link,
@@ -512,21 +515,47 @@ produced D8 also reported a Critical `aria-required-children` violation on the m
 `role="row"` owned the event chips, the `part="more-link"` buttons and the 42 `part="day-cell"`
 layers, none of which is a permitted child of a row (only cells are). The month grid is therefore
 now `grid` → one `rowgroup` per week → a day `row` of exactly seven `gridcell`s (each holding that
-day's background layer and its `part="day"` button) plus, only for weeks that have events, a second
-`row` whose `gridcell`s carry the chips and the more-link; multi-day chip cells span their columns
-and report them with `aria-colindex`/`aria-colspan` against `aria-colcount="7"`. The chips stay
+day's background layer and its `part="day"` button) plus, only for weeks that have events, **one
+`row` per occupied event lane and one for the more-links**, whose `gridcell`s carry the chips;
+multi-day chip cells span their columns and report them with `aria-colindex`/`aria-colspan` against
+`aria-colcount="7"`. One row per lane rather than one row per week is not cosmetic: ARIA 1.2
+requires `aria-colindex` to increase across a row and forbids two cells of a row claiming the same
+column, and a single row holding every lane of a week satisfied neither (a review measured
+`1 (span 7), 4 (span 3), 2, 5, 5` on one live row — no axe rule covers `aria-colindex` ordering, so
+both the axe audit and the hand-written walkers passed it). Because a week now contributes a
+variable number of rows, every row declares `aria-rowindex` against `aria-rowcount` on the grid, so
+a row's announced coordinate no longer depends on how many earlier weeks had events. The chips stay
 focusable, labelled `<button>`s throughout — the cheaper `aria-hidden="true"` on the chip layer was
 rejected, since it would have silenced the audit by removing keyboard-reachable content from the
 accessibility tree. A second Critical violation (`aria-required-parent`) was fixed at the same time:
 the week/day time grid reused the month view's weekday-cell markup, `role="columnheader"` included,
 but those views carry no grid/table semantics for a `columnheader` to belong to, so the role is now
-emitted only by the month view's `dow-row`. This is listed **here rather than as a D9** because it
-is not a visual change: every rendered box (`.cal`, `.month`, the weekday header, all 42 day-cell
-layers, all 42 day buttons, every chip, every more-link, the dot-mode dots and the today indicator)
-measured byte-identical in Chromium before and after, at the wide, medium and narrow bands, in both
-LTR and RTL, with and without overflow more-links. No `::part()` name or token, attribute, property
-or event changed either; the one host-visible detail is that `part="day"` no longer carries
-`role="gridcell"` (its wrapper does). Ships post-launch, `hijri-calendar.ts`/`styles.ts` plus tests.
+emitted only by the month view's `dow-row`. This is listed **here rather than as a deviation of its
+own** because it is not a visual change: every rendered box (`.cal`, `.month`, the weekday header,
+all 42 day-cell layers, all 42 day buttons, every chip, every more-link, the dot-mode dots and the
+today indicator) measured byte-identical in Chromium before and after, at the wide, medium and
+narrow bands, in both LTR and RTL, with and without overflow more-links. The per-lane row split was
+re-measured the same way against the pre-split build and is likewise pixel-identical: each `.lanes`
+element keeps the identical 7-track `grid-template-columns` and `grid-auto-rows: min-content`, so
+one single-row grid per lane sums to exactly what one multi-row grid summed to, and lanes that used
+to be zero-height implicit rows are simply not emitted. Chip DOM order is unchanged too (view-core
+already sorts segments by `(weekIndex, lane, startCol)`, so same-lane cells were already
+contiguous), so tab order is unchanged. No `::part()` name or token, attribute, property or event
+changed either; the one host-visible detail is that `part="day"` no longer carries `role="gridcell"`
+(its wrapper does). Ships post-launch, `hijri-calendar.ts`/`styles.ts` plus tests.
+
+**Also not a deviation — keyboard activation of the event chips (post-launch, with the row split).**
+`wireGridKeyboard()` attaches its `keydown` listener to `[role="grid"]`, so keys from the chips and
+`part="more-link"` buttons — which are inside the grid, by design — bubbled to it. The handler
+treated *any* event whose target was not inside a day cell as if the roving day button were focused:
+`Enter`/`Space` on a focused chip called `preventDefault()` and clicked that day button, emitting
+`date-click` for an unrelated date and never `event-click`. Every chip was reachable by Tab and
+impossible to activate by keyboard, which is precisely the access the `aria-hidden` rejection was
+meant to preserve — so it is in scope for the same fix wave rather than a follow-up, even though it
+predates the restructure. The handler now returns immediately when `closest("[data-i]")` finds no day
+cell, and default-prevents only the keys it actually handles; `Enter`/`Space` on a `<button>` already
+fires `click`, which `wireEventChips()` and the `[data-more]` wiring have always handled. No visual
+change and no API change. Ships post-launch, `hijri-calendar.ts` plus `month-grid.test.ts`.
 
 - **D9 — `numerals` now defaults to `"arab"` (post-launch, not part of P0–P5).** Hijri day numbers,
   the Hijri year, the title primary, the agenda Hijri date, and the day-banner primary now render
@@ -544,7 +573,13 @@ or event changed either; the one host-visible detail is that `part="day"` no lon
   Phase 1 review call, carried forward unchanged here): it calls `formatHijri()` without an
   `opts.numerals`, which defaults to `"latn"` inside `hijri-core` regardless of the `numerals`
   attribute, so a screen reader never announces Arabic-Indic digits inside the otherwise-English
-  (`locale`-default `translit`) label. Restore the pre-fix, all-Latin look with
+  (`locale`-default `translit`) label. Guarded by `typography.test.ts` — that one unguarded call
+  site is now the only thing separating the two defaults, so it is asserted rather than assumed.
+  The month grid's own `aria-label` deliberately goes the *other* way: it reuses the visible title
+  (a truth-table site), so it does carry Arabic-Indic digits — an accessible name must match the
+  visible label it names (WCAG 2.5.3), and it is a bare Hijri month/year rather than a Hijri date
+  embedded in an English sentence, so the mixed-script argument that keeps the day-cell labels
+  Latin does not apply to it. Restore the pre-fix, all-Latin look with
   `numerals="latn"` on the host element. Ships post-launch, `hijri-calendar.ts` plus
   `typography.test.ts` and other vitest suites.
 

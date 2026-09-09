@@ -496,7 +496,9 @@ render hooks (D6, D8 and D9 have a one-line restore) — they were accepted as i
   `::part(event solid)` still matches an agenda row, because the row carries the style token too.
 - **D8 — darker `--hcal-muted`, darker `--hcal-now-color`, and opacity removed from
   out-of-month/weekday-secondary text.** An accessibility audit found the 0.2.x default theme
-  failing WCAG 2 AA color contrast (1.4.3) in roughly 40 places. Three independent fixes:
+  failing WCAG 2 AA color contrast (1.4.3) at roughly 40 element instances on the audited page.
+  Reduced to the distinct text/background pairs behind those instances, 20 of the 21 pairs the
+  default theme produces were failing; all 20 now pass at ≥5.16:1. Three independent fixes:
   - `--hcal-muted` darkens from `#9aa0a6` to `#5b6572`. The old value measured ≈2.64:1 against
     `--hcal-bg` (`#fff`) — AA requires 4.5:1 for normal text (this token drives weekday labels,
     the title's Gregorian sub-label, secondary day numbers, month markers, the "+N more" link,
@@ -542,14 +544,20 @@ render hooks (D6, D8 and D9 have a one-line restore) — they were accepted as i
   is untouched, so Gregorian numbers, clock digits (time labels, event duration, day-banner
   counts) and month abbreviations (`Jul`) stay Latin — exactly the reference "editorial" pairing,
   now the default instead of an opt-in. The day-cell `aria-label` is unaffected: it is
-  deliberately not a numerals-truth-table site, so it stays Latin regardless of `numerals`.
+  deliberately not a numerals-truth-table site, so it stays Latin regardless of `numerals` — a
+  screen reader announcing an otherwise-English label should not switch digit systems mid-string.
+  The month grid's own `aria-label` is the deliberate exception in the other direction: it reuses
+  the visible title, which *is* a truth-table site, so it reads "Rabi al-Awwal ١٤٤٨" — an accessible
+  name must match the visible label it names (WCAG 2.5.3), and unlike the day-cell label it is a
+  Hijri month/year on its own rather than a Hijri date embedded in English prose.
   Restore the pre-fix, all-Latin look by setting the attribute explicitly:
   `<hijri-calendar numerals="latn">`.
 
 ## `event-style` will default to `tinted` at 1.0
 
 `event-style` defaults to `"solid"` through the whole 0.3.x line — this is deliberate, sequenced
-so the 0.3.0 upgrade itself is visually inert. **At 1.0, the default becomes `"tinted"`** (a soft
+so that the 0.3.0 upgrade adds no event-styling change of its own (the changes it *does* make are
+D1–D9 above). **At 1.0, the default becomes `"tinted"`** (a soft
 tinted background with a left accent border, matching the reference editorial look), which *is* a
 breaking visual change. If you depend on the current solid-fill look, start setting
 `event-style="solid"` explicitly now — it will keep working identically after the 1.0 upgrade, and
@@ -595,7 +603,9 @@ never causes page-level horizontal overflow — every scrollable region lives in
 
 ## Accessibility
 
-- Month grid uses `role="grid"` / `rowgroup` / `row` / `gridcell` with roving `tabindex` and arrow-key navigation; Enter/Space activates. The shape is: the grid owns the weekday `role="row"` (seven `columnheader`s) plus one `role="rowgroup"` per week; each week group owns a day `role="row"` of exactly seven `gridcell`s — one per column, each holding that day's `part="day-cell"` background layer and its `part="day"` button — and, only when that week has events, a second `role="row"` whose `gridcell`s carry the event chips and the `part="more-link"` button. A multi-day chip's cell spans its columns visually and reports them with `aria-colindex`/`aria-colspan` (`aria-colcount="7"` is on the grid). `role="row"` permits only cells as children, which is why the chips are their own row rather than siblings of the day cells, and why the day button no longer carries `role="gridcell"` itself — it reports its native `button` role inside the cell.
+- Month grid uses `role="grid"` / `rowgroup` / `row` / `gridcell` with roving `tabindex` and arrow-key navigation; Enter/Space activates. The shape is: the grid owns the weekday `role="row"` (seven `columnheader`s) plus one `role="rowgroup"` per week; each week group owns a day `role="row"` of exactly seven `gridcell`s — one per column, each holding that day's `part="day-cell"` background layer and its `part="day"` button — and, only when that week has events, **one further `role="row"` per event lane** whose `gridcell`s carry that lane's chips, plus a final one for the `part="more-link"` buttons. A multi-day chip's cell spans its columns visually and reports them with `aria-colindex`/`aria-colspan` (`aria-colcount="7"` is on the grid). `role="row"` permits only cells as children, which is why the chips are their own rows rather than siblings of the day cells, and why the day button no longer carries `role="gridcell"` itself — it reports its native `button` role inside the cell. One row **per lane** rather than one row per week is what makes `aria-colindex` legal: it must increase across a row and two cells of a row may not claim the same column, which a single row holding every lane could not satisfy.
+- Because a week contributes a variable number of rows (its day row, plus one per occupied event lane, plus a more-link row), every row declares its own `aria-rowindex` and the grid declares `aria-rowcount` — so a row's announced coordinate does not depend on how many earlier weeks happened to have events.
+- Arrow keys move between the 42 day cells only; `Enter`/`Space` on a day cell activates it (`date-click`). Keys originating on an event chip or a `part="more-link"` button are left entirely to the button's native behaviour, which fires `click` and therefore `event-click`/`more-click` — the grid handler does not intercept them and does not `preventDefault()` keys it doesn't handle.
 - Week/day and agenda views carry **no** grid/table roles at all: their weekday labels are plain labelled elements, not `columnheader`s (a `columnheader` requires an owning `row`), and events there are plain focusable buttons.
 - Every day cell is labelled with both the Hijri and Gregorian date; at the `narrow` size band with `narrow-events="dots"`, the label additionally includes an event count via `loc.moreDotsLabel`.
 - Event chips are real `<button>`s labelled with title + time (native `title` attribute tooltip too), except in dot mode where events render as non-interactive dots and the whole cell is the tap target.
