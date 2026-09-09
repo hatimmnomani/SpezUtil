@@ -147,9 +147,11 @@ ${arabicFontFace}
 .dow [part~="weekday-secondary"] { font-family: var(--hcal-font-family-mono); }
 .dow[part~="weekend"] { color: var(--hcal-weekend-fg); }
 /* One week = a role="rowgroup" wrapper holding the day row (.week, 7 role="gridcell" cells) and,
-   when the week has any, the spanning event row (.lanes). ARIA: role="row" permits only cells as
-   children, so the chips/more-links can't live in the day row — see hijri-calendar.ts's
-   renderMonth() and api.md's Accessibility section.
+   when the week has any, one spanning event row (.lanes) per occupied event lane plus one for the
+   more-links. ARIA: role="row" permits only cells as children, so the chips/more-links can't live
+   in the day row; and aria-colindex must increase across a row, so each lane needs its own row
+   rather than all lanes sharing one — see hijri-calendar.ts's renderMonth() and api.md's
+   Accessibility section.
 
    .week-wrap is the positioned, min-height-carrying box the absolutely positioned .day-cell
    background layer resolves against (it used to be .week itself, back when .week held every one
@@ -167,11 +169,14 @@ ${arabicFontFace}
    container purely so its .day-head button stretches to fill it, exactly as the button did back
    when it was the grid item of .week directly. */
 .week-cell { display: grid; }
-/* The spanning event layer: same 7 equal columns as .week, so chip columns line up with day
-   columns without needing subgrid; lane rows are its own implicit rows, so a lane's height is
-   the tallest chip in that lane across the whole week (auto-sized, never a hard-coded lane
-   height). min-width: 0 on the cells keeps a long chip title from widening a 1fr track — the
-   chip itself clips (overflow: hidden), as it did when it was the grid item. */
+/* The spanning event layer, one element per lane: same 7 equal columns as .week, so chip columns
+   line up with day columns without needing subgrid. Each lane element is its own single-row grid
+   (grid-auto-rows: min-content), so a lane's height is still the tallest chip in that lane across
+   the whole week (auto-sized, never a hard-coded lane height) and the stack of lane elements sums
+   to exactly what one multi-row grid summed to — which is why splitting the lanes into separate
+   role="row" elements moved no pixels. min-width: 0 on the cells keeps a long chip title from
+   widening a 1fr track — the chip itself clips (overflow: hidden), as it did when it was the grid
+   item. */
 .lanes { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-rows: min-content; }
 .lane-cell { display: grid; min-width: 0; }
 /* Background layer (R1): one div per column, behind the day-head buttons/chips/more-link

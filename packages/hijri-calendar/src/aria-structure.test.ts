@@ -373,6 +373,139 @@ describe("<hijri-calendar> month grid ARIA shape", () => {
   });
 });
 
+// ---- row/column coordinates -------------------------------------------------------------------
+
+/**
+ * ARIA 1.2 (`aria-colindex`): "the value ... must be greater than the value of the preceding
+ * cell in the same row", and a cell's `aria-colspan` claims that many consecutive columns from
+ * its own index — so two cells in one row may not overlap, and no cell may exceed
+ * `aria-colcount`.
+ *
+ * This was broken for a whole release: every lane of a week's events was flattened into one
+ * `role="row"`, which produced sequences like `1 (span 7), 4 (span 3), 2, 5, 5` — non-monotonic,
+ * self-overlapping, and claiming column 5 twice. axe has **no rule** for `aria-colindex` ordering
+ * (only `aria-allowed-attr`/`aria-valid-attr-value`, which the broken markup passed), and neither
+ * did the hand-written walkers above, so it was invisible to both audits. The fix is one
+ * `role="row"` per lane; this checker is what keeps it that way.
+ */
+function colIndexViolations(root: ParentNode): string[] {
+  const out: string[] = [];
+  for (const grid of Array.from(root.querySelectorAll('[role="grid"]'))) {
+    const colCount = Number(grid.getAttribute("aria-colcount"));
+    for (const row of Array.from(grid.querySelectorAll('[role="row"]'))) {
+      let prevEnd = 0; // last column claimed by the preceding cell of this row
+      for (const cell of Array.from(row.children)) {
+        const ci = Number(cell.getAttribute("aria-colindex"));
+        if (!Number.isFinite(ci) || ci < 1) {
+          out.push(`${describeEl(row)} > ${describeEl(cell)} has no usable aria-colindex`);
+          continue;
+        }
+        const span = Number(cell.getAttribute("aria-colspan") ?? 1);
+        if (ci <= prevEnd) {
+          out.push(
+            `${describeEl(row)} > ${describeEl(cell)} aria-colindex=${ci} does not exceed the ` +
+              `preceding cell's last claimed column (${prevEnd})`
+          );
+        }
+        if (colCount && ci + span - 1 > colCount) {
+          out.push(
+            `${describeEl(row)} > ${describeEl(cell)} claims columns ${ci}..${ci + span - 1}, ` +
+              `past aria-colcount=${colCount}`
+          );
+        }
+        prevEnd = ci + span - 1;
+      }
+    }
+  }
+  return out;
+}
+
+/** Rows must carry a contiguous 1..aria-rowcount sequence of `aria-rowindex`, in document order. */
+function rowIndexViolations(root: ParentNode): string[] {
+  const out: string[] = [];
+  for (const grid of Array.from(root.querySelectorAll('[role="grid"]'))) {
+    const rows = Array.from(grid.querySelectorAll('[role="row"]'));
+    const declared = rows.map((r) => r.getAttribute("aria-rowindex"));
+    const expected = rows.map((_, i) => String(i + 1));
+    if (declared.join(",") !== expected.join(",")) {
+      out.push(`aria-rowindex sequence is [${declared.join(", ")}], expected [${expected.join(", ")}]`);
+    }
+    if (grid.getAttribute("aria-rowcount") !== String(rows.length)) {
+      out.push(
+        `aria-rowcount is "${grid.getAttribute("aria-rowcount")}" but the grid owns ` +
+          `${rows.length} rows`
+      );
+    }
+  }
+  return out;
+}
+
+describe("<hijri-calendar> grid row/column coordinates", () => {
+  it.each(VIEWS)("%s: aria-colindex increases across every row and stays inside aria-colcount", (_name, factory) => {
+    const el = factory();
+    expect(colIndexViolations(el.shadowRoot!)).toEqual([]);
+  });
+
+  it.each(VIEWS)("%s: aria-rowindex runs 1..aria-rowcount in document order", (_name, factory) => {
+    const el = factory();
+    expect(rowIndexViolations(el.shadowRoot!)).toEqual([]);
+  });
+
+  it("catches the exact broken sequence the flattened lane row produced", () => {
+    // `1 (span 7), 4 (span 3), 2, 5, 5` — measured off a live `.lanes` row before the fix.
+    const host = document.createElement("div");
+    host.innerHTML =
+      `<div role="grid" aria-colcount="7" aria-rowcount="1">` +
+      `<div role="row" aria-rowindex="1">` +
+      `<div role="gridcell" aria-colindex="1" aria-colspan="7"></div>` +
+      `<div role="gridcell" aria-colindex="4" aria-colspan="3"></div>` +
+      `<div role="gridcell" aria-colindex="2"></div>` +
+      `<div role="gridcell" aria-colindex="5"></div>` +
+      `<div role="gridcell" aria-colindex="5"></div>` +
+      `</div></div>`;
+    // Walking it: cell 1 claims columns 1–7; `4` ≤ 7, then `2` ≤ 6, then `5` > 2 (the sequence
+    // is briefly monotonic again after going backwards), then `5` ≤ 5 → three ordering
+    // violations, none of which any axe rule reports.
+    expect(colIndexViolations(host)).toHaveLength(3);
+  });
+
+  it("gives each event lane its own row, so a week with three lanes has three lane rows", () => {
+    const el = mount({ date: "2026-07-06" }, DENSE);
+    const grid = el.shadowRoot!.querySelector('[role="grid"]')!;
+    // The week holding TIMED/TIMED_2/TIMED_3/ALL_DAY (2026-07-06) overflows past max-events=3,
+    // so it must own three lane rows plus a more-link row — never one row for all of them.
+    const weekOf6 = el.shadowRoot!.querySelector('[data-date="2026-07-06"]')!.closest(".week-wrap")!;
+    const laneRows = Array.from(weekOf6.querySelectorAll(":scope > .lanes"));
+    expect(laneRows.length).toBeGreaterThan(1);
+    for (const row of laneRows) {
+      expect(row.getAttribute("role")).toBe("row");
+      // Every cell in one lane row belongs to a distinct, ascending set of columns.
+      const idx = Array.from(row.children).map((c) => Number(c.getAttribute("aria-colindex")));
+      expect(idx).toEqual([...idx].sort((a, b) => a - b));
+      expect(new Set(idx).size).toBe(idx.length);
+    }
+    // The more-links are the last lane row, and every one of them is in it.
+    const mores = Array.from(weekOf6.querySelectorAll("[data-more]"));
+    expect(mores.length).toBeGreaterThan(0);
+    const lastRow = laneRows[laneRows.length - 1]!;
+    for (const m of mores) expect(m.closest(".lanes")).toBe(lastRow);
+    // Rowgroups still hold rows only, and the day row is always first in its group.
+    for (const group of Array.from(grid.querySelectorAll('[role="rowgroup"]'))) {
+      expect(group.firstElementChild!.classList.contains("week")).toBe(true);
+    }
+  });
+
+  it("keeps every chip in the same DOM order as before the split, so tab order is unchanged", () => {
+    // view-core sorts segments by (weekIndex, lane, startCol), so grouping same-lane cells into
+    // their own row is a no-op on the flat sequence of chips.
+    const el = mount({ date: "2026-07-06" }, DENSE);
+    const order = Array.from(el.shadowRoot!.querySelectorAll("[data-ev]")).map((b) =>
+      Number(b.getAttribute("data-ev"))
+    );
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+  });
+});
+
 // ---- week/day and agenda ----------------------------------------------------------------------
 
 describe("<hijri-calendar> week/day and agenda ARIA", () => {

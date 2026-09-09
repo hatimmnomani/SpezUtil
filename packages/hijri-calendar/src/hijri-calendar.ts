@@ -1236,6 +1236,16 @@ export class HijriCalendarElement extends HTMLElement {
     // desktop layout untouched and instead scrolls it horizontally (handled below, at `body`).
     const narrowDots = this._size === "narrow" && this.narrowEvents === "dots";
 
+    // `aria-rowindex` counter, in document order, starting at the weekday columnheader row
+    // (row 1 — emitted in `monthHtml` below, after this loop has run). Row indices are declared
+    // because the grid's body-row count is *variable*: a week contributes its day row plus one
+    // row per occupied event lane plus, if it overflows, a more-link row — so the same week can
+    // be document row 2 or row 8 depending on how many earlier weeks had events. Without
+    // `aria-rowindex`/`aria-rowcount` a screen reader's "row N of M" is derived from that
+    // variable position and is meaningless across navigations; with them, every row states its
+    // own coordinate. `aria-rowcount` is the exact total (never -1: every row is in the DOM).
+    let rowIndex = 1;
+
     const weeksHtml = model.weeks
       .map((week, w) => {
         // One `role="gridcell"` per day (7 per row, `.week-cell`), each holding — in this DOM
@@ -1322,8 +1332,8 @@ export class HijriCalendarElement extends HTMLElement {
         // Dot mode (narrowDots) skips both the lane chips and the desktop more-link buttons
         // entirely — the day-cell layer's dots/overflow-count span above are the only
         // per-event UI at the narrow band.
-        const chips = narrowDots
-          ? ""
+        const chipCells = narrowDots
+          ? []
           : model.segments
               .filter((s) => s.weekIndex === w)
               .map((s) => {
@@ -1349,46 +1359,76 @@ export class HijriCalendarElement extends HTMLElement {
                 const partAttr = `event ${styleToken} ${this.timingToken(n)}${variant.part}${spanPart}`;
                 const colorStyle = ev.color ? ` style="--_ev-color:${escapeHtml(ev.color)};"` : "";
                 // Lane/column placement lives on the wrapping gridcell, not on the button:
-                // `.lanes` is the grid, and the chip stretches to fill its cell (styles.ts
-                // `.lane-cell`), so the rendered chip box is unchanged. `aria-colindex`/
-                // `aria-colspan` are what tell a screen reader which day columns a multi-day
-                // chip covers, now that the chips are their own row rather than being mixed
-                // in among the day cells.
-                const gridStyle = `grid-row:${s.lane + 1};grid-column:${s.startCol + 1} / span ${s.span}`;
+                // each `.lanes` row is the grid, and the chip stretches to fill its cell
+                // (styles.ts `.lane-cell`), so the rendered chip box is unchanged.
+                // `aria-colindex`/`aria-colspan` are what tell a screen reader which day columns
+                // a multi-day chip covers, now that the chips are their own rows rather than
+                // being mixed in among the day cells. There is no `grid-row` any more: one lane
+                // per `role="row"` means every chip sits in its row's only (implicit) row.
+                const gridStyle = `grid-column:${s.startCol + 1} / span ${s.span}`;
                 const colSpan = s.span > 1 ? ` aria-colspan="${s.span}"` : "";
                 const labels = this.normalizedLabels(n);
                 const ariaLabel = `${ev.title}, ${labels.start}`;
                 const inner = this.eventInnerHtml(ev, labels, "month-chip");
-                return `<div class="lane-cell" role="gridcell" aria-colindex="${s.startCol + 1}"${colSpan}
+                return {
+                  lane: s.lane,
+                  html: `<div class="lane-cell" role="gridcell" aria-colindex="${s.startCol + 1}"${colSpan}
               style="${gridStyle}"><button type="button" part="${partAttr}" class="${cls}" data-ev="${idx}"${colorStyle}${variant.dataAttr}
-              aria-label="${escapeHtml(ariaLabel)}" title="${escapeHtml(ariaLabel)}">${inner}</button></div>`;
-              })
-              .join("");
+              aria-label="${escapeHtml(ariaLabel)}" title="${escapeHtml(ariaLabel)}">${inner}</button></div>`,
+                };
+              });
 
-        const mores = narrowDots
-          ? ""
+        const moreCells = narrowDots
+          ? []
           : week
               .map((cell, d) => {
                 const count = model.overflow[w]?.[d] ?? 0;
                 if (!count) return "";
                 return `<div class="lane-cell" role="gridcell" aria-colindex="${d + 1}"
-              style="grid-row:${this.maxEvents + 1};grid-column:${d + 1}"><button type="button" part="more-link" class="more"
+              style="grid-column:${d + 1}"><button type="button" part="more-link" class="more"
               data-more="${w * 7 + d}">${escapeHtml(this.loc.moreLabel(count))}</button></div>`;
               })
-              .join("");
+              .filter(Boolean);
 
-        // The spanning event layer is its own `role="row"` (`.lanes`), a sibling of the day row
-        // inside a `role="rowgroup"` week wrapper — never a child of the day row, whose only
-        // permitted children are cells. It is omitted entirely when a week has neither chips nor
-        // more-links (an empty row is meaningless to a screen reader), which is always the case
-        // in `narrow-events="dots"` mode.
-        const lanesHtml = chips || mores ? `<div class="lanes" role="row">${chips}${mores}</div>` : "";
-        return `<div class="week-wrap" role="rowgroup"><div class="week" role="row">${dayRowCells}</div>${lanesHtml}</div>`;
+        // One `role="row"` per event lane, plus a final row for the more-links — not one row for
+        // the whole week. ARIA 1.2 requires each cell's `aria-colindex` to be greater than the
+        // preceding cell's *in the same row*, and a row's cells must not overlap in columns; a
+        // single row holding every lane of the week violated both (a 7-column spanning chip in
+        // lane 0 followed by a 3-column chip at column 4 in lane 1 gave the sequence 1, 4, 2, …,
+        // and two lanes could each claim column 5). axe has no rule for either, so this was only
+        // visible by reading the attributes off a live grid.
+        //
+        // Zero visual change, by construction: `view-core`'s month builder already sorts
+        // segments by `(weekIndex, lane, startCol)`, so same-lane cells are contiguous and in
+        // ascending-column order — grouping them changes neither the chips' DOM order (so tab
+        // order is unchanged) nor their painted boxes. Each `.lanes` row keeps the identical
+        // 7-track `grid-template-columns` and `grid-auto-rows: min-content`, so a lane's height
+        // is still the tallest chip in that lane, and the sum of the rows is what `.week-wrap`
+        // was already getting from one grid's implicit rows. Lanes with no chips used to be
+        // zero-height implicit rows and are now simply not emitted, which is the same height.
+        //
+        // A row is omitted entirely when it would be empty (an empty row is meaningless to a
+        // screen reader), so a week with no events emits no `.lanes` row at all — always the
+        // case in `narrow-events="dots"` mode.
+        const byLane = new Map<number, string[]>();
+        for (const c of chipCells) {
+          const cells = byLane.get(c.lane);
+          if (cells) cells.push(c.html);
+          else byLane.set(c.lane, [c.html]);
+        }
+        const laneRowCells = [...byLane.keys()].sort((a, b) => a - b).map((l) => byLane.get(l)!);
+        if (moreCells.length) laneRowCells.push(moreCells);
+
+        const dayRowHtml = `<div class="week" role="row" aria-rowindex="${++rowIndex}">${dayRowCells}</div>`;
+        const lanesHtml = laneRowCells
+          .map((cells) => `<div class="lanes" role="row" aria-rowindex="${++rowIndex}">${cells.join("")}</div>`)
+          .join("");
+        return `<div class="week-wrap" role="rowgroup">${dayRowHtml}${lanesHtml}</div>`;
       })
       .join("");
 
-    const monthHtml = `<div class="month" role="grid" aria-colcount="7" aria-label="${escapeHtml(title)}"${this.loading ? ' aria-busy="true"' : ""}>
-      <div class="dow-row" role="row">${dowRow}</div>
+    const monthHtml = `<div class="month" role="grid" aria-colcount="7" aria-rowcount="${rowIndex}" aria-label="${escapeHtml(title)}"${this.loading ? ' aria-busy="true"' : ""}>
+      <div class="dow-row" role="row" aria-rowindex="1">${dowRow}</div>
       ${weeksHtml}
     </div>`;
     // §5.9 (task 4): `narrow-events="scroll"` keeps the desktop chip layout at the `narrow`
@@ -1480,6 +1520,17 @@ export class HijriCalendarElement extends HTMLElement {
       const ke = e as KeyboardEvent;
       const target = (ke.target as HTMLElement | null)?.closest?.("[data-i]");
       const idx = target ? buttons.indexOf(target as HTMLButtonElement) : -1;
+      // Only the day cells are grid-navigable. The grid also *contains* the event chips and the
+      // more-link buttons (they're real, focusable buttons in their own gridcells — the whole
+      // point of not hiding the event layer from assistive tech), and their keydowns bubble to
+      // this same listener. Bailing out here — before any `preventDefault()` — is load-bearing:
+      // this handler used to fall back to the roving day button for *any* origin, so `Enter` on
+      // a focused chip called `preventDefault()` and emitted `date-click` for whichever day
+      // happened to hold the roving tabindex, and never `event-click`. A chip was reachable by
+      // Tab and impossible to activate. Native `<button>` behaviour already turns `Enter`/`Space`
+      // into a `click`, which `wireEventChips()` and the `[data-more]` wiring handle, so the
+      // correct thing to do with a non-day-cell key event is nothing at all.
+      if (idx === -1) return;
       const deltas: Record<string, number> = {
         ArrowRight: 1,
         ArrowLeft: -1,
@@ -1488,11 +1539,12 @@ export class HijriCalendarElement extends HTMLElement {
       };
       if (ke.key in deltas) {
         ke.preventDefault();
-        moveFocus(idx === -1 ? initialIdx : idx, deltas[ke.key] ?? 0);
+        moveFocus(idx, deltas[ke.key] ?? 0);
       } else if (ke.key === "Enter" || ke.key === " ") {
+        // Space on a <button> scrolls the page unless defaulted-prevented; Enter would fire a
+        // second, native click on top of the explicit one below.
         ke.preventDefault();
-        const useIdx = idx === -1 ? initialIdx : idx;
-        buttons[useIdx]?.click();
+        buttons[idx]?.click();
       }
     });
   }
