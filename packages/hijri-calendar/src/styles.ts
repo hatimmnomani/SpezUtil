@@ -146,15 +146,42 @@ ${arabicFontFace}
    already the intended de-emphasis. */
 .dow [part~="weekday-secondary"] { font-family: var(--hcal-font-family-mono); }
 .dow[part~="weekend"] { color: var(--hcal-weekend-fg); }
-.week { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: min-content; min-height: var(--hcal-cell-min-height); align-content: start; position: relative; }
+/* One week = a role="rowgroup" wrapper holding the day row (.week, 7 role="gridcell" cells) and,
+   when the week has any, the spanning event row (.lanes). ARIA: role="row" permits only cells as
+   children, so the chips/more-links can't live in the day row — see hijri-calendar.ts's
+   renderMonth() and api.md's Accessibility section.
+
+   .week-wrap is the positioned, min-height-carrying box the absolutely positioned .day-cell
+   background layer resolves against (it used to be .week itself, back when .week held every one
+   of these boxes in one grid). Its height is therefore the full month-cell height — day row plus
+   lane rows, or the min-height floor, whichever is larger — exactly as .week's was before. NOTHING
+   below may make .week or .week-cell positioned: that would re-bound .day-cell to the day row's
+   own height, which is the (twice-shipped) bug the abspos layer exists to avoid. */
+.week-wrap { min-height: var(--hcal-cell-min-height); position: relative; }
 /* §5.9 task 4: month-cell minimum height shrinks at medium/narrow — wide keeps
    --hcal-cell-min-height unchanged (Global Constraint 1). */
-.cal[data-size="medium"] .week { min-height: var(--hcal-cell-min-height-medium); }
-.cal[data-size="narrow"] .week { min-height: var(--hcal-cell-min-height-narrow); }
+.cal[data-size="medium"] .week-wrap { min-height: var(--hcal-cell-min-height-medium); }
+.cal[data-size="narrow"] .week-wrap { min-height: var(--hcal-cell-min-height-narrow); }
+.week { display: grid; grid-template-columns: repeat(7, 1fr); }
+/* The day gridcell contributes no box of its own (no padding/border/margin) and is a grid
+   container purely so its .day-head button stretches to fill it, exactly as the button did back
+   when it was the grid item of .week directly. */
+.week-cell { display: grid; }
+/* The spanning event layer: same 7 equal columns as .week, so chip columns line up with day
+   columns without needing subgrid; lane rows are its own implicit rows, so a lane's height is
+   the tallest chip in that lane across the whole week (auto-sized, never a hard-coded lane
+   height). min-width: 0 on the cells keeps a long chip title from widening a 1fr track — the
+   chip itself clips (overflow: hidden), as it did when it was the grid item. */
+.lanes { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-rows: min-content; }
+.lane-cell { display: grid; min-width: 0; }
 /* Background layer (R1): one div per column, behind the day-head buttons/chips/more-link
-   (all position: relative; z-index: 1) in both DOM and stacking order. */
+   (all position: relative; z-index: 1) in both DOM and stacking order — the chips' own
+   z-index: 1 keeps them above this layer even though .lanes comes later in the DOM (an
+   in-flow, non-positioned box paints below a positioned z-index: 0 one). */
 .day-cell { position: absolute; top: 0; bottom: 0; inset-inline-start: calc(var(--_col, 0) * (100% / 7)); width: calc(100% / 7); z-index: 0; box-sizing: border-box; padding: var(--hcal-cell-padding); border-inline-end: 1px solid var(--hcal-grid-line); border-block-end: 1px solid var(--hcal-grid-line); transition: background var(--hcal-transition); }
-.day-cell:nth-of-type(7) { border-inline-end: none; }
+/* Last column only — each .day-cell is now the only div inside its own gridcell, so this can no
+   longer be :nth-of-type(7) among siblings. */
+.week-cell:last-child .day-cell { border-inline-end: none; }
 .day-cell:hover { background: var(--hcal-cell-hover-bg); }
 .day-cell.out { background: var(--hcal-cell-out-bg); }
 .day-cell.weekend { background: var(--hcal-weekend-bg); }
@@ -166,7 +193,7 @@ ${arabicFontFace}
 .cal[data-size="narrow"] .day-cell { display: flex; align-items: flex-end; justify-content: center; flex-wrap: wrap; gap: 2px; padding-bottom: 4px; }
 [part~="event"][part~="dot"] { width: var(--hcal-event-dot-size); height: var(--hcal-event-dot-size); border-radius: 999px; background: var(--_ev-color, var(--hcal-accent)); flex: none; pointer-events: none; }
 .day-cell [part="more-link"] { font-size: 9px; line-height: var(--hcal-event-dot-size); color: var(--hcal-muted); font-family: var(--hcal-font-family-mono); pointer-events: none; }
-.day-head { grid-row: 1; border: none; background: none; cursor: pointer; font: inherit; color: var(--hcal-fg); display: flex; align-items: baseline; gap: 4px; justify-content: center; padding: 4px 4px 2px; border-radius: 6px; position: relative; z-index: 1; }
+.day-head { border: none; background: none; cursor: pointer; font: inherit; color: var(--hcal-fg); display: flex; align-items: baseline; gap: 4px; justify-content: center; padding: 4px 4px 2px; border-radius: 6px; position: relative; z-index: 1; }
 .day-head:focus-visible { outline: 2px solid var(--hcal-accent); outline-offset: 1px; }
 [part~="day-numbers"] { display: contents; }
 [part~="day-month-marker"] { margin-inline-start: auto; font-size: var(--hcal-day-secondary-font-size); color: var(--hcal-month-marker-color); font-family: var(--hcal-day-secondary-font-family); white-space: nowrap; }

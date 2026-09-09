@@ -6,17 +6,26 @@ import { test, expect, type Page } from "@playwright/test";
  *
  * That layer shipped broken twice because jsdom performs no layout, so unit tests never caught
  * either failure: first `grid-row: 1 / -1` collapsed to the head row (measured 24px against a
- * 96px `.week`), then `grid-row: 1 / span 999` still fell short because `min-height` slack sits
+ * 96px week), then `grid-row: 1 / span 999` still fell short because `min-height` slack sits
  * outside every grid track (22px empty / 39px two-chip / 88px densest, against 96px). The fix
  * (packages/hijri-calendar/src/styles.ts `.day-cell`) takes the layer out of grid math entirely:
- * absolutely positioned via a `--_col` custom property inside a `position: relative` `.week`.
+ * absolutely positioned via a `--_col` custom property inside a `position: relative` ancestor.
+ *
+ * That ancestor is `.week-wrap` (`role="rowgroup"`) since the ARIA row-structure fix, not `.week`
+ * itself: a week is now a rowgroup holding the day row (`.week`, 7 `role="gridcell"` cells) plus,
+ * when the week has any events, the spanning event row (`.lanes`) — because `role="row"` permits
+ * only cells as children. `.week` is therefore only as tall as the day-number row, and the box
+ * a `.day-cell` must cover — the full month-cell height, min-height floor or content-driven — is
+ * `.week-wrap`'s. Measuring `.week` here instead would pass while the cell covered nothing but
+ * the day numbers, i.e. it would re-admit the original bug, so the check below also asserts that
+ * each wrapper is genuinely taller than its own day row.
  *
  * This spec pins the resulting invariant directly in a real browser (Chromium, via Playwright) —
- * for every week row in the month view, `.day-cell`'s rendered height equals `.week`'s — at both
+ * for every week in the month view, `.day-cell`'s rendered height equals `.week-wrap`'s — at both
  * the default `--hcal-cell-min-height` and a content-driven case where that min-height is
  * collapsed to near-zero, across both empty and event-dense weeks. It needs no baseline image and
  * is expected to run green immediately, without ever touching Playwright's screenshot comparison
- * (see task-6b-report.md for the observed run output).
+ * (see task-6b-report.md and task-a11y-aria-report.md for the observed run output).
  */
 
 const VIEWPORT = { width: 1200, height: 800 }; // "wide" band — matches editorial.spec.ts's wide entry
@@ -28,36 +37,53 @@ async function openMonth(page: Page): Promise<void> {
   await page.evaluate(() => document.fonts.ready);
 }
 
+interface WeekMeasurement {
+  /** `.week-wrap` (role="rowgroup") — the whole month-cell box a `.day-cell` must cover. */
+  weekHeight: number;
+  /** `.week` (role="row") — the day-number row alone, always a strict subset of the above. */
+  dayRowHeight: number;
+  cellHeights: number[];
+}
+
 /**
- * For every `.week` row in the month grid, reads the row's own rendered height and the rendered
- * height of each `.day-cell` absolutely positioned inside it. Runs inside the page, piercing into
- * `<hijri-calendar>`'s shadow root manually via `shadowRoot` — plain `document.querySelector`
- * does not pierce shadow roots the way Playwright's own locators do. Returns plain numbers
- * (`getBoundingClientRect().height`), never an image, per this task's "never read image files
- * back" rule.
+ * For every week in the month grid, reads the week wrapper's rendered height, its day row's
+ * height, and the rendered height of each `.day-cell` absolutely positioned inside the wrapper.
+ * Runs inside the page, piercing into `<hijri-calendar>`'s shadow root manually via `shadowRoot`
+ * — plain `document.querySelector` does not pierce shadow roots the way Playwright's own locators
+ * do. Returns plain numbers (`getBoundingClientRect().height`), never an image, per this task's
+ * "never read image files back" rule.
  */
-function measureWeekRows(page: Page): Promise<Array<{ weekHeight: number; cellHeights: number[] }>> {
+function measureWeekRows(page: Page): Promise<WeekMeasurement[]> {
   return page.evaluate(() => {
     const host = document.querySelector("hijri-calendar");
     const root = host?.shadowRoot;
     if (!root) throw new Error("hijri-calendar shadow root not found");
-    return Array.from(root.querySelectorAll(".week")).map((week) => ({
-      weekHeight: week.getBoundingClientRect().height,
-      cellHeights: Array.from(week.querySelectorAll(".day-cell")).map(
+    return Array.from(root.querySelectorAll(".week-wrap")).map((wrap) => ({
+      weekHeight: wrap.getBoundingClientRect().height,
+      dayRowHeight: wrap.querySelector(".week")!.getBoundingClientRect().height,
+      cellHeights: Array.from(wrap.querySelectorAll(".day-cell")).map(
         (cell) => cell.getBoundingClientRect().height,
       ),
     }));
   });
 }
 
-function assertEveryCellMatchesItsWeek(rows: Array<{ weekHeight: number; cellHeights: number[] }>): void {
+function assertEveryCellMatchesItsWeek(rows: WeekMeasurement[]): void {
   expect(rows.length).toBeGreaterThan(0);
   for (const row of rows) {
     expect(row.cellHeights.length).toBe(7); // every week row is 7 days
     for (const cellHeight of row.cellHeights) {
       expect(Math.abs(cellHeight - row.weekHeight)).toBeLessThan(0.5);
     }
+    expect(row.dayRowHeight).toBeGreaterThan(0);
+    expect(row.weekHeight).toBeGreaterThanOrEqual(row.dayRowHeight);
   }
+  // ...and at least one week must be strictly taller than its own day-number row, otherwise
+  // "every cell matches its week" would be satisfiable by cells that cover nothing but the day
+  // numbers — precisely the collapsed-to-the-head-row bug this spec exists to catch. (Per-row
+  // strictness would be wrong: with the min-height collapsed, an event-free week legitimately
+  // *is* just its day row.)
+  expect(rows.some((row) => row.weekHeight > row.dayRowHeight + 0.5)).toBe(true);
 }
 
 test.describe("month day-cell height invariant (Ruling R)", () => {
@@ -83,8 +109,8 @@ test.describe("month day-cell height invariant (Ruling R)", () => {
     page,
   }) => {
     await openMonth(page);
-    // Override the min-height token directly on the host element so the row's rendered height
-    // comes from grid content (`grid-auto-rows: min-content`) rather than the min-height floor —
+    // Override the min-height token directly on the host element so the week's rendered height
+    // comes from its content (day row + auto-sized lane rows) rather than the min-height floor —
     // this is exactly the code path task-2/task-5's two prior bugs escaped through in jsdom.
     await page.locator("hijri-calendar").evaluate((el) => {
       (el as HTMLElement).style.setProperty("--hcal-cell-min-height", "4px");

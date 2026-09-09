@@ -1038,8 +1038,16 @@ export class HijriCalendarElement extends HTMLElement {
    * time-grid views. §5.9 (task 3, render-time not CSS): `weekday-secondary` is omitted
    * entirely at the `narrow` band, even under `weekday-format="bilingual"` — the DOM itself
    * differs per band, not just its CSS visibility.
+   *
+   * `colIndex` is passed **only** by the month view's `dow-row`, which is a real `role="row"`:
+   * the cell then renders as `role="columnheader"` with an `aria-colindex`. In the week/day
+   * time grid the same markup is nested inside `.tg-col-head`, which is not a row and carries no
+   * grid semantics at all, so the cell must NOT claim `columnheader` there — `columnheader`
+   * requires a `row` owner (ARIA "required parent"), and claiming it outside one is exactly the
+   * class of violation this method's month-view caller was fixed for. It stays a plain labelled
+   * div in the time grid.
    */
-  private weekdayCellHtml(dow: number): string {
+  private weekdayCellHtml(dow: number, colIndex?: number): string {
     const full = this.nameSet.weekdayNames[dow] ?? "";
     const isWeekend = this.weekendDays.includes(dow);
     const partTokens = ["weekday", isWeekend ? "weekend" : ""].filter(Boolean).join(" ");
@@ -1049,7 +1057,9 @@ export class HijriCalendarElement extends HTMLElement {
       const secondary = (enWeekdayNames[dow] ?? "").slice(0, 3);
       inner += `<span part="weekday-secondary">${escapeHtml(secondary)}</span>`;
     }
-    return `<div class="dow" part="${partTokens}" role="columnheader" title="${escapeHtml(full)}">${inner}</div>`;
+    const roleAttr =
+      colIndex === undefined ? "" : ` role="columnheader" aria-colindex="${colIndex}"`;
+    return `<div class="dow" part="${partTokens}"${roleAttr} title="${escapeHtml(full)}">${inner}</div>`;
   }
 
   /**
@@ -1208,7 +1218,9 @@ export class HijriCalendarElement extends HTMLElement {
     );
 
     const ws = this.weekStart;
-    const dowRow = Array.from({ length: 7 }, (_, i) => this.weekdayCellHtml((i + ws) % 7)).join("");
+    const dowRow = Array.from({ length: 7 }, (_, i) =>
+      this.weekdayCellHtml((i + ws) % 7, i + 1)
+    ).join("");
 
     // §5.9 (task 4): at the `narrow` band, `narrow-events="dots"` (the default) replaces the
     // lane-based chip layout with per-day coloured dots inside the `day-cell` background layer
@@ -1220,23 +1232,28 @@ export class HijriCalendarElement extends HTMLElement {
 
     const weeksHtml = model.weeks
       .map((week, w) => {
-        // Background layer, one div per column, emitted *before* the day-head buttons so it
-        // sits behind them in DOM/stacking order (R1). It shares the button's click handler
-        // (see wireMonth) rather than re-emitting date-click itself.
+        // One `role="gridcell"` per day (7 per row, `.week-cell`), each holding — in this DOM
+        // order — its own background layer and then its day-number button, so the background
+        // sits behind the button in both DOM and stacking order (R1). ARIA: `role="row"` only
+        // permits cell/gridcell/columnheader/rowheader children, which is why the button (and,
+        // below, every chip and more-link) is wrapped in a gridcell rather than being a direct
+        // child of the row — see the `lanes` row below and the a11y section of api.md.
         //
-        // Deliberately NOT a grid item: `.week`'s own box can be taller than the sum of its row
-        // tracks (min-height: var(--hcal-cell-min-height) with align-content: start puts any
-        // leftover height *after* the last track, outside every grid line — nothing placed via
-        // grid-row/grid-column, at any span, can reach into it). So the layer is taken out of
-        // grid layout entirely and positioned absolutely instead: `.week` is already `position:
-        // relative`, and an absolutely-positioned child with NO definite grid-row/grid-column
-        // uses the grid container's own padding box as its containing block (a definite grid
-        // position would instead use that grid *area* as the containing block, which is exactly
-        // the track-bounded box we're trying to escape). `top:0;bottom:0` in styles.ts then
-        // stretches it to `.week`'s actual rendered height, whatever produced it (min-height or
-        // content). Horizontal placement is done manually via the `--_col` custom property
-        // (`inset-inline-start`/`width` in styles.ts) since there's no grid-column to rely on.
-        const dayCells = week
+        // The background layer is deliberately NOT a grid item: `.week-wrap`'s own box can be
+        // taller than the sum of its rows (min-height: var(--hcal-cell-min-height) leaves any
+        // leftover height *after* the last row, outside every grid line of `.week`/`.lanes` —
+        // nothing placed via grid-row/grid-column, at any span, can reach into it). So the layer
+        // is taken out of grid layout entirely and positioned absolutely instead: `.week-wrap`
+        // is `position: relative` (and neither `.week` nor `.week-cell` is positioned), and an
+        // absolutely-positioned element with NO definite grid-row/grid-column uses its nearest
+        // positioned ancestor's padding box as its containing block — here the whole week
+        // wrapper, day row plus lane rows (a definite grid position would instead use its own
+        // grid *area* as the containing block, which is exactly the track-bounded box we're
+        // trying to escape). `top:0;bottom:0` in styles.ts then stretches it to `.week-wrap`'s
+        // actual rendered height, whatever produced it (min-height or content). Horizontal
+        // placement is done manually via the `--_col` custom property (`inset-inline-start`/
+        // `width` in styles.ts) since there's no grid-column to rely on.
+        const dayRowCells = week
           .map((cell, d) => {
             const i = w * 7 + d;
             const tokens = ["day-cell"];
@@ -1270,19 +1287,10 @@ export class HijriCalendarElement extends HTMLElement {
                 dotsHtml += `<span part="more-link">+${this.numG(overflowCount)}</span>`;
               }
             }
-            return `<div class="${tokenStr}" part="${tokenStr}" data-cell="${i}"
+            const bgHtml = `<div class="${tokenStr}" part="${tokenStr}" data-cell="${i}"
               style="--_col:${d}">${indicator}${dotsHtml}</div>`;
-          })
-          .join("");
 
-        const dayHeads = week
-          .map((cell, d) => {
-            const i = w * 7 + d;
-            const cls = [
-              "day-head",
-              cell.inCurrentMonth ? "" : "out",
-              cell.isToday ? "today" : "",
-            ]
+            const cls = ["day-head", cell.inCurrentMonth ? "" : "out", cell.isToday ? "today" : ""]
               .filter(Boolean)
               .join(" ");
             let label = `${formatHijri(cell.hijri, "D MMMM YYYY", { monthNames: this.nameSet.monthNames })} (${toIso(cell.gregorian)})`;
@@ -1290,11 +1298,18 @@ export class HijriCalendarElement extends HTMLElement {
               const n = this.eventsOnDay(cell.gregorian.getTime()).length;
               if (n > 0) label += `, ${this.loc.moreDotsLabel(this.numG(n))}`;
             }
-            return `<button type="button" part="day" class="${cls}" role="gridcell"
-              style="grid-column:${d + 1}" data-i="${i}" data-date="${toIso(cell.gregorian)}"
+            // The button keeps every hook the rest of the component keys off (`part="day"`,
+            // `data-i`, `data-date`, the roving `tabindex`, the aria-label) but no longer
+            // carries `role="gridcell"` itself: that role is on the wrapper, so the button
+            // reports its own native `button` role again inside the cell.
+            const headHtml = `<button type="button" part="day" class="${cls}"
+              data-i="${i}" data-date="${toIso(cell.gregorian)}"
               aria-label="${escapeHtml(label)}" tabindex="-1" ${cell.disabled ? "disabled data-disabled" : ""}>
               ${this.dayNumbersHtml(cell.hijri, cell.gregorian)}
             </button>`;
+
+            return `<div class="week-cell" role="gridcell" aria-colindex="${d + 1}"
+              style="grid-column:${d + 1}">${bgHtml}${headHtml}</div>`;
           })
           .join("");
 
@@ -1326,14 +1341,21 @@ export class HijriCalendarElement extends HTMLElement {
                 // root. Additive: no shipped CSS rule targets either token.
                 const spanPart = spanTokens.map((t) => ` ${t}`).join("");
                 const partAttr = `event ${styleToken} ${this.timingToken(n)}${variant.part}${spanPart}`;
-                const colorStyle = ev.color ? `--_ev-color:${escapeHtml(ev.color)};` : "";
-                const gridStyle = `grid-row:${s.lane + 2};grid-column:${s.startCol + 1} / span ${s.span}`;
+                const colorStyle = ev.color ? ` style="--_ev-color:${escapeHtml(ev.color)};"` : "";
+                // Lane/column placement lives on the wrapping gridcell, not on the button:
+                // `.lanes` is the grid, and the chip stretches to fill its cell (styles.ts
+                // `.lane-cell`), so the rendered chip box is unchanged. `aria-colindex`/
+                // `aria-colspan` are what tell a screen reader which day columns a multi-day
+                // chip covers, now that the chips are their own row rather than being mixed
+                // in among the day cells.
+                const gridStyle = `grid-row:${s.lane + 1};grid-column:${s.startCol + 1} / span ${s.span}`;
+                const colSpan = s.span > 1 ? ` aria-colspan="${s.span}"` : "";
                 const labels = this.normalizedLabels(n);
                 const ariaLabel = `${ev.title}, ${labels.start}`;
                 const inner = this.eventInnerHtml(ev, labels, "month-chip");
-                return `<button type="button" part="${partAttr}" class="${cls}" data-ev="${idx}"
-              style="${colorStyle}${gridStyle}"${variant.dataAttr}
-              aria-label="${escapeHtml(ariaLabel)}" title="${escapeHtml(ariaLabel)}">${inner}</button>`;
+                return `<div class="lane-cell" role="gridcell" aria-colindex="${s.startCol + 1}"${colSpan}
+              style="${gridStyle}"><button type="button" part="${partAttr}" class="${cls}" data-ev="${idx}"${colorStyle}${variant.dataAttr}
+              aria-label="${escapeHtml(ariaLabel)}" title="${escapeHtml(ariaLabel)}">${inner}</button></div>`;
               })
               .join("");
 
@@ -1343,17 +1365,23 @@ export class HijriCalendarElement extends HTMLElement {
               .map((cell, d) => {
                 const count = model.overflow[w]?.[d] ?? 0;
                 if (!count) return "";
-                return `<button type="button" part="more-link" class="more"
-              style="grid-row:${this.maxEvents + 2};grid-column:${d + 1}"
-              data-more="${w * 7 + d}">${escapeHtml(this.loc.moreLabel(count))}</button>`;
+                return `<div class="lane-cell" role="gridcell" aria-colindex="${d + 1}"
+              style="grid-row:${this.maxEvents + 1};grid-column:${d + 1}"><button type="button" part="more-link" class="more"
+              data-more="${w * 7 + d}">${escapeHtml(this.loc.moreLabel(count))}</button></div>`;
               })
               .join("");
 
-        return `<div class="week" role="row">${dayCells}${dayHeads}${chips}${mores}</div>`;
+        // The spanning event layer is its own `role="row"` (`.lanes`), a sibling of the day row
+        // inside a `role="rowgroup"` week wrapper — never a child of the day row, whose only
+        // permitted children are cells. It is omitted entirely when a week has neither chips nor
+        // more-links (an empty row is meaningless to a screen reader), which is always the case
+        // in `narrow-events="dots"` mode.
+        const lanesHtml = chips || mores ? `<div class="lanes" role="row">${chips}${mores}</div>` : "";
+        return `<div class="week-wrap" role="rowgroup"><div class="week" role="row">${dayRowCells}</div>${lanesHtml}</div>`;
       })
       .join("");
 
-    const monthHtml = `<div class="month" role="grid" aria-label="${escapeHtml(title)}"${this.loading ? ' aria-busy="true"' : ""}>
+    const monthHtml = `<div class="month" role="grid" aria-colcount="7" aria-label="${escapeHtml(title)}"${this.loading ? ' aria-busy="true"' : ""}>
       <div class="dow-row" role="row">${dowRow}</div>
       ${weeksHtml}
     </div>`;

@@ -33,24 +33,54 @@ function partTokens(el: Element): string[] {
   return (el.getAttribute("part") ?? "").split(/\s+/).filter(Boolean);
 }
 
+/**
+ * R1 (background layer behind the button, in DOM as well as stacking order), re-expressed for
+ * the per-day `role="gridcell"` structure the ARIA fix introduced: a week row's children are
+ * exactly 7 gridcells, and inside each one the `day-cell` background div is the first child and
+ * its `day` button the second. Before that fix the same invariant read "the row's first seven
+ * children are the 7 day-cell divs, and no `day` button appears before index 7" — the day-cell
+ * still precedes its own column's button, it is just now scoped to the cell rather than the row
+ * (the flat form was also weaker: it only checked that *some* button came after all seven
+ * layers, not that each layer precedes *its own* button).
+ */
+function expectCellPrecedesItsButton(week: Element): void {
+  const cells = Array.from(week.children) as HTMLElement[];
+  expect(cells.length).toBe(7);
+  for (const cell of cells) {
+    expect(cell.getAttribute("role")).toBe("gridcell");
+    const children = Array.from(cell.children) as HTMLElement[];
+    expect(children.length).toBe(2);
+    expect(children[0]!.tagName).toBe("DIV");
+    expect(partTokens(children[0]!)).toContain("day-cell");
+    expect(children[1]!.tagName).toBe("BUTTON");
+    expect(partTokens(children[1]!)).toContain("day");
+    // Same column: the layer's data-cell index and the button's data-i index must agree.
+    expect(children[0]!.dataset.cell).toBe(children[1]!.dataset.i);
+  }
+}
+
 describe("<hijri-calendar> month day-cell background layer", () => {
   it("renders exactly 42 [part~=day-cell] layers per month", () => {
     const el = mount({ date: "2026-07-06" });
     expect(sr(el).querySelectorAll('[part~="day-cell"]').length).toBe(42);
   });
 
-  it("takes each day-cell out of grid placement (--_col only, no grid-row/grid-column) so it can be positioned to fill .week's real rendered box rather than a track-bounded grid area", () => {
-    // Fix history: `.week` has `min-height: var(--hcal-cell-min-height)` with `align-content:
-    // start`, so any week whose real content (head + chip lanes + more-link) is shorter than
-    // that min-height has leftover space sitting *after* the last grid line — nothing placed
-    // via grid-row, at any span (`1 / -1` or `1 / span 999`), can reach into it, since a grid
-    // item's box is bounded by the tracks it spans. The layer is therefore not a grid item at
-    // all: no `grid-row`/`grid-column` in its inline style (a definite grid position would make
-    // an absolutely-positioned child use that grid *area*, not `.week`'s padding box, as its
-    // containing block — see styles.ts's `.day-cell` comment). jsdom performs no layout, so it
-    // cannot see whether the rendered box actually reaches `.week`'s real height — that's a
-    // Playwright-only assertion (see the fix report) — but it CAN honestly see that no grid
-    // placement was emitted, and that the CSS declares the absolute/inset mechanism instead.
+  it("takes each day-cell out of grid placement (--_col only, no grid-row/grid-column) so it can be positioned to fill .week-wrap's real rendered box rather than a track-bounded grid area", () => {
+    // Fix history: the week wrapper has `min-height: var(--hcal-cell-min-height)`, so any week
+    // whose real content (day row + chip lanes + more-link row) is shorter than that min-height
+    // has leftover space sitting *after* the last grid line of the rows inside it — nothing
+    // placed via grid-row, at any span (`1 / -1` or `1 / span 999`), can reach into it, since a
+    // grid item's box is bounded by the tracks it spans. The layer is therefore not a grid item
+    // at all: no `grid-row`/`grid-column` in its inline style (a definite grid position would
+    // make an absolutely-positioned element use that grid *area*, not its nearest positioned
+    // ancestor's padding box, as its containing block — see styles.ts's `.day-cell` comment).
+    // Since the ARIA fix the positioned ancestor is `.week-wrap` (role="rowgroup") rather than
+    // `.week` itself, because `.week` is now only the day row; the mechanism is otherwise
+    // unchanged. jsdom performs no layout, so it cannot see whether the rendered box actually
+    // reaches the wrapper's real height — that's a Playwright-only assertion (see
+    // apps/storybook/tests/visual/day-cell-height.spec.ts) — but it CAN honestly see that no
+    // grid placement was emitted, and that the CSS declares the absolute/inset mechanism, that
+    // `.week-wrap` is the positioned box, and that neither `.week` nor `.week-cell` is.
     const el = mount({ date: "2026-07-06" });
     const cells = Array.from(sr(el).querySelectorAll<HTMLElement>("[data-cell]"));
     expect(cells.length).toBe(42);
@@ -65,6 +95,12 @@ describe("<hijri-calendar> month day-cell background layer", () => {
     expect(css).toMatch(/\.day-cell\s*\{[^}]*top:\s*0\b/);
     expect(css).toMatch(/\.day-cell\s*\{[^}]*bottom:\s*0\b/);
     expect(css).toMatch(/\.day-cell\s*\{[^}]*inset-inline-start:\s*calc\(var\(--_col/);
+    // The containing block: .week-wrap is positioned and carries the min-height; the day row and
+    // the day gridcell must not be positioned, or .day-cell would be re-bounded to the day row.
+    expect(css).toMatch(/\.week-wrap\s*\{[^}]*min-height:\s*var\(--hcal-cell-min-height\)/);
+    expect(css).toMatch(/\.week-wrap\s*\{[^}]*position:\s*relative/);
+    expect(css).not.toMatch(/\.week\s*\{[^}]*position:/);
+    expect(css).not.toMatch(/\.week-cell\s*\{[^}]*position:/);
   });
 
   it("marks the out token consistently with its column's day-head button (out-of-Hijri-month cells)", () => {
@@ -118,28 +154,14 @@ describe("<hijri-calendar> month day-cell background layer", () => {
     // Default weekend-days="0 6" (Sun/Sat); with Monday-first columns those land at the end.
     expect(weekendIdx).toEqual([5, 6]);
     // Every day-cell still precedes its own column's button, exactly as under week-start=0.
-    const week = sr(el).querySelector(".week")!;
-    const firstButtonIdx = Array.from(week.children).findIndex(
-      (c) => c.tagName === "BUTTON" && partTokens(c as HTMLElement).includes("day")
-    );
-    expect(firstButtonIdx).toBeGreaterThanOrEqual(7);
+    expectCellPrecedesItsButton(sr(el).querySelector(".week")!);
   });
 
   it("precedes its column's day button in DOM order within every week row (R1)", () => {
     const el = mount({ date: "2026-07-06" });
     const weeks = Array.from(sr(el).querySelectorAll(".week"));
     expect(weeks.length).toBe(6);
-    for (const week of weeks) {
-      const children = Array.from(week.children) as HTMLElement[];
-      const firstSeven = children.slice(0, 7);
-      expect(
-        firstSeven.every((c) => c.tagName === "DIV" && partTokens(c).includes("day-cell"))
-      ).toBe(true);
-      const firstButtonIdx = children.findIndex(
-        (c) => c.tagName === "BUTTON" && partTokens(c).includes("day")
-      );
-      expect(firstButtonIdx).toBeGreaterThanOrEqual(7);
-    }
+    for (const week of weeks) expectCellPrecedesItsButton(week);
   });
 
   it("gives .day-head a z-index and a visible :focus-visible ring, not outline:none (R1)", () => {
