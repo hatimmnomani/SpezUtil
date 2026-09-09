@@ -41,7 +41,7 @@ describe("<hijri-calendar> shell", () => {
   });
 
   it("shows the Hijri month title with a Gregorian subtitle", () => {
-    const el = mount({ date: "2026-07-06" });
+    const el = mount({ date: "2026-07-06", numerals: "latn" });
     const h = cal.gregorianToHijri(new Date(Date.UTC(2026, 6, 6)));
     const title = sr(el).querySelector('[part="title"]')!.textContent!;
     expect(title).toContain(translitMonthNames[h.month - 1]);

@@ -29,7 +29,8 @@ properties, 21 new attributes/properties, 1 new DOM event (`range-change`), 2 re
 (`renderEvent`, `renderDayCell`), 5 slots, and ~30 new `::part()` names/tokens — all additive, shipped in
 eight phases (six package phases, one CI/visual-regression phase, one consumer-migration phase), with the
 default look unchanged for existing 0.2.x consumers except the accepted changes catalogued in §5.4
-(D1–D8 as shipped; D8 is a post-launch WCAG AA contrast fix, not part of the original phase plan).
+(D1–D9 as shipped; D8 is a post-launch WCAG AA contrast fix and D9 is a post-launch `numerals`
+default-flip, neither part of the original phase plan).
 
 ---
 
@@ -246,7 +247,7 @@ New:
 | `toolbar` (`toolbar`) | `"full" \| "none"` | `"full"` | P0 | `none` removes the built-in toolbar (host drives `view`/`date` itself). Slots still render. |
 | `title-layout` (`titleLayout`) | `"stacked" \| "inline"` | `"stacked"` | P1 | Gregorian subtitle below (today) or inline after the Hijri title with a separator. |
 | `names` (`names`) | `"translit" \| "ar"` | follows `locale` | P1 | Hijri month & weekday names, independent of UI strings. |
-| `numerals` (`numerals`) | `"latn" \| "arab"` | `"latn"` | P1 | Digit system for **Hijri** numbers: day numbers, Hijri year, title primary, agenda Hijri date, day-banner primary. |
+| `numerals` (`numerals`) | `"latn" \| "arab"` | `"arab"` (was `"latn"` through P1; flipped post-launch, **D9**) | P1 | Digit system for **Hijri** numbers: day numbers, Hijri year, title primary, agenda Hijri date, day-banner primary. |
 | `numerals-gregorian` (`numeralsGregorian`) | `"latn" \| "arab"` | `"latn"` | P1 | Digit system for **Gregorian** numbers *and clock digits*: Gregorian day numbers, Gregorian year in the title/agenda/banner, time-gutter labels, `event-time` text, `now-label`. Month abbreviations ("Jul") are never transliterated. |
 | `weekday-format` (`weekdayFormat`) | `"short" \| "long" \| "bilingual"` | `"short"` | P1 | `bilingual` renders the `names` weekday (primary) and the English abbreviation (secondary). |
 | `weekend-days` (`weekendDays`) | space-separated day indices `0`(Sun)–`6`(Sat) | `"0 6"` | P1 | Days that receive the `weekend` part token and `--hcal-weekend-*` styling. Empty string = no weekend. Out-of-range/duplicate tokens ignored. |
@@ -268,13 +269,15 @@ New:
 | — (`renderDayCell`) | `(ctx: RenderDayCellContext) => Node \| string \| null` | `undefined` | P4 | Property only. Replaces the **inner content** of the month-cell number button and time-grid column head (`part="day"`). `string` = text; `null` = default. Output must be non-interactive (it lives inside a `<button>`). |
 | — (`visibleRange`) | read-only `RangeChangeDetail` | computed | P0 | Same object the last `range-change` carried. |
 
-**Numerals truth table** (both attributes share `formatNumerals()` from `hijri-core`; Latin is the
-untouched default so 0.2.x output is unchanged):
+**Numerals truth table** (both attributes share `formatNumerals()` from `hijri-core`).
+`numerals-gregorian`'s `"latn"` default is untouched and has been since P1. `numerals`'s default
+flipped from `"latn"` to `"arab"` post-launch (**D9** — see §5.4); the row below marked "(default)"
+reflects the current, post-D9 default, not the P1-era one:
 
 | `numerals` | `numerals-gregorian` | Hijri day/year/title | Gregorian day/year | Clock labels (`10:30`, gutter, `now-label`) | Month names |
 | --- | --- | --- | --- | --- | --- |
-| `latn` | `latn` (default) | `27 Shawwal 1447` | `14`, `May 2026` | `10:30` | per `names` / always Latin for Gregorian |
-| `arab` | `latn` (reference look) | `٢٧ شوال ١٤٤٧` | `14`, `May 2026` | `10:30` | idem |
+| `latn` | `latn` (pre-D9 default; still available, explicit) | `27 Shawwal 1447` | `14`, `May 2026` | `10:30` | per `names` / always Latin for Gregorian |
+| `arab` | `latn` (default since D9; reference look) | `٢٧ شوال ١٤٤٧` | `14`, `May 2026` | `10:30` | idem |
 | `latn` | `arab` | `27 …` | `١٤`, `May ٢٠٢٦` | `١٠:٣٠` | idem |
 | `arab` | `arab` | `٢٧ …` | `١٤`, `May ٢٠٢٦` | `١٠:٣٠` | idem |
 
@@ -414,7 +417,7 @@ export interface RangeChangeDetail {
 6. Emitted **before** any timers start (the now-indicator interval) and independently of `timezone`;
    ranges are UTC-day based like the rest of the component.
 
-### 5.4 Accepted default/visual changes (decided — no escape hatch, except D6's and D8's tokens)
+### 5.4 Accepted default/visual changes (decided — no escape hatch, except D6's and D8's tokens and D9's attribute)
 
 - **D1 — toolbar order** becomes `‹ Today ›` (prev / today / next). Purely visual; parts unchanged.
   Ships in P0. Changeset text: "Toolbar navigation is now ‹ Today › (was Today ‹ ›) to match common
@@ -524,6 +527,26 @@ measured byte-identical in Chromium before and after, at the wide, medium and na
 LTR and RTL, with and without overflow more-links. No `::part()` name or token, attribute, property
 or event changed either; the one host-visible detail is that `part="day"` no longer carries
 `role="gridcell"` (its wrapper does). Ships post-launch, `hijri-calendar.ts`/`styles.ts` plus tests.
+
+- **D9 — `numerals` now defaults to `"arab"` (post-launch, not part of P0–P5).** Hijri day numbers,
+  the Hijri year, the title primary, the agenda Hijri date, and the day-banner primary now render
+  Arabic-Indic digits with no attribute set; P1 through this fix had `numerals` default to
+  `"latn"` (Latin digits) to preserve the 0.2.x look byte-for-byte. That default-preservation call
+  weighed backward compatibility too heavily: the component's entire purpose is displaying Hijri
+  dates, and the product owner reported twice, independently, that "the arabic dates are still in
+  english numericals" while looking at the docs demo, the default Storybook stories, and their own
+  app — the only place Arabic-Indic numerals showed up by default was the three `Editorial/*`
+  stories, which set `numerals="arab"` explicitly. `numerals-gregorian` is untouched and keeps its
+  own `"latn"` default, so Gregorian numbers, clock digits (time labels, event duration,
+  day-banner counts) and month abbreviations (`Jul`) stay Latin — this is exactly the reference
+  design's ("editorial") numeral pairing, now the out-of-the-box look instead of an opt-in. The
+  day-cell `aria-label` is unaffected — it is deliberately not a numerals-truth-table site (a
+  Phase 1 review call, carried forward unchanged here): it calls `formatHijri()` without an
+  `opts.numerals`, which defaults to `"latn"` inside `hijri-core` regardless of the `numerals`
+  attribute, so a screen reader never announces Arabic-Indic digits inside the otherwise-English
+  (`locale`-default `translit`) label. Restore the pre-fix, all-Latin look with
+  `numerals="latn"` on the host element. Ships post-launch, `hijri-calendar.ts` plus
+  `typography.test.ts` and other vitest suites.
 
 ### 5.5 CSS custom properties
 
@@ -1347,8 +1370,8 @@ resolution below is already propagated into §5 and §6; this section is the rec
 - `apps/docs` API page lists every attribute, property, event, custom property, part and slot in §5,
   the numerals truth table, the `range-change` contract, the `slot-minutes` note, and the size-band
   table.
-- Changesets applied; versions as in the header; CHANGELOGs mention D1, D2, D3, D4, D5, D6, D7 and
-  the 1.0 `event-style` default change.
+- Changesets applied; versions as in the header; CHANGELOGs mention D1, D2, D3, D4, D5, D6, D7, D8,
+  D9 and the 1.0 `event-style` default change.
 - `da-office-management-fe` PR deletes the five dead calendar sections of `events.css`, ships
   `calendar-theme.css` + the rewritten `my-calendar.jsx`, and fetches by visible range via
   `useEventsInRange` (merged once the backend filter exists; the token/markup parts of the PR can

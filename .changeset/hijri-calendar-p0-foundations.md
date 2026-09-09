@@ -29,13 +29,13 @@ chrome (filter chips, a "New event" button, etc.) alongside the calendar.
   `--hcal-switch-*`) are now overridable custom properties, all defaulting to their previous
   literal values.
 
-### Accepted visual changes (D1–D8)
+### Accepted visual changes (D1–D9)
 
-Eight small, deliberate visual changes ship across this 0.3.0 release (landing in different phases
-of the same underlying work, plus a post-launch accessibility fix; listed together here for
-visibility). Only D6 and D8 have configuration escape hatches (D8's is a "restore the old,
-failing look" hatch, not recommended) — the others were each judged an improvement, not left as a
-choice:
+Nine small, deliberate visual changes ship across this 0.3.0 release (landing in different phases
+of the same underlying work, plus two post-launch fixes — an accessibility fix and a numerals
+default flip; listed together here for visibility). Only D6, D8 and D9 have configuration escape
+hatches (D8's is a "restore the old, failing look" hatch, not recommended) — the others were each
+judged an improvement, not left as a choice:
 
 - **D1 — toolbar order** is now `‹ Today ›` (prev / today / next), was `Today ‹ ›`.
   `::part(nav-prev|nav-today|nav-next)` selectors are unaffected.
@@ -75,6 +75,17 @@ choice:
   switch to `--hcal-cell-out-fg` instead. `--hcal-day-secondary-font-size` stays at its 9px
   default (D4) — not itself a WCAG violation, but worth knowing the contrast fix matters more at
   that size.
+- **D9 — `numerals` now defaults to `"arab"` (post-launch, replacing P1's original `"latn"`
+  default).** Hijri day numbers, the Hijri year, the title primary, the agenda Hijri date and the
+  day-banner primary now render Arabic-Indic digits with no attribute set. The component's whole
+  purpose is displaying Hijri dates, and Latin was the wrong default for that audience — the
+  original P1 default-preservation call weighed backward compatibility too heavily.
+  `numerals-gregorian` is untouched and keeps its own `"latn"` default, so Gregorian numbers,
+  clock digits (time labels, event duration, day-banner counts) and month abbreviations (`Jul`)
+  stay Latin — exactly the reference "editorial" pairing, now the default instead of an opt-in.
+  Unlike D6/D8, the restore path is an attribute, not a custom property (this is a digit
+  *system*, not a color or size token): `numerals="latn"` on the host element fully restores the
+  pre-D9, all-Latin look. See the P1 entry above for the full rationale.
 
 ### Looking ahead to 1.0
 

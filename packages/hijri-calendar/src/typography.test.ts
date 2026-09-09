@@ -54,8 +54,8 @@ describe("<hijri-calendar> numerals", () => {
     expect(cell.querySelector('[part="day-secondary"]')!.getAttribute("dir")).toBeNull();
   });
 
-  it('numerals-gregorian="arab" alone transliterates the Gregorian day number, leaving the Hijri title Latin', () => {
-    const el = mount({ date: "2026-07-06", "numerals-gregorian": "arab" });
+  it('numerals-gregorian="arab" alone (numerals explicitly "latn") transliterates the Gregorian day number, leaving the Hijri title Latin', () => {
+    const el = mount({ date: "2026-07-06", numerals: "latn", "numerals-gregorian": "arab" });
     const first = cellFor(el, "2026-07-01");
     expect(first.querySelector('[part="day-secondary"]')!.textContent!.trim()).toBe("١ Jul");
     // "١ Jul" mixes an Arabic-Indic numeral with a Latin month abbreviation; under an RTL
@@ -142,6 +142,43 @@ describe("<hijri-calendar> numerals", () => {
 
     const titlePrimary = sr(el).querySelector('[part="title-primary"]')!.textContent!;
     expect(ASCII_DIGIT.test(titlePrimary)).toBe(false);
+  });
+
+  it('numerals="latn" numerals-gregorian="latn" (both explicit) is the pre-0.3.0 all-Latin combination', () => {
+    const el = mount({
+      date: "2026-07-06",
+      numerals: "latn",
+      "numerals-gregorian": "latn",
+    });
+    const titlePrimary = sr(el).querySelector('[part="title-primary"]')!;
+    expect(ARABIC_INDIC.test(titlePrimary.textContent!)).toBe(false);
+    expect(ASCII_DIGIT.test(titlePrimary.textContent!)).toBe(true);
+
+    const cell = cellFor(el, "2026-07-06");
+    const primary = cell.querySelector('[part="day-primary"]')!.textContent!;
+    expect(ARABIC_INDIC.test(primary)).toBe(false);
+    const secondary = cell.querySelector('[part="day-secondary"]')!.textContent!;
+    expect(ARABIC_INDIC.test(secondary)).toBe(false);
+  });
+
+  it('D9: defaults to numerals="arab" with no numerals attribute set — Hijri day numbers, the Hijri year/title-primary render Arabic-Indic out of the box; numerals="latn" restores the pre-0.3.0 Latin look', () => {
+    const bare = mount({ date: "2026-07-06" });
+    expect(bare.numerals).toBe("arab");
+    const bareCell = cellFor(bare, "2026-07-06");
+    const barePrimary = bareCell.querySelector('[part="day-primary"]')!.textContent!;
+    expect(ARABIC_INDIC.test(barePrimary)).toBe(true);
+    expect(ASCII_DIGIT.test(barePrimary)).toBe(false);
+    const bareTitle = sr(bare).querySelector('[part="title-primary"]')!.textContent!;
+    expect(ARABIC_INDIC.test(bareTitle)).toBe(true);
+    // numerals-gregorian is unaffected by the new default and stays Latin.
+    const bareSecondary = bareCell.querySelector('[part="day-secondary"]')!.textContent!;
+    expect(ARABIC_INDIC.test(bareSecondary)).toBe(false);
+
+    const latin = mount({ date: "2026-07-06", numerals: "latn" });
+    const latinCell = cellFor(latin, "2026-07-06");
+    const latinPrimary = latinCell.querySelector('[part="day-primary"]')!.textContent!;
+    expect(ASCII_DIGIT.test(latinPrimary)).toBe(true);
+    expect(ARABIC_INDIC.test(latinPrimary)).toBe(false);
   });
 });
 

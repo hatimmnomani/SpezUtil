@@ -275,13 +275,14 @@ export const Loading = Template.bind({});
 /**
  * Four-combination grid of `numerals` × `numerals-gregorian` (see the API reference's numerals
  * truth table): Hijri and Gregorian digit systems are independent, and neither is decided by
- * `locale`. `latn`/`latn` (top-left) is today's unchanged default; `arab`/`latn` (top-right) is
- * the reference "editorial" look.
+ * `locale`. `arab`/`latn` (top-right) is the default since D9 — it's also the reference
+ * "editorial" look; `latn`/`latn` (top-left) is the pre-0.3.0-D9 all-Latin look, still available
+ * by setting `numerals="latn"` explicitly.
  */
 export const Numerals = () => {
   const combos: Array<{ label: string; numerals: "latn" | "arab"; numeralsGregorian: "latn" | "arab" }> = [
-    { label: "numerals=latn, numerals-gregorian=latn (default)", numerals: "latn", numeralsGregorian: "latn" },
-    { label: "numerals=arab, numerals-gregorian=latn (editorial)", numerals: "arab", numeralsGregorian: "latn" },
+    { label: "numerals=latn, numerals-gregorian=latn (pre-D9 default)", numerals: "latn", numeralsGregorian: "latn" },
+    { label: "numerals=arab, numerals-gregorian=latn (default since D9; editorial)", numerals: "arab", numeralsGregorian: "latn" },
     { label: "numerals=latn, numerals-gregorian=arab", numerals: "latn", numeralsGregorian: "arab" },
     { label: "numerals=arab, numerals-gregorian=arab", numerals: "arab", numeralsGregorian: "arab" },
   ];

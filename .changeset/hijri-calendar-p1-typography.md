@@ -13,8 +13,22 @@ header, and configurable weekend days.
   numeral-formatting call site in `hijri-calendar`.
 - **`numerals`** (Hijri digits) and **`numerals-gregorian`** (Gregorian digits *and all
   clock-adjacent numbers* — time labels, event duration, day-banner counts) are independent
-  attributes, both defaulting to `"latn"` so existing output is unchanged. Neither is decided by
-  `locale`, which continues to control only UI chrome strings (toolbar labels, "+N more", etc.).
+  attributes. Neither is decided by `locale`, which continues to control only UI chrome strings
+  (toolbar labels, "+N more", etc.). `numerals-gregorian` defaults to `"latn"`, unchanged from
+  0.2.x.
+- **D9 (post-launch, replacing this changeset's original `numerals` default) — `numerals` now
+  defaults to `"arab"`, not `"latn"`.** Hijri day numbers, the Hijri year, the title primary, the
+  agenda Hijri date and the day-banner primary now render **Arabic-Indic digits out of the box**;
+  0.3.0 initially shipped `numerals` defaulting to `"latn"` to keep 0.2.x output byte-for-byte
+  unchanged, but that weighed backward compatibility too heavily for a component whose entire
+  purpose is displaying Hijri dates — Arabic-Indic numerals ended up appearing only where a
+  consumer opted in explicitly (the three `Editorial/*` Storybook stories), which is not what
+  anyone actually wanted from a Hijri calendar. `numerals-gregorian` is **not** affected by this
+  change and keeps its `"latn"` default above, so Gregorian numbers, clock digits (time labels,
+  event duration, day-banner counts) and month abbreviations (`Jul`) stay Latin — this combination
+  (`numerals="arab"`, `numerals-gregorian="latn"`) is exactly the reference "editorial" pairing,
+  now the default instead of an opt-in. If you need the pre-fix, all-Latin look, set
+  `numerals="latn"` explicitly on the host element — that one attribute fully restores it.
 - **`names`** selects the Hijri month/weekday *name set* (`"translit"`/`"ar"`) independently of
   `locale` — set `names="ar"` for genuine Arabic month/weekday names while keeping English toolbar
   labels, or any other combination.

@@ -28,7 +28,7 @@ Every attribute has a matching camelCase property (`weekStart`, `dayStart`, `day
 ## New attributes (events-parity API)
 
 All of these are additive: every default reproduces today's (pre-parity) behaviour, **except** the
-eight accepted visual changes listed in [Accepted visual changes](#accepted-visual-changes-d1d8)
+nine accepted visual changes listed in [Accepted visual changes](#accepted-visual-changes-d1d9)
 below. A 0.2.x consumer upgrading to 0.3.0 sees no other visual difference.
 
 | Attribute (property) | Type | Default | Description |
@@ -37,7 +37,7 @@ below. A 0.2.x consumer upgrading to 0.3.0 sees no other visual difference.
 | `toolbar` (`toolbar`) | `"full" \| "none"` | `"full"` | `"none"` removes the built-in toolbar (the host drives `view`/`date` itself, e.g. from URL params). Slots still render. |
 | `title-layout` (`titleLayout`) | `"stacked" \| "inline"` | `"stacked"` | Gregorian subtitle rendered below the Hijri title (today) or inline after it with a separator. |
 | `names` (`names`) | `"translit" \| "ar"` | follows `locale` | Hijri month & weekday **name set**, independent of the `locale` UI strings. Set `names="ar"` for genuine Arabic month/weekday names while keeping English toolbar labels. |
-| `numerals` (`numerals`) | `"latn" \| "arab"` | `"latn"` | Digit system for **Hijri** numbers: day numbers, Hijri year, title primary, agenda Hijri date, day-banner primary. See the [numerals truth table](#numerals-truth-table). |
+| `numerals` (`numerals`) | `"latn" \| "arab"` | `"arab"` | Digit system for **Hijri** numbers: day numbers, Hijri year, title primary, agenda Hijri date, day-banner primary. Defaults to Arabic-Indic (see [D9](#accepted-visual-changes-d1d9)); set `numerals="latn"` for the pre-0.3.0 Latin look. See the [numerals truth table](#numerals-truth-table). |
 | `numerals-gregorian` (`numeralsGregorian`) | `"latn" \| "arab"` | `"latn"` | Digit system for **Gregorian** numbers *and clock digits*: Gregorian day numbers, Gregorian year in the title/agenda/banner, time-gutter labels, `event-time` text, event duration/count/hours-scheduled figures, `now-label`. Month abbreviations ("Jul") and `AM`/`PM` are never transliterated. `locale` never decides a digit system — only `numerals` and `numerals-gregorian` do. |
 | `weekday-format` (`weekdayFormat`) | `"short" \| "long" \| "bilingual"` | `"short"` | `"bilingual"` renders the `names` weekday (primary) and the English abbreviation (secondary) stacked. |
 | `weekend-days` (`weekendDays`) | space-separated day indices `0`(Sun)–`6`(Sat) | `"0 6"` | Days that receive the `weekend` part token and `--hcal-weekend-*` styling. Empty string = no weekend. Set `weekend-days="5 6"` for a Fri/Sat weekend. Out-of-range or duplicate tokens are ignored. |
@@ -121,13 +121,15 @@ Omitted keys default to the same-named field. The original raw object is always 
 ### Numerals truth table
 
 Both `numerals` and `numerals-gregorian` share a single `formatNumerals()` utility from
-`@spezutil/hijri-core`. Latin is the untouched default, so 0.2.x consumers see no change.
-`locale` **never** decides a digit system:
+`@spezutil/hijri-core`. `numerals-gregorian`'s `"latn"` default is untouched, so Gregorian day/year
+numbers, clock digits and month abbreviations are unaffected by this section. `numerals`'s default
+is `"arab"` (Arabic-Indic Hijri numbers — see [D9](#accepted-visual-changes-d1d9)); set
+`numerals="latn"` for the pre-0.3.0 all-Latin look. `locale` **never** decides a digit system:
 
 | `numerals` | `numerals-gregorian` | Hijri day/year/title | Gregorian day/year | Clock labels (`10:30`, gutter, event time/duration, `now-label`) | Month names |
 | --- | --- | --- | --- | --- | --- |
-| `latn` (default) | `latn` (default) | `27 Shawwal 1447` | `14`, `May 2026` | `10:30` | per `names`; Gregorian month abbreviations are always Latin |
-| `arab` | `latn` | `٢٧ شوال ١٤٤٧` | `14`, `May 2026` | `10:30` | idem — this is the reference "editorial" look |
+| `latn` (pre-0.3.0 look) | `latn` (default) | `27 Shawwal 1447` | `14`, `May 2026` | `10:30` | per `names`; Gregorian month abbreviations are always Latin |
+| `arab` (default) | `latn` | `٢٧ شوال ١٤٤٧` | `14`, `May 2026` | `10:30` | idem — this is the reference "editorial" look |
 | `latn` | `arab` | `27 Shawwal 1447` | `١٤`, `May ٢٠٢٦` | `١٠:٣٠` | idem |
 | `arab` | `arab` | `٢٧ شوال ١٤٤٧` | `١٤`, `May ٢٠٢٦` | `١٠:٣٠` | idem |
 
@@ -436,10 +438,10 @@ chips by content).
 React: children with `slot="…"` pass through `createComponent` unchanged. Angular: the wrapper
 template exposes `<ng-content select="[slot=toolbar-start]">` etc. inside `<hijri-calendar-ng>`.
 
-## Accepted visual changes (D1–D8)
+## Accepted visual changes (D1–D9)
 
-Eight default/visual changes ship with 0.3.0 and have **no escape hatch** other than `::part()`/
-render hooks (D6 and D8 have a one-line restore) — they were accepted as improvements over the
+Nine default/visual changes ship with 0.3.0 and have **no escape hatch** other than `::part()`/
+render hooks (D6, D8 and D9 have a one-line restore) — they were accepted as improvements over the
 0.2.x look, not left configurable:
 
 - **D1 — toolbar order.** Navigation is now `‹ Today ›` (prev / today / next), was `Today ‹ ›`.
@@ -531,6 +533,18 @@ render hooks (D6 and D8 have a one-line restore) — they were accepted as impro
   (matching the reference design, D4). WCAG sets no minimum font size, so 9px text is not itself
   a violation, but legibility at that size matters more once contrast is fixed — hosts who want
   larger secondary numerals can already do this via `--hcal-day-secondary-font-size`.
+- **D9 — `numerals` now defaults to `"arab"`.** Hijri day numbers, the Hijri year, the title
+  primary, the agenda Hijri date, and the day-banner primary render Arabic-Indic digits with no
+  attribute set — through 0.3.0's first release, `numerals` defaulted to `"latn"` (Latin digits)
+  to preserve the 0.2.x look byte-for-byte, so this was the one place Arabic-Indic numerals
+  didn't show up unless a consumer opted in explicitly. The component's whole purpose is
+  rendering Hijri dates, and Latin was the wrong default for that audience; `numerals-gregorian`
+  is untouched, so Gregorian numbers, clock digits (time labels, event duration, day-banner
+  counts) and month abbreviations (`Jul`) stay Latin — exactly the reference "editorial" pairing,
+  now the default instead of an opt-in. The day-cell `aria-label` is unaffected: it is
+  deliberately not a numerals-truth-table site, so it stays Latin regardless of `numerals`.
+  Restore the pre-fix, all-Latin look by setting the attribute explicitly:
+  `<hijri-calendar numerals="latn">`.
 
 ## `event-style` will default to `tinted` at 1.0
 

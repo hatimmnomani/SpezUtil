@@ -35,7 +35,7 @@ const ev = (id: string, start: string, end?: string): CalendarEvent => ({
 
 describe("week view", () => {
   it("renders 7 day columns with Hijri-first headers", () => {
-    const el = mount({ date: "2026-07-06", view: "week" });
+    const el = mount({ date: "2026-07-06", view: "week", numerals: "latn" });
     const heads = sr(el).querySelectorAll(".tg-col-head");
     expect(heads.length).toBe(7);
     const h = cal.gregorianToHijri(new Date(Date.UTC(2026, 6, 5)));
@@ -308,7 +308,7 @@ describe("time-label-position", () => {
 
 describe("day view", () => {
   it("renders a single column anchored at the date", () => {
-    const el = mount({ date: "2026-07-06", view: "day" });
+    const el = mount({ date: "2026-07-06", view: "day", numerals: "latn" });
     expect(sr(el).querySelectorAll(".tg-day-col").length).toBe(1);
     const h = cal.gregorianToHijri(new Date(Date.UTC(2026, 6, 6)));
     expect(sr(el).querySelector(".tg-col-head")!.textContent).toContain(String(h.day));

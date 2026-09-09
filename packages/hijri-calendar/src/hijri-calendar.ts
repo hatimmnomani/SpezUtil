@@ -453,9 +453,15 @@ export class HijriCalendarElement extends HTMLElement {
   set names(v: string) {
     this.reflect("names", v);
   }
-  /** Digit system for Hijri numbers: day numbers, Hijri year, title primary, agenda Hijri date. */
+  /**
+   * Digit system for Hijri numbers: day numbers, Hijri year, title primary, agenda Hijri date,
+   * day-banner primary. Defaults to `"arab"` (Arabic-Indic) — the component renders Hijri dates,
+   * so Arabic-Indic numerals are the right default for its audience (see D9). Set
+   * `numerals="latn"` to restore the pre-0.3.0 Latin-digit look. `numerals-gregorian` is
+   * unaffected and keeps its own `"latn"` default.
+   */
   get numerals(): "latn" | "arab" {
-    return this.getAttribute("numerals") === "arab" ? "arab" : "latn";
+    return this.getAttribute("numerals") === "latn" ? "latn" : "arab";
   }
   set numerals(v: string) {
     this.reflect("numerals", v);

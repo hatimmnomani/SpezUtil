@@ -35,7 +35,7 @@ const ev = (id: string, start: string, end?: string): CalendarEvent => ({
 
 describe("agenda view", () => {
   it("groups events by day with Hijri-first headings, skipping empty days", () => {
-    const el = mount({ date: "2026-07-06", view: "agenda" });
+    const el = mount({ date: "2026-07-06", view: "agenda", numerals: "latn" });
     el.events = [ev("a", "2026-07-06T10:00"), ev("b", "2026-07-10T09:00")];
     const days = sr(el).querySelectorAll('[part="agenda-day"]');
     expect(days.length).toBe(2);
