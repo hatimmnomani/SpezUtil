@@ -182,6 +182,83 @@ describe("<hijri-calendar> numerals", () => {
   });
 });
 
+/**
+ * D9 made the component default (`numerals: "arab"`) and `formatHijri()`'s own default
+ * (`opts?.numerals ?? "latn"`, hijri-core/src/format.ts) deliberately *disagree*. Before D9 they
+ * agreed, so the day-cell `aria-label` staying Latin was accidental and unbreakable; now the only
+ * thing keeping Arabic-Indic digits out of an otherwise-English screen-reader announcement is that
+ * one call site passing `{ monthNames }` and no `numerals`. Both the plan (§5.4, D9) and
+ * `apps/docs/docs/calendar/api.md` promise this behaviour to consumers, so it needs a test rather
+ * than a convention: adding `numerals: this.numerals` to that call — an entirely reasonable-looking
+ * edit — must fail here.
+ */
+describe("<hijri-calendar> aria-label digits stay Latin under the arab default (D9)", () => {
+  it("labels a day cell with Latin Hijri digits on a bare mount, exactly as documented", () => {
+    const el = mount({ date: "2026-07-06" });
+    expect(el.numerals).toBe("arab"); // the default that makes this non-trivial
+    // The grid is a *Hijri* month grid: date="2026-07-06" renders Safar 1448, whose visible
+    // range runs 2026-06-14 .. 2026-07-25. This is its last cell.
+    const label = cellFor(el, "2026-07-25").getAttribute("aria-label")!;
+    const h = cal.gregorianToHijri(new Date(Date.UTC(2026, 6, 25)));
+    expect(label).toBe(
+      `${h.day} ${translitMonthNames[h.month - 1]} ${h.year} (2026-07-25)`
+    );
+    expect(ASCII_DIGIT.test(label)).toBe(true);
+    expect(ARABIC_INDIC.test(label)).toBe(false);
+  });
+
+  it("keeps the day-cell label Latin for all 42 cells, with numerals=arab explicit and under names=ar", () => {
+    for (const attrs of [
+      { date: "2026-07-06" },
+      { date: "2026-07-06", numerals: "arab" },
+      { date: "2026-07-06", numerals: "arab", names: "ar" },
+      { date: "2026-07-06", numerals: "arab", "numerals-gregorian": "arab" },
+    ]) {
+      const el = mount(attrs);
+      const labels = Array.from(sr(el).querySelectorAll("[data-i]")).map(
+        (b) => b.getAttribute("aria-label")!
+      );
+      expect(labels.length).toBe(42);
+      for (const label of labels) {
+        expect(ARABIC_INDIC.test(label), `${JSON.stringify(attrs)}: ${label}`).toBe(false);
+        expect(ASCII_DIGIT.test(label), `${JSON.stringify(attrs)}: ${label}`).toBe(true);
+      }
+    }
+  });
+
+  it("leaves every aria-label in every view digit-Latin, except the grid's own, which mirrors the visible title", () => {
+    // The day banner's and the agenda's Hijri dates are *visible text*, so they follow `numerals`
+    // like every other truth-table site — they carry no aria-label of their own. The month grid's
+    // aria-label is the one deliberate exception: it reuses the visible title, so it must match
+    // what a sighted user reads (title primary is a truth-table site). See api.md's D9 entry.
+    const events = [
+      { id: "e", title: "Standup", start: "2026-07-06T09:00", end: "2026-07-06T09:30" },
+      { id: "f", title: "Trip", start: "2026-07-04", end: "2026-07-09", allDay: true },
+    ];
+    for (const attrs of [
+      { date: "2026-07-06" },
+      { date: "2026-07-06", view: "week" },
+      { date: "2026-07-06", view: "day", "day-header": "banner" },
+      { date: "2026-07-06", view: "agenda" },
+      { date: "2026-07-06", "max-events": "1" },
+    ]) {
+      const el = mount(attrs);
+      el.events = events;
+      const labelled = Array.from(sr(el).querySelectorAll("[aria-label]"));
+      expect(labelled.length).toBeGreaterThan(0);
+      for (const node of labelled) {
+        const label = node.getAttribute("aria-label")!;
+        if (node.getAttribute("role") === "grid") {
+          // Non-vacuous: this one *does* carry Arabic-Indic digits (the Hijri year), by design.
+          expect(ARABIC_INDIC.test(label), `grid label: ${label}`).toBe(true);
+          continue;
+        }
+        expect(ARABIC_INDIC.test(label), `${JSON.stringify(attrs)}: ${label}`).toBe(false);
+      }
+    }
+  });
+});
+
 describe("<hijri-calendar> title-primary dir gate (Ruling M)", () => {
   it('names="translit" numerals="arab" never marks title-primary rtl, even though the year digits are Arabic-Indic', () => {
     const el = mount({ date: "2026-07-06", names: "translit", numerals: "arab" });
