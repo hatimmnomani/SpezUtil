@@ -358,7 +358,8 @@ export interface RenderDayCellContext {
 **Hook contract (both hooks):** called during render for every instance; return `Node` (appended),
 `string` (appended as a text node — never parsed as HTML), or `null` (default renderer). Must be
 synchronous and side-effect free. The wrapper element stays component-owned: `<button part="event …">`
-for `renderEvent`, `<button part="day …" role="gridcell">` for `renderDayCell`. Hook output therefore
+for `renderEvent`, `<button part="day …">` for `renderDayCell` (in the month view that button sits
+inside the day's own `role="gridcell"` — see the ARIA-restructure note in §5.4). Hook output therefore
 inherits the button's `:focus-visible` ring, roving `tabindex`, `aria-label` and click handler; **do not
 return interactive elements** (nested interactive content is invalid HTML and breaks the grid keyboard
 model) — use `date-click` / `event-click` instead. Exceptions are caught, reported once per hook via
@@ -502,6 +503,27 @@ export interface RangeChangeDetail {
   reference design). WCAG sets no minimum font size, so this isn't itself a violation, but 9px
   text is harder to read and the contrast fix matters more at that size — noted for the user,
   not changed. Ships post-launch, `packages/hijri-calendar/src/styles.ts` and its tests only.
+
+**Not a deviation — the month-grid ARIA restructure (post-launch, after D8).** The same audit that
+produced D8 also reported a Critical `aria-required-children` violation on the month view: the week
+`role="row"` owned the event chips, the `part="more-link"` buttons and the 42 `part="day-cell"`
+layers, none of which is a permitted child of a row (only cells are). The month grid is therefore
+now `grid` → one `rowgroup` per week → a day `row` of exactly seven `gridcell`s (each holding that
+day's background layer and its `part="day"` button) plus, only for weeks that have events, a second
+`row` whose `gridcell`s carry the chips and the more-link; multi-day chip cells span their columns
+and report them with `aria-colindex`/`aria-colspan` against `aria-colcount="7"`. The chips stay
+focusable, labelled `<button>`s throughout — the cheaper `aria-hidden="true"` on the chip layer was
+rejected, since it would have silenced the audit by removing keyboard-reachable content from the
+accessibility tree. A second Critical violation (`aria-required-parent`) was fixed at the same time:
+the week/day time grid reused the month view's weekday-cell markup, `role="columnheader"` included,
+but those views carry no grid/table semantics for a `columnheader` to belong to, so the role is now
+emitted only by the month view's `dow-row`. This is listed **here rather than as a D9** because it
+is not a visual change: every rendered box (`.cal`, `.month`, the weekday header, all 42 day-cell
+layers, all 42 day buttons, every chip, every more-link, the dot-mode dots and the today indicator)
+measured byte-identical in Chromium before and after, at the wide, medium and narrow bands, in both
+LTR and RTL, with and without overflow more-links. No `::part()` name or token, attribute, property
+or event changed either; the one host-visible detail is that `part="day"` no longer carries
+`role="gridcell"` (its wrapper does). Ships post-launch, `hijri-calendar.ts`/`styles.ts` plus tests.
 
 ### 5.5 CSS custom properties
 

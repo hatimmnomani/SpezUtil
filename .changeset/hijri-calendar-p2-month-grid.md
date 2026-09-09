@@ -8,6 +8,21 @@ month-boundary markers, and a "today" mode that doesn't require a pill.
 - New `part="day-cell"` background layer spans each month-cell's full height (previously only the
   number button had a hit target/background), with `--hcal-cell-padding`, `--hcal-cell-hover-bg`,
   `--hcal-cell-out-bg`/`--hcal-cell-out-opacity`, `--hcal-weekend-bg`/`--hcal-weekend-fg`.
+- **Month-grid ARIA structure (post-launch a11y fix, no visual change).** An axe audit reported a
+  Critical `aria-required-children` violation: the week `role="row"` owned the event chips, the
+  `part="more-link"` buttons and the `part="day-cell"` layers, none of which is a permitted child
+  of a row. The month grid is now `grid` → one `rowgroup` per week → a day `row` of exactly seven
+  `gridcell`s (each holding that day's background layer and `part="day"` button) plus, for weeks
+  that have events, a second `row` whose `gridcell`s carry the chips and more-link — so every
+  event stays a focusable, announced `<button>` (hiding that layer with `aria-hidden` would have
+  silenced the audit at the cost of keyboard access). Chip cells report the days they cover via
+  `aria-colindex`/`aria-colspan`, against `aria-colcount="7"` on the grid. Two consequences for
+  hosts: the `part="day"` button no longer carries `role="gridcell"` itself (its wrapper does, so
+  the button reports its native `button` role), and in week/day views the weekday label is no
+  longer a `role="columnheader"` — those views have no grid/table semantics for a `columnheader`
+  to belong to, which was a second Critical violation (`aria-required-parent`). No `::part()`
+  name, token, attribute, event or rendered pixel changes: every element's rendered box was
+  measured identical in Chromium before and after, at wide/medium/narrow, LTR and RTL.
 - **`day-number-align`** (`"center"` default, `"start"`, `"end"`) controls day-number alignment in
   month cells and time-grid column heads.
 - **`month-marker`** (`"gregorian"` default, `"hijri"`, `"both"`, `"none"`) controls which

@@ -176,7 +176,8 @@ day-cell/column-head. Return a `Node` (appended), a `string` (appended as a plai
 side-effect free.
 
 The wrapper element is always component-owned: `<button part="event …">` for `renderEvent`,
-`<button part="day …" role="gridcell">` for `renderDayCell`. Hook output therefore inherits the
+`<button part="day …">` for `renderDayCell` (in the month view that button sits inside the day's
+`role="gridcell"`; see [Accessibility](#accessibility)). Hook output therefore inherits the
 button's `:focus-visible` ring, roving `tabindex`, `aria-label`, and click wiring — **do not return
 interactive elements** (nested interactive content is invalid HTML and breaks the grid's keyboard
 model); use the `date-click` / `event-click` events instead if you need custom interaction.
@@ -580,7 +581,8 @@ never causes page-level horizontal overflow — every scrollable region lives in
 
 ## Accessibility
 
-- Month grid uses `role="grid"` / `row` / `gridcell` with roving `tabindex` and arrow-key navigation; Enter/Space activates.
+- Month grid uses `role="grid"` / `rowgroup` / `row` / `gridcell` with roving `tabindex` and arrow-key navigation; Enter/Space activates. The shape is: the grid owns the weekday `role="row"` (seven `columnheader`s) plus one `role="rowgroup"` per week; each week group owns a day `role="row"` of exactly seven `gridcell`s — one per column, each holding that day's `part="day-cell"` background layer and its `part="day"` button — and, only when that week has events, a second `role="row"` whose `gridcell`s carry the event chips and the `part="more-link"` button. A multi-day chip's cell spans its columns visually and reports them with `aria-colindex`/`aria-colspan` (`aria-colcount="7"` is on the grid). `role="row"` permits only cells as children, which is why the chips are their own row rather than siblings of the day cells, and why the day button no longer carries `role="gridcell"` itself — it reports its native `button` role inside the cell.
+- Week/day and agenda views carry **no** grid/table roles at all: their weekday labels are plain labelled elements, not `columnheader`s (a `columnheader` requires an owning `row`), and events there are plain focusable buttons.
 - Every day cell is labelled with both the Hijri and Gregorian date; at the `narrow` size band with `narrow-events="dots"`, the label additionally includes an event count via `loc.moreDotsLabel`.
 - Event chips are real `<button>`s labelled with title + time (native `title` attribute tooltip too), except in dot mode where events render as non-interactive dots and the whole cell is the tap target.
 - The current time indicator in week/day views is decorative (`part="now-indicator"`); its optional label (`now-indicator="line-label"`) is `part="now-label"`.
