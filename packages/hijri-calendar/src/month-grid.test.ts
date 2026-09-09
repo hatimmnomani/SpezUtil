@@ -291,4 +291,101 @@ describe("<hijri-calendar> month grid keyboard navigation (unaffected by the day
     expect(buttons[1]!.tabIndex).toBe(-1);
     expect(buttons[8]!.tabIndex).toBe(0);
   });
+
+  it("Enter on a day button activates that day, and defaults-prevents the key", () => {
+    const el = mount({ date: "2026-07-06" });
+    const dates: string[] = [];
+    el.addEventListener("date-click", (e) => dates.push((e as CustomEvent).detail.gregorian));
+    const btn = sr(el).querySelector<HTMLButtonElement>('[data-date="2026-07-15"]')!;
+    const ev = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+    btn.dispatchEvent(ev);
+    expect(dates).toEqual(["2026-07-15"]);
+    // Enter on a <button> also fires a native click; the handler clicks explicitly, so it must
+    // suppress the native one or the day would be activated twice.
+    expect(ev.defaultPrevented).toBe(true);
+  });
+});
+
+/**
+ * The grid's keydown listener sits on `[role="grid"]`, so *every* key event inside the month grid
+ * bubbles to it — including ones from the event chips and `part="more-link"` buttons, which are
+ * real focusable buttons in their own gridcells (the ARIA restructure deliberately kept them in
+ * the accessibility tree rather than hiding them). The listener used to fall back to the roving
+ * day button whenever the event did not originate in a day cell, so `Enter` on a focused chip
+ * called `preventDefault()` and emitted `date-click` for an unrelated day — never `event-click`.
+ * Every chip was reachable by Tab and impossible to activate.
+ *
+ * jsdom does not implement a `<button>`'s default activation behaviour (a dispatched
+ * `keydown` never turns into a `click`), so what these tests pin is the half that is ours: the
+ * grid handler must not consume the key and must not fire the wrong event. `defaultPrevented`
+ * staying false is exactly what lets the browser's native activation reach `wireEventChips()`;
+ * the resulting `event-click`/`more-click` is verified with real key presses in Chromium.
+ */
+describe("<hijri-calendar> month grid keyboard: keys from chips and more-links are left to the button", () => {
+  const EVENTS = [
+    { id: "a", title: "Standup", start: "2026-07-15T09:00", end: "2026-07-15T09:30" },
+    { id: "b", title: "Review", start: "2026-07-15T11:00", end: "2026-07-15T12:00" },
+    { id: "c", title: "Retro", start: "2026-07-15T14:00", end: "2026-07-15T15:00" },
+    { id: "d", title: "Long", start: "2026-07-13", end: "2026-07-17", allDay: true },
+  ];
+
+  function mountWithEvents(attrs: Record<string, string> = {}): HijriCalendarElement {
+    const el = mount({ date: "2026-07-06", ...attrs });
+    el.events = EVENTS;
+    return el;
+  }
+
+  for (const key of ["Enter", " "]) {
+    it(`${key === " " ? "Space" : key} on a chip is not consumed by the grid and emits no date-click`, () => {
+      const el = mountWithEvents();
+      const seen: string[] = [];
+      el.addEventListener("date-click", () => seen.push("date-click"));
+      el.addEventListener("event-click", () => seen.push("event-click"));
+      const chip = sr(el).querySelector<HTMLButtonElement>("[data-ev]")!;
+      expect(chip).toBeTruthy();
+      const ev = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+      chip.dispatchEvent(ev);
+      expect(ev.defaultPrevented).toBe(false);
+      expect(seen).toEqual([]);
+      // The chip's own click wiring is what the native activation reaches.
+      chip.click();
+      expect(seen).toEqual(["event-click"]);
+    });
+  }
+
+  it("Enter on a more-link is not consumed by the grid and emits no date-click", () => {
+    const el = mountWithEvents({ "max-events": "1" });
+    const seen: string[] = [];
+    el.addEventListener("date-click", () => seen.push("date-click"));
+    el.addEventListener("more-click", () => seen.push("more-click"));
+    const more = sr(el).querySelector<HTMLButtonElement>("[data-more]")!;
+    expect(more).toBeTruthy();
+    const ev = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+    more.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(false);
+    expect(seen).toEqual([]);
+    more.click();
+    expect(seen).toEqual(["more-click"]);
+  });
+
+  it("arrow keys from a chip neither move the roving tabindex nor get consumed", () => {
+    const el = mountWithEvents();
+    const buttons = Array.from(sr(el).querySelectorAll<HTMLButtonElement>("[data-i]"));
+    const before = buttons.findIndex((b) => b.tabIndex === 0);
+    const chip = sr(el).querySelector<HTMLButtonElement>("[data-ev]")!;
+    const ev = new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true, cancelable: true });
+    chip.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(false);
+    expect(buttons.findIndex((b) => b.tabIndex === 0)).toBe(before);
+  });
+
+  it("a key the grid does not handle is never defaults-prevented, even from a day button", () => {
+    const el = mountWithEvents();
+    const btn = sr(el).querySelector<HTMLButtonElement>("[data-i]")!;
+    for (const key of ["a", "Tab", "Escape", "Home", "PageDown"]) {
+      const ev = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true });
+      btn.dispatchEvent(ev);
+      expect(ev.defaultPrevented, key).toBe(false);
+    }
+  });
 });
