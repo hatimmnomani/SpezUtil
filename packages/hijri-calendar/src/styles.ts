@@ -5,7 +5,7 @@ ${arabicFontFace}
 :host {
   --hcal-bg: #fff;
   --hcal-fg: #1a1a1a;
-  --hcal-muted: #9aa0a6;
+  --hcal-muted: #5b6572;
   --hcal-accent: #0b7d3e;
   --hcal-accent-fg: #fff;
   --hcal-border: #e0e0e0;
@@ -37,6 +37,12 @@ ${arabicFontFace}
   --hcal-cell-hover-bg: color-mix(in srgb, var(--hcal-fg) 6%, transparent);
   --hcal-cell-out-bg: transparent;
   --hcal-cell-out-opacity: 0.45;
+  /* D8: out-of-month text de-emphasis is a solid color, not opacity (opacity multiplies the
+     contrast deficit of whatever it's applied to — see the .day-head.out rule below, which no
+     longer carries an opacity declaration). --hcal-cell-out-opacity above is retained only for
+     any host CSS that still references it; nothing in this stylesheet applies it to text or
+     to part="day-cell"'s own background anymore. */
+  --hcal-cell-out-fg: var(--hcal-muted);
   --hcal-weekend-bg: transparent;
   --hcal-weekend-fg: inherit;
   --hcal-today-color: var(--hcal-accent);
@@ -65,7 +71,7 @@ ${arabicFontFace}
   --hcal-event-hover-shadow: none;
   --hcal-event-hover-transform: none;
   --hcal-event-inset: 2px;
-  --hcal-now-color: #ea4335;
+  --hcal-now-color: #c5321f;
   --hcal-now-width: 2px;
   --hcal-now-dot-size: 8px;
   --hcal-banner-bg: var(--hcal-header-bg);
@@ -135,7 +141,10 @@ ${arabicFontFace}
 [part="scroll"] > .month { min-width: 640px; }
 .dow-row { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--hcal-border); background: var(--hcal-header-bg); }
 .dow { display: flex; flex-direction: column; align-items: var(--hcal-weekday-align); text-align: var(--hcal-weekday-align); font-size: var(--hcal-weekday-font-size); color: var(--hcal-weekday-color); padding: 6px 0; font-family: var(--hcal-font-family-arabic); }
-.dow [part~="weekday-secondary"] { font-family: var(--hcal-font-family-mono); opacity: 0.8; }
+/* D8: no opacity here either — it compounded on top of an already-muted parent (.dow inherits
+   --hcal-weekday-color) and pushed this text below AA on its own; the parent's muted color is
+   already the intended de-emphasis. */
+.dow [part~="weekday-secondary"] { font-family: var(--hcal-font-family-mono); }
 .dow[part~="weekend"] { color: var(--hcal-weekend-fg); }
 .week { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: min-content; min-height: var(--hcal-cell-min-height); align-content: start; position: relative; }
 /* §5.9 task 4: month-cell minimum height shrinks at medium/narrow — wide keeps
@@ -170,7 +179,14 @@ ${arabicFontFace}
 :host([day-number-align="start"]) .tg-col-head { justify-content: flex-start; align-items: flex-start; }
 :host([day-number-align="end"]) .day-head,
 :host([day-number-align="end"]) .tg-col-head { justify-content: flex-end; align-items: flex-end; }
-.day-head.out { opacity: var(--hcal-cell-out-opacity); }
+/* D8: out-of-month numbers are de-emphasised with a dedicated color token instead of opacity —
+   opacity on text multiplies whatever contrast deficit the underlying color already has, which is
+   exactly how this failed AA (see --hcal-cell-out-fg default above). Each descendant that carries
+   its own color (num-primary, num-secondary, day-month-marker) is targeted directly rather than
+   relying on inheritance, since each already sets its own color in the rules above. */
+.day-head.out .num-primary,
+.day-head.out .num-secondary,
+.day-head.out [part~="day-month-marker"] { color: var(--hcal-cell-out-fg); }
 :host(:not([today-marker])) .day-head.today .num-primary,
 :host([today-marker="pill"]) .day-head.today .num-primary { background: var(--hcal-accent); color: var(--hcal-accent-fg); border-radius: 999px; padding: 1px 6px; }
 :host([today-marker="dot"]) .day-head.today .num-primary { color: var(--hcal-today-color); }

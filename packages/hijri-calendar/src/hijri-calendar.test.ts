@@ -343,3 +343,103 @@ describe("<hijri-calendar> loading", () => {
     expect(decls).not.toMatch(/margin/);
   });
 });
+
+// D8 (WCAG 2 AA color-contrast fix): jsdom computes no cascaded custom properties, so every
+// assertion below reads the *declared* token values out of the `styles` string, never
+// getComputedStyle. See docs/plans/hijri-calendar-events-parity.md §5.4 D8 and
+// apps/docs/docs/calendar/api.md's "Accepted visual changes" section for the narrative.
+describe("<hijri-calendar> WCAG AA contrast (D8)", () => {
+  // A ~15-line relative-luminance/contrast helper, local to this test file on purpose — see the
+  // task brief: no dependency, and this must never be exported from the package.
+  function hexToRgb(hex: string): [number, number, number] {
+    const h = hex.replace("#", "");
+    const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+    const num = Number.parseInt(full, 16);
+    return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+  }
+  function channelLuminance(c: number): number {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  }
+  function relativeLuminance(hex: string): number {
+    const [r, g, b] = hexToRgb(hex);
+    return 0.2126 * channelLuminance(r) + 0.7152 * channelLuminance(g) + 0.0722 * channelLuminance(b);
+  }
+  function contrastRatio(hex1: string, hex2: string): number {
+    const L1 = relativeLuminance(hex1);
+    const L2 = relativeLuminance(hex2);
+    const [lighter, darker] = L1 >= L2 ? [L1, L2] : [L2, L1];
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+  // Mirrors `color-mix(in srgb, var(--hcal-accent) 10%, transparent)` composited over
+  // --hcal-bg, i.e. the actual default --hcal-today-bg surface (jsdom can't evaluate
+  // color-mix() itself, so this is done by hand from the declared token values).
+  function alphaOverWhite(fgHex: string, alpha: number): string {
+    const [r, g, b] = hexToRgb(fgHex);
+    const [wr, wg, wb] = hexToRgb("#ffffff");
+    const mix = [r, g, b].map((c, i) => Math.round(alpha * c + (1 - alpha) * [wr, wg, wb][i]!));
+    return "#" + mix.map((c) => c.toString(16).padStart(2, "0")).join("");
+  }
+
+  const AA_NORMAL_TEXT = 4.5;
+
+  it("declares the darkened --hcal-muted default (was #9aa0a6, ≈2.64:1 on white)", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-muted: #5b6572;");
+    expect(css).not.toContain("--hcal-muted: #9aa0a6;");
+  });
+
+  it("--hcal-muted clears 4.5:1 against both --hcal-bg (#fff) and the default --hcal-today-bg tint", () => {
+    const muted = "#5b6572";
+    const todayBgTint = alphaOverWhite("#0b7d3e", 0.1); // --hcal-accent at 10%, per --hcal-today-bg
+    expect(contrastRatio(muted, "#ffffff")).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+    expect(contrastRatio(muted, todayBgTint)).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+  });
+
+  it("darkens --hcal-now-color so the now-label text clears 4.5:1 on white (was #ea4335, ≈3.92:1)", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-now-color: #c5321f;");
+    expect(css).not.toContain("--hcal-now-color: #ea4335;");
+    expect(contrastRatio("#c5321f", "#ffffff")).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+  });
+
+  it("declares a dedicated --hcal-cell-out-fg token defaulting to --hcal-muted", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-cell-out-fg: var(--hcal-muted);");
+  });
+
+  it("out-of-month day numbers are de-emphasised via color, not opacity: .day-head.out no longer carries an opacity declaration", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).not.toMatch(/\.day-head\.out\s*\{\s*opacity:/);
+    expect(css).toContain(
+      '.day-head.out .num-primary,\n.day-head.out .num-secondary,\n.day-head.out [part~="day-month-marker"] { color: var(--hcal-cell-out-fg); }',
+    );
+  });
+
+  it("the out-of-month day-head rule actually renders on out-of-month cells", () => {
+    const el = mount({ date: "2026-07-06" });
+    const outHead = sr(el).querySelector(".day-head.out");
+    expect(outHead).toBeTruthy();
+    expect(outHead!.querySelector(".num-primary")).toBeTruthy();
+  });
+
+  it("the bilingual weekday secondary label no longer compounds opacity on top of the muted color", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    const rule = css.match(/\.dow \[part~="weekday-secondary"\]\s*\{([^}]*)\}/);
+    expect(rule).toBeTruthy();
+    expect(rule![1]!).not.toMatch(/opacity/);
+  });
+
+  it("--hcal-cell-out-opacity is still declared (for any host CSS still referencing it) but is no longer consumed anywhere in styles.ts", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-cell-out-opacity: 0.45;");
+    const consumers = css.match(/var\(--hcal-cell-out-opacity\)/g) ?? [];
+    expect(consumers.length).toBe(0);
+  });
+});

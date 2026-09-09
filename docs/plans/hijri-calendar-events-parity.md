@@ -29,7 +29,7 @@ properties, 21 new attributes/properties, 1 new DOM event (`range-change`), 2 re
 (`renderEvent`, `renderDayCell`), 5 slots, and ~30 new `::part()` names/tokens — all additive, shipped in
 eight phases (six package phases, one CI/visual-regression phase, one consumer-migration phase), with the
 default look unchanged for existing 0.2.x consumers except the accepted changes catalogued in §5.4
-(D1–D7 as shipped).
+(D1–D8 as shipped; D8 is a post-launch WCAG AA contrast fix, not part of the original phase plan).
 
 ---
 
@@ -413,7 +413,7 @@ export interface RangeChangeDetail {
 6. Emitted **before** any timers start (the now-indicator interval) and independently of `timezone`;
    ranges are UTC-day based like the rest of the component.
 
-### 5.4 Accepted default/visual changes (decided — no escape hatch, except D6's token)
+### 5.4 Accepted default/visual changes (decided — no escape hatch, except D6's and D8's tokens)
 
 - **D1 — toolbar order** becomes `‹ Today ›` (prev / today / next). Purely visual; parts unchanged.
   Ships in P0. Changeset text: "Toolbar navigation is now ‹ Today › (was Today ‹ ›) to match common
@@ -462,6 +462,46 @@ export interface RangeChangeDetail {
   `hijri-calendar:not([view="agenda"])::part(event)` for chips/blocks and uses
   `::part(agenda-item)` for the row; adding a style token does *not* exclude agenda rows, since
   they carry it too. Ships in P3.
+- **D8 — WCAG 2 AA color-contrast fix (post-launch, not part of P0–P5).** An accessibility audit
+  (axe) against a real host surfaced ~40 "Serious" contrast violations in the default theme,
+  traced to our own default token values, not the host's palette. Three changes, all in
+  `styles.ts` only:
+  - `--hcal-muted` darkens `#9aa0a6` → `#5b6572`. `#9aa0a6` measured ≈2.64:1 against `--hcal-bg`
+    (`#fff`); AA requires 4.5:1 for normal text, and every consumer of this token (weekday
+    labels, title secondary, day-secondary numbers, month marker, loading label, more-link,
+    day-banner summary, allday label, gutter time labels, agenda Gregorian date/event-time) is
+    smaller than the 18.66px/14px-bold large-text threshold, so none qualify for the 3:1
+    allowance. `#5b6572` measures ≈5.92:1 on `--hcal-bg` and ≈5.16:1 on the default
+    `--hcal-today-bg` tint (`color-mix(in srgb, var(--hcal-accent) 10%, transparent)` over
+    white) — the binding constraint, since several `--hcal-muted` consumers (day-secondary
+    number, month marker, day-banner summary) render on today cells too, and a value that only
+    cleared 4.5:1 on white (e.g. `#6b7280`, ≈4.83:1 on white) measured only ≈4.22:1 on the
+    today-bg tint. Restore the old (failing) look with
+    `hijri-calendar { --hcal-muted: #9aa0a6; }` — not recommended, reintroduces the failure.
+  - `--hcal-now-color` darkens `#ea4335` → `#c5321f`. It doubles as a decorative now-line/dot
+    color (not subject to 1.4.3) and the text color of `part="now-label"` (10px,
+    `now-indicator="line-label"`), where `#ea4335` measured ≈3.92:1 on white. `#c5321f` measures
+    ≈5.45:1. Restore the old (failing) color with
+    `hijri-calendar { --hcal-now-color: #ea4335; }` — not recommended.
+  - **Opacity is no longer used for text de-emphasis.** `.day-head.out` previously applied
+    `opacity: var(--hcal-cell-out-opacity)` (default `0.45`) to its whole subtree; the audit
+    measured the result at 1.44:1 (secondary numbers) and 2.85:1 (primary numbers) — opacity
+    multiplies whatever contrast deficit the underlying color has, which is why this failed even
+    harder than `--hcal-muted` on its own. `.day-head.out`'s number spans and month marker now
+    get an explicit `color: var(--hcal-cell-out-fg)` instead (new token, default
+    `var(--hcal-muted)`, same ≈5.92:1/≈5.16:1 as above). `.dow [part~="weekday-secondary"]`
+    similarly no longer carries `opacity: 0.8` on top of its already-muted inherited color (that
+    compounded to ≈3.79:1 on white with the new `--hcal-muted`, still failing).
+    **Deviation:** `--hcal-cell-out-opacity` stays declared (default `0.45`) so a host CSS rule
+    referencing it doesn't error, but nothing in `styles.ts` consumes it anymore — a host that
+    was overriding it to tune out-of-month dimming intensity gets no effect from that override
+    post-upgrade, and should set `--hcal-cell-out-fg` instead. `--hcal-cell-out-bg` (the
+    out-of-month cell *background*) is untouched by this change.
+
+  Judgement call, left alone: `--hcal-day-secondary-font-size` stays at `9px` (D4, matching the
+  reference design). WCAG sets no minimum font size, so this isn't itself a violation, but 9px
+  text is harder to read and the contrast fix matters more at that size — noted for the user,
+  not changed. Ships post-launch, `packages/hijri-calendar/src/styles.ts` and its tests only.
 
 ### 5.5 CSS custom properties
 
@@ -469,7 +509,8 @@ Defaults are today's literal values unless marked **new**. All declared on `:hos
 
 | Property | Default | Phase | Applies to |
 | --- | --- | --- | --- |
-| `--hcal-bg`, `--hcal-fg`, `--hcal-muted`, `--hcal-accent`, `--hcal-accent-fg`, `--hcal-border`, `--hcal-radius`, `--hcal-event-fg`, `--hcal-font-family-arabic` | existing | — | unchanged |
+| `--hcal-bg`, `--hcal-fg`, `--hcal-accent`, `--hcal-accent-fg`, `--hcal-border`, `--hcal-radius`, `--hcal-event-fg`, `--hcal-font-family-arabic` | existing | — | unchanged |
+| `--hcal-muted` | `#5b6572` (was `#9aa0a6`) | P0 default; **darkened post-launch, see D8 (§5.4)** | see D8 for the contrast rationale |
 | `--hcal-today-bg` | `color-mix(in srgb, var(--hcal-accent) 10%, transparent)` | P2 | **Now actually used**: month day-cell background, week/day column-head background when today |
 | `--hcal-font-family` | `system-ui, sans-serif` **(declare; was referenced but undefined)** | P0 | base font |
 | `--hcal-font-family-display` | `var(--hcal-font-family)` **new** | P1 | `title-secondary`, day-banner secondary, time-grid event title, the `agenda-date` Gregorian sub-label (Gregorian day-number spans are governed by `--hcal-day-secondary-font-family` instead, whose default preserves the Arabic family — see §7.1 for overriding it to the display serif) |
@@ -487,8 +528,9 @@ Defaults are today's literal values unless marked **new**. All declared on `:hos
 | `--hcal-cell-min-height-narrow` | `56px` **new** | P5 | month week-row minimum at the `narrow` band |
 | `--hcal-cell-padding` | `4px` **new** | P2 | month cell inner padding |
 | `--hcal-cell-hover-bg` | `color-mix(in srgb, var(--hcal-fg) 6%, transparent)` | P2 | hovered month cell (whole cell once `day-cell` exists) |
-| `--hcal-cell-out-bg` | `transparent` **new** | P2 | out-of-month cell |
-| `--hcal-cell-out-opacity` | `0.45` | P2 | out-of-month numbers |
+| `--hcal-cell-out-bg` | `transparent` **new** | P2 | out-of-month cell background |
+| `--hcal-cell-out-opacity` | `0.45` | P2; **no longer consumed as of D8 (§5.4)** | declared for compatibility only — see D8 |
+| `--hcal-cell-out-fg` | `var(--hcal-muted)` **new** | D8 (§5.4), post-launch | out-of-month day-number/month-marker text color, replacing the old opacity mechanism |
 | `--hcal-weekend-bg` | `transparent` **new** | P2 | weekend cells/columns (days from `weekend-days`) |
 | `--hcal-weekend-fg` | `inherit` **new** | P2 | weekend weekday labels |
 | `--hcal-today-color` | `var(--hcal-accent)` **new** | P2 | primary number colour when today (dot/none modes) |
@@ -525,7 +567,7 @@ Defaults are today's literal values unless marked **new**. All declared on `:hos
 | `--hcal-event-inset` | `2px` | P3 | horizontal inset of timed blocks |
 | `--hcal-event-dot-size` | `6px` **new** | P5 | month dot-mode chips at `narrow` |
 | `--hcal-column-min-width` | `120px` **new** | P5 | minimum width of a week/day column before horizontal scrolling engages |
-| `--hcal-now-color` | `#ea4335` | P3 | |
+| `--hcal-now-color` | `#c5321f` (was `#ea4335`) | P3 default; **darkened post-launch, see D8 (§5.4)** | |
 | `--hcal-now-width` | `2px` | P3 | |
 | `--hcal-now-dot-size` | `8px` | P3 | |
 | `--hcal-banner-bg` | `var(--hcal-header-bg)` **new** | P4 | day banner |

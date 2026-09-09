@@ -236,7 +236,9 @@ describe("now-indicator", () => {
     expect(nowLine.getAttribute("style")).not.toMatch(/background/);
     const css = sr(el).querySelector("style")!.textContent!;
     expect(css).toContain("var(--hcal-now-color)");
-    expect(css).toContain("--hcal-now-color: #ea4335;");
+    // D8 (WCAG AA contrast fix): #ea4335 measured ≈3.92:1 for the now-label text on white,
+    // below the 4.5:1 AA minimum for normal text; #c5321f clears it (≈5.45:1).
+    expect(css).toContain("--hcal-now-color: #c5321f;");
   });
 
   it('"line-label" renders part="now-label" with "Now · <time>", honoring time-format, and is re-rendered by the minute timer', () => {

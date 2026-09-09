@@ -28,7 +28,7 @@ Every attribute has a matching camelCase property (`weekStart`, `dayStart`, `day
 ## New attributes (events-parity API)
 
 All of these are additive: every default reproduces today's (pre-parity) behaviour, **except** the
-seven accepted visual changes listed in [Accepted visual changes](#accepted-visual-changes-d1d7)
+eight accepted visual changes listed in [Accepted visual changes](#accepted-visual-changes-d1d8)
 below. A 0.2.x consumer upgrading to 0.3.0 sees no other visual difference.
 
 | Attribute (property) | Type | Default | Description |
@@ -264,7 +264,7 @@ hijri-calendar {
   /* Existing (unchanged) */
   --hcal-bg: #fff;
   --hcal-fg: #1a1a1a;
-  --hcal-muted: #9aa0a6;
+  --hcal-muted: #5b6572; /* darkened from #9aa0a6 in 0.3.0 for AA contrast; see D8 */
   --hcal-accent: #0b7d3e;
   --hcal-accent-fg: #fff;
   --hcal-border: #e0e0e0;
@@ -292,7 +292,8 @@ hijri-calendar {
   --hcal-cell-padding: 4px;
   --hcal-cell-hover-bg: color-mix(in srgb, var(--hcal-fg) 6%, transparent);
   --hcal-cell-out-bg: transparent;
-  --hcal-cell-out-opacity: 0.45;
+  --hcal-cell-out-opacity: 0.45;   /* 0.3.0: declared for compatibility, no longer consumed — see D8 */
+  --hcal-cell-out-fg: var(--hcal-muted);  /* new in 0.3.0; out-of-month day-number color, see D8 */
   --hcal-weekend-bg: transparent;
   --hcal-weekend-fg: inherit;
 
@@ -345,7 +346,7 @@ hijri-calendar {
   --hcal-body-max-height: 640px;       /* time-grid body & agenda scroll container; "none" = unbounded */
   --hcal-slot-alt-bg: transparent;     /* every second hour row */
   --hcal-slot-hover-bg: color-mix(in srgb, var(--hcal-fg) 4%, transparent);
-  --hcal-now-color: #ea4335;
+  --hcal-now-color: #c5321f; /* darkened from #ea4335 in 0.3.0 for AA contrast; see D8 */
   --hcal-now-width: 2px;
   --hcal-now-dot-size: 8px;
 
@@ -434,11 +435,11 @@ chips by content).
 React: children with `slot="…"` pass through `createComponent` unchanged. Angular: the wrapper
 template exposes `<ng-content select="[slot=toolbar-start]">` etc. inside `<hijri-calendar-ng>`.
 
-## Accepted visual changes (D1–D7)
+## Accepted visual changes (D1–D8)
 
-Seven default/visual changes ship with 0.3.0 and have **no escape hatch** other than `::part()`/
-render hooks (D6 has a one-line restore) — they were accepted as improvements over the 0.2.x
-look, not left configurable:
+Eight default/visual changes ship with 0.3.0 and have **no escape hatch** other than `::part()`/
+render hooks (D6 and D8 have a one-line restore) — they were accepted as improvements over the
+0.2.x look, not left configurable:
 
 - **D1 — toolbar order.** Navigation is now `‹ Today ›` (prev / today / next), was `Today ‹ ›`.
   Purely visual; `::part(nav-prev|nav-today|nav-next)` selectors are unaffected.
@@ -490,6 +491,45 @@ look, not left configurable:
   only exist in the agenda view) — and style the agenda row through `::part(agenda-item)`, which
   means exactly what it always did. Note that adding style tokens does *not* narrow the match:
   `::part(event solid)` still matches an agenda row, because the row carries the style token too.
+- **D8 — darker `--hcal-muted`, darker `--hcal-now-color`, and opacity removed from
+  out-of-month/weekday-secondary text.** An accessibility audit found the 0.2.x default theme
+  failing WCAG 2 AA color contrast (1.4.3) in roughly 40 places. Three independent fixes:
+  - `--hcal-muted` darkens from `#9aa0a6` to `#5b6572`. The old value measured ≈2.64:1 against
+    `--hcal-bg` (`#fff`) — AA requires 4.5:1 for normal text (this token drives weekday labels,
+    the title's Gregorian sub-label, secondary day numbers, month markers, the "+N more" link,
+    the loading label, the day-banner summary, and the agenda's Gregorian date/event-time text,
+    nearly all well under 18.66px so none qualify for the 3:1 large-text allowance). The new
+    value measures ≈5.92:1 on `--hcal-bg` and ≈5.16:1 on the default `--hcal-today-bg` tint
+    (`color-mix(in srgb, var(--hcal-accent) 10%, transparent)` over white) — both of which this
+    token renders on by default, since several of the elements above appear on today cells too.
+    Restore the old (failing) look with `hijri-calendar { --hcal-muted: #9aa0a6; }` — this
+    reintroduces the AA failure and is not recommended.
+  - `--hcal-now-color` darkens from `#ea4335` to `#c5321f`. It is both a decorative line/dot
+    color (not subject to 1.4.3) and the text color of `part="now-label"` at 10px
+    (`now-indicator="line-label"`), where `#ea4335` measured ≈3.92:1 on white — below AA.
+    `#c5321f` measures ≈5.45:1. Restore the old (failing) color with
+    `hijri-calendar { --hcal-now-color: #ea4335; }`.
+  - **Out-of-month numbers and the bilingual weekday secondary label no longer use `opacity`
+    for de-emphasis.** `.day-head.out` previously applied `opacity: var(--hcal-cell-out-opacity)`
+    (default `0.45`) to its whole subtree; opacity multiplies whatever contrast deficit the
+    underlying color already has, and the audit measured the resulting out-of-month numbers at
+    1.44:1 (secondary) and 2.85:1 (primary) — both far below AA even after the `--hcal-muted` fix
+    above, since the multiplication happens regardless of the base color. `.day-head.out`'s
+    number spans and month marker now get a solid color instead, from a new token
+    **`--hcal-cell-out-fg`** (default `var(--hcal-muted)`, ≈5.92:1/≈5.16:1 on the same two
+    surfaces as `--hcal-muted` above). Similarly, `.dow [part~="weekday-secondary"]` no longer
+    carries `opacity: 0.8` on top of its already-muted inherited color.
+    **Deviation:** `--hcal-cell-out-opacity` is still declared (default `0.45`) so existing host
+    CSS referencing it doesn't break, but nothing in this stylesheet consumes it anymore — a host
+    that was overriding it to tune out-of-month dimming intensity will see no effect from that
+    override after upgrading, and should use `--hcal-cell-out-fg` instead to control the
+    out-of-month text color directly. `--hcal-cell-out-bg` (the out-of-month cell *background*,
+    unaffected by this change) is unchanged and still transparent by default.
+
+  **Judgement call, not changed:** `--hcal-day-secondary-font-size` stays at its 9px default
+  (matching the reference design, D4). WCAG sets no minimum font size, so 9px text is not itself
+  a violation, but legibility at that size matters more once contrast is fixed — hosts who want
+  larger secondary numerals can already do this via `--hcal-day-secondary-font-size`.
 
 ## `event-style` will default to `tinted` at 1.0
 

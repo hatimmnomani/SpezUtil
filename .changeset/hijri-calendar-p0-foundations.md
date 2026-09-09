@@ -29,11 +29,13 @@ chrome (filter chips, a "New event" button, etc.) alongside the calendar.
   `--hcal-switch-*`) are now overridable custom properties, all defaulting to their previous
   literal values.
 
-### Accepted visual changes (D1–D7)
+### Accepted visual changes (D1–D8)
 
-Seven small, deliberate visual changes ship across this 0.3.0 release (landing in different phases
-of the same underlying work; listed together here for visibility). Only D6 has a configuration
-escape hatch — the others were each judged an improvement, not left as a choice:
+Eight small, deliberate visual changes ship across this 0.3.0 release (landing in different phases
+of the same underlying work, plus a post-launch accessibility fix; listed together here for
+visibility). Only D6 and D8 have configuration escape hatches (D8's is a "restore the old,
+failing look" hatch, not recommended) — the others were each judged an improvement, not left as a
+choice:
 
 - **D1 — toolbar order** is now `‹ Today ›` (prev / today / next), was `Today ‹ ›`.
   `::part(nav-prev|nav-today|nav-next)` selectors are unaffected.
@@ -57,6 +59,22 @@ escape hatch — the others were each judged an improvement, not left as a choic
 - **D7 — agenda items are `event` parts.** Agenda rows now emit
   `part="agenda-item event <style> <allday|timed>"`, so an existing `::part(event)` rule also
   matches agenda rows. See the P3 entry for the details.
+- **D8 — WCAG 2 AA color-contrast fix.** An accessibility audit found the default theme failing
+  color contrast (WCAG 1.4.3) in ~40 places, traced to our own default token values.
+  `--hcal-muted` darkens `#9aa0a6` → `#5b6572` (was ≈2.64:1 on `--hcal-bg`, now ≈5.92:1, and
+  ≈5.16:1 on the default `--hcal-today-bg` tint, which several `--hcal-muted` consumers also
+  render on). `--hcal-now-color` darkens `#ea4335` → `#c5321f` (the `part="now-label"` text was
+  ≈3.92:1, now ≈5.45:1). Out-of-month day numbers and the bilingual weekday secondary label no
+  longer use `opacity` for de-emphasis — opacity multiplies whatever contrast deficit the
+  underlying color already has (the audit measured out-of-month numbers as low as 1.44:1) — and
+  instead use a new **`--hcal-cell-out-fg`** token (default `var(--hcal-muted)`) applied as a
+  solid color. `hijri-calendar { --hcal-muted: #9aa0a6; --hcal-now-color: #ea4335; }` restores
+  the old look but reintroduces the AA failure; not recommended. **Deviation:**
+  `--hcal-cell-out-opacity` (default `0.45`) stays declared for compatibility but is no longer
+  consumed anywhere in `styles.ts` — a host tuning out-of-month dimming via that property should
+  switch to `--hcal-cell-out-fg` instead. `--hcal-day-secondary-font-size` stays at its 9px
+  default (D4) — not itself a WCAG violation, but worth knowing the contrast fix matters more at
+  that size.
 
 ### Looking ahead to 1.0
 
