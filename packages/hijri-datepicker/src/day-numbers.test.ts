@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { createCalendar } from "@spezutil/hijri-core";
+import { createCalendar, formatNumerals } from "@spezutil/hijri-core";
 import { HijriDatepicker } from "./hijri-datepicker";
 
 const cal = createCalendar();
@@ -45,7 +45,7 @@ describe("primary / secondary-position", () => {
     const h = cal.gregorianToHijri(new Date(Date.UTC(2024, 2, 15)));
     const selected = sr(el).querySelector('[aria-selected="true"]')!;
     expect(selected.querySelector('[part="day-primary"]')!.textContent!.trim()).toBe(
-      String(h.day)
+      formatNumerals(h.day, "arab")
     );
     expect(selected.querySelector('[part="day-secondary"]')!.textContent!.trim()).toBe("15");
   });
