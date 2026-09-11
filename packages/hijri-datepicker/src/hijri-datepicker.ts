@@ -1,6 +1,9 @@
 import {
+  arMonthNames,
+  arWeekdayNames,
   createCalendar,
   formatHijri,
+  formatNumerals,
   translitMonthNames,
   weekdayNames,
   zonedTodayUtc,
@@ -74,6 +77,10 @@ export class HijriDatepicker extends HTMLElement {
       "primary",
       "secondary-position",
       "timezone",
+      "numerals",
+      "numerals-gregorian",
+      "names",
+      "weekday-format",
     ];
   }
 
@@ -131,6 +138,43 @@ export class HijriDatepicker extends HTMLElement {
       : "below";
   }
   set secondaryPosition(v: string) { this.reflect("secondary-position", v); }
+  /**
+   * Digit system for Hijri numbers (day numbers, Hijri year in the title). Defaults to `"arab"`
+   * (Arabic-Indic digits) — the picker's purpose is Hijri dates. Set `"latn"` for Latin digits.
+   */
+  get numerals(): "latn" | "arab" {
+    return this.getAttribute("numerals") === "latn" ? "latn" : "arab";
+  }
+  set numerals(v: string) { this.reflect("numerals", v); }
+  /** Digit system for Gregorian numbers (secondary day numbers, Gregorian year). Default `"latn"`. */
+  get numeralsGregorian(): "latn" | "arab" {
+    return this.getAttribute("numerals-gregorian") === "arab" ? "arab" : "latn";
+  }
+  set numeralsGregorian(v: string) { this.reflect("numerals-gregorian", v); }
+  /** Hijri month and weekday names: transliterated (default) or Arabic. */
+  get names(): "translit" | "ar" {
+    return this.getAttribute("names") === "ar" ? "ar" : "translit";
+  }
+  set names(v: string) { this.reflect("names", v); }
+  /** Weekday header labels: `narrow` (default, "Su" / "أحد") or `short` ("Sun" / "أحد"). */
+  get weekdayFormat(): "narrow" | "short" {
+    return this.getAttribute("weekday-format") === "short" ? "short" : "narrow";
+  }
+  set weekdayFormat(v: string) { this.reflect("weekday-format", v); }
+
+  private numH(n: number): string { return formatNumerals(n, this.numerals); }
+  private numG(n: number): string { return formatNumerals(n, this.numeralsGregorian); }
+
+  /** Weekday label for column `dow` (0=Sunday). Arabic names drop the definite article. */
+  private weekdayLabel(dow: number): string {
+    if (this.names === "ar") {
+      const full = arWeekdayNames[dow] ?? "";
+      return full.replace(/^ال/, "");
+    }
+    const full = weekdayNames[dow] ?? "";
+    return full.slice(0, this.weekdayFormat === "short" ? 3 : 2);
+  }
+
   /** IANA timezone (e.g. "Asia/Kolkata") used to resolve "today". Defaults to the viewer's local zone. */
   get timezone(): string | undefined { return this.getAttribute("timezone") ?? undefined; }
   set timezone(v: string | null | undefined) { this.reflect("timezone", v ?? null); }
@@ -331,19 +375,23 @@ export class HijriDatepicker extends HTMLElement {
   /** Gregorian day number, with "1 Mar"-style month marker on the first of a month. */
   private gregDayLabel(g: Date): string {
     const d = g.getUTCDate();
-    if (d !== 1) return String(d);
-    return `1 ${g.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" })}`;
+    if (d !== 1) return this.numG(d);
+    return `${this.numG(1)} ${g.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" })}`;
   }
 
   /** Primary/secondary day-number spans honoring `primary` and `secondary-position`. */
   private dayNumbersHtml(cell: DayCell): string {
     const gregLabel = this.gregDayLabel(cell.gregorian);
-    const hijriLabel = String(cell.hijri.day);
-    const [prim, sec] =
-      this.primary === "gregorian" ? [gregLabel, hijriLabel] : [hijriLabel, gregLabel];
-    const primarySpan = `<span class="num-primary" part="day-primary">${prim}</span>`;
+    const hijriLabel = this.numH(cell.hijri.day);
+    const hijriDir = this.numerals === "arab" ? ' dir="rtl"' : "";
+    const gregDir = this.numeralsGregorian === "arab" && cell.gregorian.getUTCDate() !== 1 ? ' dir="rtl"' : "";
+    const [prim, sec, primDir, secDir] =
+      this.primary === "gregorian"
+        ? [gregLabel, hijriLabel, gregDir, hijriDir]
+        : [hijriLabel, gregLabel, hijriDir, gregDir];
+    const primarySpan = `<span class="num-primary" part="day-primary"${primDir}>${prim}</span>`;
     if (this.secondaryPosition === "hidden") return primarySpan;
-    return `${primarySpan}<span class="num-secondary" part="day-secondary">${sec}</span>`;
+    return `${primarySpan}<span class="num-secondary" part="day-secondary"${secDir}>${sec}</span>`;
   }
 
   private renderTimeRow(): string {
@@ -412,23 +460,22 @@ export class HijriDatepicker extends HTMLElement {
       month: this.view.month,
       day: 1,
     });
-    const title = `${translitMonthNames[this.view.month - 1] ?? ""} ${this.view.year}`;
-    const subtitle = headerGreg.toLocaleDateString("en-US", {
-      month: "long",
-      year: "numeric",
-      timeZone: "UTC",
-    });
+    const monthNames = this.names === "ar" ? arMonthNames : translitMonthNames;
+    const title = `${monthNames[this.view.month - 1] ?? ""} ${this.numH(this.view.year)}`;
+    const titleDir = this.names === "ar" || this.numerals === "arab" ? ' dir="rtl"' : "";
+    const subtitle = `${headerGreg.toLocaleDateString("en-US", { month: "long", timeZone: "UTC" })} ${this.numG(headerGreg.getUTCFullYear())}`;
+    const dowDir = this.names === "ar" ? ' dir="rtl"' : "";
 
     this.root.innerHTML = `<style>${styles}</style>
-      <div class="cal" role="application" aria-label="Hijri date picker">
-        <div class="header">
+      <div class="cal" part="calendar" role="application" aria-label="Hijri date picker">
+        <div class="header" part="header">
           <button type="button" part="nav-prev" aria-label="Previous month" data-nav="-1">‹</button>
-          <div class="title">${title}<small>${subtitle}</small></div>
+          <div class="title" part="title"><span part="title-primary"${titleDir}>${title}</span><small part="title-secondary">${subtitle}</small></div>
           <button type="button" part="nav-next" aria-label="Next month" data-nav="1">›</button>
         </div>
         <div class="grid" role="grid">
           <div class="dow-row" role="row">
-            ${weekdayNames.map((d) => `<div class="dow" role="columnheader">${d.slice(0, 2)}</div>`).join("")}
+            ${weekdayNames.map((_, dow) => `<div class="dow" part="weekday" role="columnheader"${dowDir}>${this.weekdayLabel(dow)}</div>`).join("")}
           </div>
           ${model.weeks
             .map((week, w) => {

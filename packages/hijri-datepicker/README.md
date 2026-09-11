@@ -5,7 +5,7 @@ Hijri-first date picker Web Component (Fatimid/Bohra calendar) with Gregorian da
 - Modes: `single`, `range` (with hover preview), `multiple`
 - Optional time picker (12/24h)
 - `min`/`max`, disabled weekdays, custom `isDateDisabled`
-- `primary="hijri|gregorian"` + `secondary-position` to control which numeral is prominent
+- `primary="hijri|gregorian"` + `secondary-position` to control which numeral is prominent; `numerals="arab|latn"` (default Arabic-Indic), `numerals-gregorian`, `names="translit|ar"`, `weekday-format="narrow|short"`; full `--dtp-*` theming tokens and `::part()` hooks
 - Abbreviated month marker ("1 Apr") when the Gregorian month changes mid-grid
 - Keyboard navigation, ARIA grid semantics, RTL
 

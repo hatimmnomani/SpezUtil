@@ -26,8 +26,27 @@ Every attribute has a matching reflected property (e.g. `el.value`, `el.enableTi
 | `dir` | `dir` | ltr \| rtl | all | Text direction. |
 | `primary` | `primary` | hijri \| gregorian | all | Which day number is prominent in cells (default `hijri`). |
 | `secondary-position` | `secondaryPosition` | end \| start \| above \| below \| hidden | all | Where the secondary number sits (default `below`), or hide it. |
+| `numerals` | `numerals` | latn \| arab | all | Digit system for Hijri numbers (day numbers, Hijri year). Default `arab` (Arabic-Indic). |
+| `numerals-gregorian` | `numeralsGregorian` | latn \| arab | all | Digit system for Gregorian numbers (secondary day numbers, Gregorian year). Default `latn`. Month abbreviations stay Latin. |
+| `names` | `names` | translit \| ar | all | Hijri month and weekday names, transliterated (default) or Arabic. |
+| `weekday-format` | `weekdayFormat` | narrow \| short | all | Weekday header labels: `narrow` ("Su", default) or `short` ("Sun"). Arabic names drop the definite article in both. |
 
 When the Gregorian month changes inside the grid, the first of the month is labelled with its abbreviated name (e.g. "1 Apr").
+
+### Theming
+
+All visual traits are `--dtp-*` custom properties on the host (defaults are the stock look):
+`--dtp-bg`, `--dtp-fg`, `--dtp-muted`, `--dtp-accent`, `--dtp-accent-fg`, `--dtp-border`, `--dtp-radius`,
+`--dtp-cell-radius`, `--dtp-width`, `--dtp-padding`, `--dtp-gap`, `--dtp-shadow`, `--dtp-font-family`,
+`--dtp-font-family-display`, `--dtp-font-family-mono`, `--dtp-font-family-arabic`, `--dtp-header-bg`,
+`--dtp-hover-bg`, `--dtp-title-font-size`, `--dtp-title-color`, `--dtp-title-weight`,
+`--dtp-title-secondary-font-size`, `--dtp-title-secondary-color`, `--dtp-weekday-font-size`,
+`--dtp-weekday-color`, `--dtp-weekday-font-family`, `--dtp-day-primary-font-size`, `--dtp-day-primary-color`,
+`--dtp-day-primary-weight`, `--dtp-day-secondary-font-size`, `--dtp-day-secondary-color`,
+`--dtp-day-secondary-font-family`, `--dtp-out-color`, `--dtp-out-opacity`, `--dtp-today-color`,
+`--dtp-selected-bg`, `--dtp-selected-fg`, `--dtp-range-bg`, `--dtp-input-border`.
+Parts: `calendar`, `header`, `title`, `title-primary`, `title-secondary`, `nav-prev`, `nav-next`, `weekday`,
+`day`, `day-primary`, `day-secondary`, `time`.
 
 ### isDateDisabled (property only)
 
