@@ -32,7 +32,7 @@ export function Example() {
 }
 ```
 
-All element attributes are available as props — including the events-parity API (`views`, `titleLayout`, `names`, `numerals`, `numeralsGregorian`, `weekdayFormat`, `weekendDays`, `dayNumberAlign`, `monthMarker`, `todayMarker`, `eventStyle`, `eventTime`, `slotMinutes`, `alldayRow`, `nowIndicator`, `timeLabelPosition`, `dayHeader`, `agendaDays`, `loading`, `narrowEvents`, `renderEvent`, `renderDayCell`; see the [full reference](https://hatimmnomani.github.io/SpezUtil/calendar/api)) — and the seven CustomEvents map to typed callbacks (`onEventClick`, `onDateClick`, `onSlotClick`, `onMoreClick`, `onViewChange`, `onDateChange`, `onRangeChange`).
+All element attributes are available as props — including the events-parity API (`views`, `titleLayout`, `names`, `numerals`, `numeralsGregorian`, `weekdayFormat`, `weekendDays`, `dayNumberAlign`, `monthMarker`, `monthGrid`, `todayMarker`, `eventStyle`, `eventTime`, `slotMinutes`, `alldayRow`, `nowIndicator`, `timeLabelPosition`, `dayHeader`, `agendaDays`, `loading`, `narrowEvents`, `renderEvent`, `renderDayCell`; see the [full reference](https://hatimmnomani.github.io/SpezUtil/calendar/api)) — and the seven CustomEvents map to typed callbacks (`onEventClick`, `onDateClick`, `onSlotClick`, `onMoreClick`, `onViewChange`, `onDateChange`, `onRangeChange`).
 
 `onRangeChange` fires on every visible-range change **after mount**, but misses the connect-time
 `init` fire — `@lit/react`'s `createComponent` attaches listeners in a `useLayoutEffect` that runs

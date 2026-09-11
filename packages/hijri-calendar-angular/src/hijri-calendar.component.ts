@@ -49,6 +49,7 @@ import type {
       [weekendDays]="weekendDays"
       [dayNumberAlign]="dayNumberAlign"
       [monthMarker]="monthMarker"
+      [monthGrid]="monthGrid"
       [todayMarker]="todayMarker"
       [eventStyle]="eventStyle"
       [eventTime]="eventTime"
@@ -101,6 +102,7 @@ export class HijriCalendarComponent {
   @Input() weekendDays: string | number[] | null = null;
   @Input() dayNumberAlign: "center" | "start" | "end" | null = null;
   @Input() monthMarker: "gregorian" | "hijri" | "both" | "none" | null = null;
+  @Input() monthGrid: "hijri" | "gregorian" | null = null;
   @Input() todayMarker: "pill" | "dot" | "none" | null = null;
   @Input() eventStyle: "solid" | "tinted" | "outline" | null = null;
   @Input() eventTime: "auto" | "none" | "start" | "start-duration" | "range" | null = null;

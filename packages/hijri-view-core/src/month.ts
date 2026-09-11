@@ -31,7 +31,17 @@ export interface BuildOptions {
   weekStart?: number;
   /** Day indices (0=Sunday..6=Saturday) that count as weekend. Default [0, 6]. */
   weekendDays?: number[];
+  /**
+   * Which calendar `view.year`/`view.month` refer to and which month the grid is framed around.
+   * `"hijri"` (default): the 6×7 grid is built around that Hijri month and `inCurrentMonth`
+   * flags its days. `"gregorian"`: `view` is a Gregorian year/month (1–12), the grid is framed
+   * around that Gregorian month and `inCurrentMonth` flags its days — Hijri dates are still
+   * computed per cell, so a Hijri-numeral calendar can be laid out month-by-Gregorian-month.
+   */
+  anchor?: MonthAnchor;
 }
+
+export type MonthAnchor = "hijri" | "gregorian";
 
 export function sameHijri(a: HijriDate, b: HijriDate): boolean {
   return a.year === b.year && a.month === b.month && a.day === b.day;
@@ -46,7 +56,11 @@ export function buildMonthModel(
   view: { year: number; month: number },
   opts: BuildOptions
 ): MonthModel {
-  const firstGreg = cal.hijriToGregorian({ year: view.year, month: view.month, day: 1 });
+  const anchor: MonthAnchor = opts.anchor ?? "hijri";
+  const firstGreg =
+    anchor === "gregorian"
+      ? new Date(Date.UTC(view.year, view.month - 1, 1))
+      : cal.hijriToGregorian({ year: view.year, month: view.month, day: 1 });
   const weekStart = opts.weekStart ?? 0;
   const startOffset = (firstGreg.getUTCDay() - weekStart + 7) % 7;
   const gridStart = addDaysUtc(firstGreg, -startOffset);
@@ -71,7 +85,10 @@ export function buildMonthModel(
       week.push({
         hijri,
         gregorian: g,
-        inCurrentMonth: hijri.year === view.year && hijri.month === view.month,
+        inCurrentMonth:
+          anchor === "gregorian"
+            ? g.getUTCFullYear() === view.year && g.getUTCMonth() + 1 === view.month
+            : hijri.year === view.year && hijri.month === view.month,
         selected,
         disabled: opts.isDisabled ? opts.isDisabled(hijri, g) : false,
         isToday: todayHijri ? sameHijri(hijri, todayHijri) : false,

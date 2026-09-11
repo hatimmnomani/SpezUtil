@@ -1,5 +1,5 @@
 export { buildMonthModel, sameHijri, addDaysUtc } from "./month";
-export type { DayCell, MonthModel, BuildOptions } from "./month";
+export type { MonthAnchor, DayCell, MonthModel, BuildOptions } from "./month";
 export { normalizeEvent, eventsInRange, mapEventFields } from "./events";
 export type { CalendarEvent, NormalizedEvent } from "./types";
 export type { EventFieldMap, EventFieldSource } from "./events";
