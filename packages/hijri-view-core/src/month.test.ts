@@ -75,4 +75,28 @@ describe("buildMonthModel", () => {
     const band = model.weeks.flat().filter((c) => c.inRange && c.inCurrentMonth).map((c) => c.hijri.day);
     expect(band.sort((a, b) => a - b)).toEqual([6, 7, 8]);
   });
+
+  it("marks Sat/Sun as weekend by default", () => {
+    const model = buildMonthModel(cal, { year: 1445, month: 9 }, {});
+    const cells = model.weeks.flat();
+    for (const c of cells) {
+      expect(c.isWeekend).toBe(c.gregorian.getUTCDay() === 0 || c.gregorian.getUTCDay() === 6);
+    }
+  });
+
+  it("marks exactly 12 of 42 cells isWeekend for a custom weekendDays set", () => {
+    const model = buildMonthModel(cal, { year: 1445, month: 9 }, { weekendDays: [5, 6] });
+    const cells = model.weeks.flat();
+    expect(cells.length).toBe(42);
+    const weekend = cells.filter((c) => c.isWeekend);
+    expect(weekend.length).toBe(12);
+    for (const c of weekend) {
+      expect([5, 6]).toContain(c.gregorian.getUTCDay());
+    }
+  });
+
+  it("marks no cell as weekend when weekendDays is empty", () => {
+    const model = buildMonthModel(cal, { year: 1445, month: 9 }, { weekendDays: [] });
+    expect(model.weeks.flat().some((c) => c.isWeekend)).toBe(false);
+  });
 });

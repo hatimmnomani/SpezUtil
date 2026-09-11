@@ -1,5 +1,14 @@
 # @spezutil/hijri-datepicker
 
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [5d1d377]
+- Updated dependencies [5d1d377]
+  - @spezutil/hijri-core@0.2.0
+  - @spezutil/hijri-view-core@0.2.0
+
 ## 0.2.1
 
 ### Patch Changes

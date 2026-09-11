@@ -21,6 +21,7 @@ export interface TimeGridColumn {
   /** Day start, UTC midnight. */
   gregorian: Date;
   isToday: boolean;
+  isWeekend: boolean;
   allDay: NormalizedEvent[];
   timed: PositionedEvent[];
 }
@@ -36,6 +37,8 @@ export interface TimeGridOptions {
   dayEndHour?: number;
   weekStart?: number;
   today?: Date;
+  /** Day indices (0=Sunday..6=Saturday) that count as weekend. Default [0, 6]. */
+  weekendDays?: number[];
 }
 
 function floorToDayUtc(date: Date): Date {
@@ -96,6 +99,7 @@ export function buildTimeGridModel(
       ? addDaysUtc(anchorDay, -((anchorDay.getUTCDay() - (opts.weekStart ?? 0) + 7) % 7))
       : anchorDay;
   const todayHijri = opts.today ? cal.gregorianToHijri(opts.today) : null;
+  const weekendDays = opts.weekendDays ?? [0, 6];
   const normalized = events.map(normalizeEvent);
 
   const columns: TimeGridColumn[] = [];
@@ -124,6 +128,7 @@ export function buildTimeGridModel(
       hijri,
       gregorian: dayStart,
       isToday: todayHijri ? sameHijri(hijri, todayHijri) : false,
+      isWeekend: weekendDays.includes(dayStart.getUTCDay()),
       allDay,
       timed,
     });

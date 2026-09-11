@@ -51,8 +51,11 @@ describe("gregorian month-change marker", () => {
 });
 
 describe("primary / secondary-position", () => {
-  it("defaults to Hijri primary with Gregorian secondary", () => {
-    const el = mount({ date: "2026-07-06" });
+  // `numerals="latn"` is pinned so the assertions can compare bare digits; the *slot assignment*
+  // (which date goes in primary vs secondary) is what defaults here, not the digit system —
+  // `numerals` itself defaults to `"arab"` since D9, covered in typography.test.ts.
+  it("puts the Hijri number in primary and the Gregorian in secondary by default", () => {
+    const el = mount({ date: "2026-07-06", numerals: "latn" });
     const cell = cellFor(el, "2026-07-06");
     const h = cal.gregorianToHijri(new Date(Date.UTC(2026, 6, 6)));
     expect(cell.querySelector('[part="day-primary"]')!.textContent!.trim()).toBe(String(h.day));
@@ -60,7 +63,7 @@ describe("primary / secondary-position", () => {
   });
 
   it("swaps numbers when primary=gregorian", () => {
-    const el = mount({ date: "2026-07-06", primary: "gregorian" });
+    const el = mount({ date: "2026-07-06", primary: "gregorian", numerals: "latn" });
     const cell = cellFor(el, "2026-07-06");
     const h = cal.gregorianToHijri(new Date(Date.UTC(2026, 6, 6)));
     expect(cell.querySelector('[part="day-primary"]')!.textContent!.trim()).toBe("6");

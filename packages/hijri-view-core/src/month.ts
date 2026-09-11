@@ -10,6 +10,7 @@ export interface DayCell {
   rangeStart: boolean;
   rangeEnd: boolean;
   inRange: boolean;
+  isWeekend: boolean;
 }
 
 export interface MonthModel {
@@ -28,6 +29,8 @@ export interface BuildOptions {
   today?: Date;
   /** First day of week, 0=Sunday..6=Saturday. Default 0. */
   weekStart?: number;
+  /** Day indices (0=Sunday..6=Saturday) that count as weekend. Default [0, 6]. */
+  weekendDays?: number[];
 }
 
 export function sameHijri(a: HijriDate, b: HijriDate): boolean {
@@ -48,6 +51,7 @@ export function buildMonthModel(
   const startOffset = (firstGreg.getUTCDay() - weekStart + 7) % 7;
   const gridStart = addDaysUtc(firstGreg, -startOffset);
   const todayHijri = opts.today ? cal.gregorianToHijri(opts.today) : null;
+  const weekendDays = opts.weekendDays ?? [0, 6];
 
   const startT = opts.rangeStart ? cal.hijriToGregorian(opts.rangeStart).getTime() : null;
   const endT = opts.rangeEnd ? cal.hijriToGregorian(opts.rangeEnd).getTime() : null;
@@ -74,6 +78,7 @@ export function buildMonthModel(
         rangeStart: startT !== null && t === startT,
         rangeEnd: endT !== null && t === endT,
         inRange: lo !== null && hi !== null && t > lo && t < hi,
+        isWeekend: weekendDays.includes(g.getUTCDay()),
       });
     }
     weeks.push(week);

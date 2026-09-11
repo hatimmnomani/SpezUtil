@@ -4,7 +4,7 @@ pnpm/turbo monorepo. Published scope: `@spezutil/*`. Hijri (Bohra/Misri) calenda
 
 ## Packages
 
-- `hijri-core` — zero-dep Hijri calendar engine (JD conversion, tabular calc, locale strings, formatting). No DOM.
+- `hijri-core` — zero-dep Hijri calendar engine (JD conversion, tabular calc, locale strings, formatting). No DOM. Includes `formatNumerals(value, "latn" | "arab")`, the shared digit-transliteration utility (`src/format.ts`) that `hijri-calendar`'s `numerals`/`numerals-gregorian` attributes and `hijri-datepicker` both build on — Latin↔Arabic-Indic only, does not touch non-digit characters.
 - `hijri-view-core` — pure view-model builders (month grid, time grid, agenda, event layout). No DOM, no styling.
 - `hijri-calendar` — `<hijri-calendar>` Web Component (month/week/day/agenda views + events). Ships CSS-in-JS (`src/styles.ts`).
 - `hijri-datepicker` — `<hijri-datepicker>` Web Component (single/range date picker + optional time). Ships CSS-in-JS (`src/styles.ts`).
@@ -19,12 +19,21 @@ Build: `tsup` per package (`pnpm --filter <pkg> build`). Test: `vitest` (`pnpm -
 
 > Previously this slot was filled by **Al-Kanz**, which was removed (2026-07) because the team had no redistribution license for it — see git history. Amiri is licensed under the SIL Open Font License 1.1, which permits embedding/redistribution; the license text ships at `assets/fonts/OFL-Amiri.txt` and each consuming package's README carries an attribution note, both required by the OFL. If written permission for Al-Kanz is obtained later, swapping back is a config change — see below.
 
+> Separately, `apps/storybook/public/fonts/` vendors three more OFL-licensed TTFs (Newsreader,
+> Public Sans, JetBrains Mono — the reference "editorial" type ramp's display/sans/mono families)
+> with their `OFL-*.txt` license files alongside, loaded via `@font-face` in
+> `apps/storybook/.storybook/preview-head.html`. This is unrelated to the embedded-Amiri mechanism
+> above (Storybook is a private, never-published app, and these fonts are static files served by
+> the dev/build server, not base64-inlined into any package's JS) but carries the same OFL
+> redistribution obligation, and exists for the same reason: deterministic Playwright screenshot
+> tests must never depend on a Google Fonts network fetch.
+
 - Source font: `assets/fonts/Amiri-Regular.ttf` (repo root, tracked in git). License: `assets/fonts/OFL-Amiri.txt` (must accompany redistribution per OFL §1).
 - Generated modules (do not hand-edit): `packages/hijri-calendar/src/font-arabic.ts`, `packages/hijri-datepicker/src/font-arabic.ts`, `packages/richtext-editor/src/font-arabic.ts`. The filename (`font-arabic.ts`) and export names are font-agnostic on purpose, so swapping the embedded font never requires touching a package's `styles.ts`.
 - To swap fonts: drop the new TTF (+ its license file) into `assets/fonts/`, update the `AMIRI` config object (file + family) in `scripts/generate-font-asset.mjs`, then regenerate: `node scripts/generate-font-asset.mjs`.
 - The generated module exports `arabicFontFace` (a full `@font-face` rule) and `arabicFontDataUrl` (the raw data URL, used by `richtext-editor` to declare its own `@font-face` with `unicode-range` so the embedded font applies only to Arabic codepoints), plus `ARABIC_FONT_FAMILY`. Exports are annotated `: string` — without that, TypeScript inlines the ~500 KB literal into every consumer's `.d.ts`.
 - CSS custom properties (per-component, override on the host element to configure — this is the supported way to use a different Arabic font without forking the package):
-  - `hijri-calendar`: `--hcal-font-family-arabic` (default `"Amiri", "Traditional Arabic", serif`), `--hcal-font-family` (default `system-ui, sans-serif`, used for non-Arabic text).
+  - `hijri-calendar`: `--hcal-font-family-arabic` (default `"Amiri", "Traditional Arabic", serif`), `--hcal-font-family` (default `system-ui, sans-serif`, used for non-Arabic text), plus two properties that fall back to `--hcal-font-family` — `--hcal-font-family-display` (title-secondary, day-banner secondary, timed-block event title) and `--hcal-font-family-mono` (gutter labels, `event-time`, weekday-secondary, day-banner weekday) — for the four-family "editorial" type ramp (display/sans/mono/Arabic). Note the Gregorian day-number span is governed by `--hcal-day-secondary-font-family` (default `var(--hcal-font-family-arabic)`), not `--hcal-font-family-display`, so it must be set explicitly to move that number onto the display serif.
   - `hijri-datepicker`: `--dtp-font-family-arabic` (default `"Amiri", "Traditional Arabic", serif`), `--dtp-font-family` (default `system-ui, sans-serif`).
   - `richtext-editor`: `--rte-font-family-arabic` (default `"Amiri", "Traditional Arabic", serif`), `--rte-font-family` (default `"Amiri", system-ui, sans-serif` — Amiri first is safe because its `@font-face` is restricted to Arabic `unicode-range`). `richtext-editor` additionally exposes a user-facing font-family picker in the toolbar (`fonts` property/attribute on `<spez-richtext>`, see `packages/richtext-editor/src/toolbar.ts`) that applies inline `font-family` styles to selected text via `$patchStyleText` — independent of the CSS custom properties, which only set the *default* font.
 

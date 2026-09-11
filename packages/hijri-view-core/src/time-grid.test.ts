@@ -139,4 +139,14 @@ describe("buildTimeGridModel", () => {
     const model = buildTimeGridModel(cal, monday, 7, [], { today: monday });
     expect(model.columns.map((c) => c.isToday)).toEqual([false, true, false, false, false, false, false]);
   });
+
+  it("marks Sat/Sun columns as weekend by default", () => {
+    const model = buildTimeGridModel(cal, monday, 7, [], {});
+    expect(model.columns.map((c) => c.isWeekend)).toEqual([true, false, false, false, false, false, true]);
+  });
+
+  it("marks weekend columns using a custom weekendDays set", () => {
+    const model = buildTimeGridModel(cal, monday, 7, [], { weekendDays: [5, 6] });
+    expect(model.columns.map((c) => c.isWeekend)).toEqual([false, false, false, false, false, true, true]);
+  });
 });

@@ -40,3 +40,191 @@ Every demo below is the real Web Component with sample meeting data. Interaction
   onEventClick={(e) => openMeeting(e.detail.event.data as Meeting)}
 />
 ```
+
+## Editorial theme
+
+The "editorial" look (warm cream surfaces, crimson accent, Amiri Hijri numerals, a bilingual
+weekday header, an inline Gregorian sub-title) is reachable entirely through public API — no
+`::part()` required. It needs **both** halves of the API, not just the color tokens:
+`--hcal-*` custom properties for appearance, and a set of structural attributes for what DOM
+renders. A tokens-only theme (just recoloring the default layout) does **not** reproduce this
+look — the bilingual header, inline title and start-aligned numbers are all attribute-driven, not
+CSS-driven. (The Arabic-Indic Hijri numerals are the one part you get for free: `numerals`
+defaults to `"arab"`. `numerals="arab"` is still written out below, because a reference recipe
+should say what it depends on rather than lean on a default.)
+
+<CalendarDemo
+  date="2026-07-06"
+  numerals="arab"
+  names="ar"
+  weekdayFormat="bilingual"
+  titleLayout="inline"
+  dayNumberAlign="start"
+  monthMarker="hijri"
+  todayMarker="dot"
+  weekStart={0}
+  hostStyle={{
+    "--hcal-bg": "#FFFFFF",
+    "--hcal-fg": "#1F1A17",
+    "--hcal-muted": "#9A8E85",
+    "--hcal-accent": "#D62246",
+    "--hcal-accent-fg": "#FFFFFF",
+    "--hcal-border": "#E8DECF",
+    "--hcal-radius": "12px",
+    "--hcal-button-radius": "6px",
+    "--hcal-today-bg": "#FBF7F0",
+    "--hcal-grid-line": "#E8DECF",
+    "--hcal-header-bg": "#F4ECDD",
+    "--hcal-weekend-bg": "#FAF6EE",
+    "--hcal-font-family": '"Public Sans", system-ui, sans-serif',
+    "--hcal-font-family-display": '"Newsreader", Georgia, serif',
+    "--hcal-font-family-mono": '"JetBrains Mono", ui-monospace, monospace',
+    "--hcal-day-secondary-font-family": "var(--hcal-font-family-display)",
+  }}
+/>
+
+```tsx
+// Structural attributes — these change WHAT renders, not just how it looks.
+<HijriCalendar
+  numerals="arab"           // Arabic-Indic Hijri digits
+  names="ar"                 // genuine Arabic month/weekday names (independent of `locale`)
+  weekdayFormat="bilingual"  // Arabic weekday above, English abbreviation below
+  titleLayout="inline"       // Gregorian sub-title after the Hijri title, not stacked below
+  dayNumberAlign="start"     // left-align day numbers instead of centering them
+  monthMarker="hijri"        // mark the first of each Hijri month, not the Gregorian one
+  todayMarker="dot"          // corner dot instead of a pill around today's number
+  weekStart={0}              // Sun→Sat column order — this is the ONLY thing that controls
+                              // column order; it is never affected by `names` or `numerals`
+  style={{
+    // Appearance — these only change HOW the structural DOM above looks.
+    "--hcal-accent": "#D62246",
+    "--hcal-font-family-display": '"Newsreader", Georgia, serif',
+    "--hcal-day-secondary-font-family": "var(--hcal-font-family-display)",
+    // … see the API reference's full custom-property list
+  }}
+/>
+```
+
+## Custom event content (`renderEvent`)
+
+`renderEvent` replaces a chip/block/agenda item's **inner content** — the component still owns the
+wrapping `<button>`, its ARIA, focus ring and click handling. Return a `Node`, a plain `string`
+(never parsed as HTML), or `null` to fall back to the default renderer:
+
+<CalendarDemo
+  view="week"
+  date="2026-07-06"
+  dayStart={7}
+  dayEnd={21}
+  renderEvent={(ctx) => {
+    const el = document.createElement("div");
+    el.style.display = "flex";
+    el.style.flexDirection = "column";
+    el.style.gap = "2px";
+    const time = document.createElement("span");
+    time.style.fontWeight = "600";
+    time.textContent = ctx.labels.start;
+    const title = document.createElement("span");
+    title.textContent = `📌 ${ctx.event.title}`;
+    el.append(time, title);
+    return el;
+  }}
+/>
+
+```tsx
+<HijriCalendar
+  view="week"
+  events={meetings}
+  renderEvent={(ctx) => {
+    // ctx: { event, view, placement, hijri, labels, continuesBefore, continuesAfter, size }
+    const el = document.createElement("div");
+    el.textContent = `📌 ${ctx.event.title} · ${ctx.labels.start}`;
+    return el; // or a string, or null to use the default renderer
+  }}
+/>
+```
+
+A hook that throws falls back to the default renderer and logs one `console.warn` — it can never
+break the calendar.
+
+## Custom day numbers (`renderDayCell`)
+
+`renderDayCell` replaces the content of the month-cell number button (and, in week/day views, the
+time-grid column head) the same way — content-only, inside a component-owned `<button>`:
+
+<CalendarDemo
+  date="2026-07-06"
+  renderDayCell={(ctx) => {
+    const el = document.createElement("div");
+    el.textContent = ctx.labels.primary;
+    if (ctx.cell.isToday) el.style.textDecoration = "underline";
+    if (ctx.events.length > 0) el.style.fontWeight = "700";
+    return el;
+  }}
+/>
+
+```tsx
+<HijriCalendar
+  renderDayCell={(ctx) => {
+    // ctx: { cell, view, placement, events, labels, size }
+    const el = document.createElement("div");
+    el.textContent = ctx.labels.primary;
+    if (ctx.events.length > 0) el.style.fontWeight = "700"; // bold days with events
+    return el;
+  }}
+/>
+```
+
+Output must be non-interactive (it lives inside a `<button>`) — use `date-click` for interaction,
+not elements returned from the hook.
+
+## Fri/Sat weekend
+
+Some deployments use a Friday/Saturday weekend instead of the default Saturday/Sunday. Set
+`weekendDays` to the space-separated day indices (`0` = Sunday … `6` = Saturday) that should get
+the `weekend` part token and `--hcal-weekend-*` styling:
+
+<CalendarDemo date="2026-07-06" weekendDays="5 6" hostStyle={{ "--hcal-weekend-bg": "#f5f5f5" }} />
+
+```tsx
+<HijriCalendar weekendDays="5 6" />
+```
+
+```css
+hijri-calendar {
+  --hcal-weekend-bg: #f5f5f5;
+  --hcal-weekend-fg: #888;
+}
+```
+
+Pass an empty string (`weekendDays=""`) to disable weekend styling entirely.
+
+## Phone layout
+
+The component measures its own width (not the viewport) with a `ResizeObserver` and switches
+layout at fixed thresholds — `wide` ≥ 900px, `medium` 600–899px, `narrow` < 600px — so it adapts
+correctly even inside a narrow sidebar column on a wide screen. At `narrow`, month-view chips
+collapse to dots by default (`narrow-events="dots"`), the title is forced to `stacked`, and
+week/day views scroll horizontally with a JS-pinned sticky time gutter (see the API reference's
+note on why that isn't plain CSS `position: sticky`).
+
+<CalendarDemo date="2026-07-06" hostWidth={380} />
+
+```tsx
+// No special markup needed — just constrain the host's own width (a phone viewport, a
+// sidebar column, whatever). The calendar adapts on its own.
+<div style={{ width: 380 }}>
+  <HijriCalendar date="2026-07-06" />
+</div>
+```
+
+Prefer the desktop lane layout with horizontal scrolling instead of dots at the `narrow` band?
+Set `narrowEvents="scroll"`:
+
+<CalendarDemo date="2026-07-06" hostWidth={380} narrowEvents="scroll" />
+
+```tsx
+<div style={{ width: 380 }}>
+  <HijriCalendar date="2026-07-06" narrowEvents="scroll" />
+</div>
+```

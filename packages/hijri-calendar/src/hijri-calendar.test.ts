@@ -41,7 +41,7 @@ describe("<hijri-calendar> shell", () => {
   });
 
   it("shows the Hijri month title with a Gregorian subtitle", () => {
-    const el = mount({ date: "2026-07-06" });
+    const el = mount({ date: "2026-07-06", numerals: "latn" });
     const h = cal.gregorianToHijri(new Date(Date.UTC(2026, 6, 6)));
     const title = sr(el).querySelector('[part="title"]')!.textContent!;
     expect(title).toContain(translitMonthNames[h.month - 1]);
@@ -203,6 +203,50 @@ describe("<hijri-calendar> month view events", () => {
   });
 });
 
+describe("<hijri-calendar> Phase 0 tokenised styles", () => {
+  it("declares --hcal-font-family on :host and uses it for the base font", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-font-family: system-ui, sans-serif;");
+    expect(css).toContain("font-family: var(--hcal-font-family);");
+  });
+
+  it("tokenises previously hard-coded sizes", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-cell-min-height: 96px;");
+    expect(css).toContain("--hcal-body-max-height: 640px;");
+    expect(css).toContain("--hcal-button-radius: 6px;");
+    expect(css).toContain("--hcal-switch-bg: transparent;");
+    expect(css).toContain("--hcal-switch-active-bg: var(--hcal-accent);");
+    expect(css).toContain("--hcal-switch-active-fg: var(--hcal-accent-fg);");
+    expect(css).toContain("--hcal-switch-active-shadow: none;");
+    expect(css).toContain("min-height: var(--hcal-cell-min-height);");
+    expect(css).toContain("max-height: var(--hcal-body-max-height);");
+  });
+});
+
+describe("<hijri-calendar> Phase 0 native title on events", () => {
+  it("carries a title on the all-day and timed time-grid event blocks", () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    el.events = [
+      { id: "a", title: "Event a", start: "2026-07-06", allDay: true },
+      { id: "b", title: "Event b", start: "2026-07-06T10:00" },
+    ];
+    const allDayChip = sr(el).querySelector('[data-aev]') as HTMLElement;
+    expect(allDayChip.getAttribute("title")).toBe("Event a, All day");
+    const timedBlock = sr(el).querySelector('[data-tev]') as HTMLElement;
+    expect(timedBlock.getAttribute("title")).toBe("Event b, 10 AM");
+  });
+
+  it("carries a title on agenda items", () => {
+    const el = mount({ date: "2026-07-06", view: "agenda" });
+    el.events = [{ id: "a", title: "Event a", start: "2026-07-06T10:00" }];
+    const item = sr(el).querySelector('[part~="agenda-item"]') as HTMLElement;
+    expect(item.getAttribute("title")).toBe("Event a, 10 AM");
+  });
+});
+
 describe("<hijri-calendar> eventFields mapping", () => {
   it("renders unmodified events as before when eventFields is unset", () => {
     const el = mount({ date: "2026-07-06" });
@@ -240,5 +284,162 @@ describe("<hijri-calendar> eventFields mapping", () => {
     el.addEventListener("event-click", (e) => (detail = (e as CustomEvent).detail));
     (sr(el).querySelector('[part~="event"]') as HTMLButtonElement).click();
     expect(detail!.event.data).toBe(raw);
+  });
+});
+
+describe("<hijri-calendar> loading", () => {
+  it('sets aria-busy="true" on the grid and renders a part="loading" overlay', () => {
+    const el = mount({ date: "2026-07-06", loading: "" });
+    expect(el.loading).toBe(true);
+    expect(sr(el).querySelector('[role="grid"]')!.getAttribute("aria-busy")).toBe("true");
+    const overlay = sr(el).querySelector('[part="loading"]');
+    expect(overlay).toBeTruthy();
+    expect(overlay!.textContent).toBe("Loading…");
+  });
+
+  it("removing the attribute removes aria-busy and the overlay", () => {
+    const el = mount({ date: "2026-07-06", loading: "" });
+    el.removeAttribute("loading");
+    expect(el.loading).toBe(false);
+    expect(sr(el).querySelector('[role="grid"]')!.hasAttribute("aria-busy")).toBe(false);
+    expect(sr(el).querySelector('[part="loading"]')).toBeNull();
+  });
+
+  it("applies aria-busy to .timegrid and .agenda bodies too", () => {
+    const week = mount({ date: "2026-07-06", view: "week", loading: "" });
+    expect(sr(week).querySelector(".timegrid")!.getAttribute("aria-busy")).toBe("true");
+    const agenda = mount({ date: "2026-07-06", view: "agenda", loading: "" });
+    expect(sr(agenda).querySelector(".agenda")!.getAttribute("aria-busy")).toBe("true");
+  });
+
+  it("the loading slot falls back to loc.loadingLabel and can be overridden by light-DOM slotting", () => {
+    const el = mount({ date: "2026-07-06", loading: "" });
+    const slot = sr(el).querySelector('slot[name="loading"]') as HTMLSlotElement;
+    expect(slot).toBeTruthy();
+    const span = document.createElement("span");
+    span.slot = "loading";
+    span.textContent = "Fetching…";
+    el.appendChild(span);
+    expect(slot.assignedNodes()[0]!.textContent).toBe("Fetching…");
+  });
+
+  it("reflects the loading property to the attribute", () => {
+    const el = mount({ date: "2026-07-06" });
+    el.loading = true;
+    expect(el.getAttribute("loading")).toBe("");
+    el.loading = false;
+    expect(el.hasAttribute("loading")).toBe(false);
+  });
+
+  it(".body-wrap (needed to give the loading overlay a positioning context) contributes no box of its own — no padding/border/margin — and carries the flex:1 its children (.month/.timegrid/.agenda) previously relied on directly under .cal", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    const rule = css.match(/\.body-wrap\s*\{([^}]*)\}/);
+    expect(rule).toBeTruthy();
+    const decls = rule![1]!;
+    expect(decls).toMatch(/flex:\s*1\b/);
+    expect(decls).not.toMatch(/padding/);
+    expect(decls).not.toMatch(/border/);
+    expect(decls).not.toMatch(/margin/);
+  });
+});
+
+// D8 (WCAG 2 AA color-contrast fix): jsdom computes no cascaded custom properties, so every
+// assertion below reads the *declared* token values out of the `styles` string, never
+// getComputedStyle. See docs/plans/hijri-calendar-events-parity.md §5.4 D8 and
+// apps/docs/docs/calendar/api.md's "Accepted visual changes" section for the narrative.
+describe("<hijri-calendar> WCAG AA contrast (D8)", () => {
+  // A ~15-line relative-luminance/contrast helper, local to this test file on purpose — see the
+  // task brief: no dependency, and this must never be exported from the package.
+  function hexToRgb(hex: string): [number, number, number] {
+    const h = hex.replace("#", "");
+    const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+    const num = Number.parseInt(full, 16);
+    return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+  }
+  function channelLuminance(c: number): number {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  }
+  function relativeLuminance(hex: string): number {
+    const [r, g, b] = hexToRgb(hex);
+    return 0.2126 * channelLuminance(r) + 0.7152 * channelLuminance(g) + 0.0722 * channelLuminance(b);
+  }
+  function contrastRatio(hex1: string, hex2: string): number {
+    const L1 = relativeLuminance(hex1);
+    const L2 = relativeLuminance(hex2);
+    const [lighter, darker] = L1 >= L2 ? [L1, L2] : [L2, L1];
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+  // Mirrors `color-mix(in srgb, var(--hcal-accent) 10%, transparent)` composited over
+  // --hcal-bg, i.e. the actual default --hcal-today-bg surface (jsdom can't evaluate
+  // color-mix() itself, so this is done by hand from the declared token values).
+  function alphaOverWhite(fgHex: string, alpha: number): string {
+    const [r, g, b] = hexToRgb(fgHex);
+    const [wr, wg, wb] = hexToRgb("#ffffff");
+    const mix = [r, g, b].map((c, i) => Math.round(alpha * c + (1 - alpha) * [wr, wg, wb][i]!));
+    return "#" + mix.map((c) => c.toString(16).padStart(2, "0")).join("");
+  }
+
+  const AA_NORMAL_TEXT = 4.5;
+
+  it("declares the darkened --hcal-muted default (was #9aa0a6, ≈2.64:1 on white)", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-muted: #5b6572;");
+    expect(css).not.toContain("--hcal-muted: #9aa0a6;");
+  });
+
+  it("--hcal-muted clears 4.5:1 against both --hcal-bg (#fff) and the default --hcal-today-bg tint", () => {
+    const muted = "#5b6572";
+    const todayBgTint = alphaOverWhite("#0b7d3e", 0.1); // --hcal-accent at 10%, per --hcal-today-bg
+    expect(contrastRatio(muted, "#ffffff")).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+    expect(contrastRatio(muted, todayBgTint)).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+  });
+
+  it("darkens --hcal-now-color so the now-label text clears 4.5:1 on white (was #ea4335, ≈3.92:1)", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-now-color: #c5321f;");
+    expect(css).not.toContain("--hcal-now-color: #ea4335;");
+    expect(contrastRatio("#c5321f", "#ffffff")).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+  });
+
+  it("declares a dedicated --hcal-cell-out-fg token defaulting to --hcal-muted", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-cell-out-fg: var(--hcal-muted);");
+  });
+
+  it("out-of-month day numbers are de-emphasised via color, not opacity: .day-head.out no longer carries an opacity declaration", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).not.toMatch(/\.day-head\.out\s*\{\s*opacity:/);
+    expect(css).toContain(
+      '.day-head.out .num-primary,\n.day-head.out .num-secondary,\n.day-head.out [part~="day-month-marker"] { color: var(--hcal-cell-out-fg); }',
+    );
+  });
+
+  it("the out-of-month day-head rule actually renders on out-of-month cells", () => {
+    const el = mount({ date: "2026-07-06" });
+    const outHead = sr(el).querySelector(".day-head.out");
+    expect(outHead).toBeTruthy();
+    expect(outHead!.querySelector(".num-primary")).toBeTruthy();
+  });
+
+  it("the bilingual weekday secondary label no longer compounds opacity on top of the muted color", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    const rule = css.match(/\.dow \[part~="weekday-secondary"\]\s*\{([^}]*)\}/);
+    expect(rule).toBeTruthy();
+    expect(rule![1]!).not.toMatch(/opacity/);
+  });
+
+  it("--hcal-cell-out-opacity is still declared (for any host CSS still referencing it) but is no longer consumed anywhere in styles.ts", () => {
+    const el = mount({ date: "2026-07-06" });
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-cell-out-opacity: 0.45;");
+    const consumers = css.match(/var\(--hcal-cell-out-opacity\)/g) ?? [];
+    expect(consumers.length).toBe(0);
   });
 });

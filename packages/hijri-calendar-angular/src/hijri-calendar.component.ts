@@ -14,6 +14,9 @@ import type {
   EventClickDetail,
   EventFieldMap,
   MoreClickDetail,
+  RangeChangeDetail,
+  RenderDayCellContext,
+  RenderEventContext,
   SlotClickDetail,
   ViewChangeDetail,
 } from "@spezutil/hijri-calendar";
@@ -36,6 +39,29 @@ import type {
       [primary]="primary"
       [secondaryPosition]="secondaryPosition"
       [timezone]="timezone"
+      [views]="views"
+      [toolbar]="toolbar"
+      [titleLayout]="titleLayout"
+      [names]="names"
+      [numerals]="numerals"
+      [numeralsGregorian]="numeralsGregorian"
+      [weekdayFormat]="weekdayFormat"
+      [weekendDays]="weekendDays"
+      [dayNumberAlign]="dayNumberAlign"
+      [monthMarker]="monthMarker"
+      [todayMarker]="todayMarker"
+      [eventStyle]="eventStyle"
+      [eventTime]="eventTime"
+      [slotMinutes]="slotMinutes"
+      [alldayRow]="alldayRow"
+      [nowIndicator]="nowIndicator"
+      [timeLabelPosition]="timeLabelPosition"
+      [dayHeader]="dayHeader"
+      [agendaDays]="agendaDays"
+      [loading]="loading"
+      [narrowEvents]="narrowEvents"
+      [renderEvent]="renderEvent"
+      [renderDayCell]="renderDayCell"
       [eventFields]="eventFields"
       [events]="events"
       (event-click)="onEventClick($event)"
@@ -44,7 +70,12 @@ import type {
       (more-click)="onMoreClick($event)"
       (view-change)="onViewChange($event)"
       (date-change)="onDateChange($event)"
-    ></hijri-calendar>
+      (range-change)="onRangeChange($event)"
+    >
+      <ng-content select="[slot=toolbar-start]"></ng-content>
+      <ng-content select="[slot=toolbar-end]"></ng-content>
+      <ng-content select="[slot=subheader]"></ng-content>
+    </hijri-calendar>
   `,
 })
 export class HijriCalendarComponent {
@@ -60,6 +91,29 @@ export class HijriCalendarComponent {
   @Input() primary: "hijri" | "gregorian" = "hijri";
   @Input() secondaryPosition = "end";
   @Input() timezone: string | null = null;
+  @Input() views: string | null = null;
+  @Input() toolbar: "full" | "none" = "full";
+  @Input() titleLayout: "stacked" | "inline" | null = null;
+  @Input() names: "translit" | "ar" | null = null;
+  @Input() numerals: "latn" | "arab" | null = null;
+  @Input() numeralsGregorian: "latn" | "arab" | null = null;
+  @Input() weekdayFormat: "short" | "long" | "bilingual" | null = null;
+  @Input() weekendDays: string | number[] | null = null;
+  @Input() dayNumberAlign: "center" | "start" | "end" | null = null;
+  @Input() monthMarker: "gregorian" | "hijri" | "both" | "none" | null = null;
+  @Input() todayMarker: "pill" | "dot" | "none" | null = null;
+  @Input() eventStyle: "solid" | "tinted" | "outline" | null = null;
+  @Input() eventTime: "auto" | "none" | "start" | "start-duration" | "range" | null = null;
+  @Input() slotMinutes = 30;
+  @Input() alldayRow: "always" | "auto" | "never" | null = null;
+  @Input() nowIndicator: "line" | "line-label" | "none" | null = null;
+  @Input() timeLabelPosition: "line" | "cell" | null = null;
+  @Input() dayHeader: "column" | "banner" | null = null;
+  @Input() agendaDays = 30;
+  @Input() loading = false;
+  @Input() narrowEvents: "dots" | "scroll" | null = null;
+  @Input() renderEvent: ((ctx: RenderEventContext) => Node | string | null) | null = null;
+  @Input() renderDayCell: ((ctx: RenderDayCellContext) => Node | string | null) | null = null;
   @Input() eventFields: EventFieldMap | null = null;
   @Input() events: CalendarEvent[] = [];
 
@@ -69,6 +123,7 @@ export class HijriCalendarComponent {
   @Output() moreClick = new EventEmitter<MoreClickDetail>();
   @Output() viewChange = new EventEmitter<ViewChangeDetail>();
   @Output() dateChange = new EventEmitter<DateChangeDetail>();
+  @Output() rangeChange = new EventEmitter<RangeChangeDetail>();
 
   onEventClick(event: Event): void {
     this.eventClick.emit((event as CustomEvent<EventClickDetail>).detail);
@@ -87,5 +142,8 @@ export class HijriCalendarComponent {
   }
   onDateChange(event: Event): void {
     this.dateChange.emit((event as CustomEvent<DateChangeDetail>).detail);
+  }
+  onRangeChange(event: Event): void {
+    this.rangeChange.emit((event as CustomEvent<RangeChangeDetail>).detail);
   }
 }

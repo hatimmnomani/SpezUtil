@@ -35,7 +35,7 @@ const ev = (id: string, start: string, end?: string): CalendarEvent => ({
 
 describe("week view", () => {
   it("renders 7 day columns with Hijri-first headers", () => {
-    const el = mount({ date: "2026-07-06", view: "week" });
+    const el = mount({ date: "2026-07-06", view: "week", numerals: "latn" });
     const heads = sr(el).querySelectorAll(".tg-col-head");
     expect(heads.length).toBe(7);
     const h = cal.gregorianToHijri(new Date(Date.UTC(2026, 6, 5)));
@@ -125,9 +125,190 @@ describe("week view", () => {
   });
 });
 
+describe("slot-minutes", () => {
+  it('default (30) renders 24 [part~="slot"] per column for the default 0-24 window', () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    const col = sr(el).querySelectorAll('[part~="day-column"]')[0]!;
+    expect(col.querySelectorAll('[part~="slot"]').length).toBe(24 * 2);
+  });
+
+  it('slot-minutes="60" renders 12 slots per column for day-start=8 day-end=20, and slot-click coarsens to the hour start', () => {
+    const el = mount({
+      date: "2026-07-06",
+      view: "week",
+      "slot-minutes": "60",
+      "day-start": "8",
+      "day-end": "20",
+    });
+    const col = sr(el).querySelectorAll('[part~="day-column"]')[0]!;
+    expect(col.querySelectorAll('[part~="slot"]').length).toBe(12);
+
+    let detail: { gregorian: string } | null = null;
+    el.addEventListener("slot-click", (e) => (detail = (e as CustomEvent).detail));
+    const slot = sr(el).querySelector('[data-slot="2026-07-06T09:00"]') as HTMLElement;
+    expect(slot).toBeTruthy();
+    // With 60-minute slots there is no ...T09:30 slot to click at all.
+    expect(sr(el).querySelector('[data-slot="2026-07-06T09:30"]')).toBeNull();
+    slot.click();
+    expect(detail!.gregorian).toBe("2026-07-06T09:00");
+  });
+
+  it('slot-minutes="15" renders 48 slots per column for day-start=8 day-end=20, with the second slot of the hour at :15', () => {
+    const el = mount({
+      date: "2026-07-06",
+      view: "week",
+      "slot-minutes": "15",
+      "day-start": "8",
+      "day-end": "20",
+    });
+    const col = sr(el).querySelectorAll('[part~="day-column"]')[0]!;
+    expect(col.querySelectorAll('[part~="slot"]').length).toBe(48);
+    expect(sr(el).querySelector('[data-slot="2026-07-06T09:15"]')).toBeTruthy();
+  });
+
+  it("an out-of-range slot-minutes value falls back to the default of 30", () => {
+    const el = mount({ date: "2026-07-06", view: "week", "slot-minutes": "45" });
+    expect(el.slotMinutes).toBe(30);
+  });
+
+  it("sets --_slot-h on .tg-body from --hcal-hour-height and the current slot-minutes", () => {
+    const el = mount({ date: "2026-07-06", view: "week", "slot-minutes": "15" });
+    const body = sr(el).querySelector(".tg-body") as HTMLElement;
+    expect(body.getAttribute("style")).toContain("--_slot-h:calc(var(--hcal-hour-height) * 15 / 60)");
+  });
+});
+
+describe("--hcal-gutter-width", () => {
+  it("replaces the previously hard-coded 56px in the grid-template-columns of the head/allday/body rows", () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    for (const sel of [".tg-head", ".tg-allday", ".tg-body"]) {
+      const node = sr(el).querySelector(sel) as HTMLElement;
+      expect(node.getAttribute("style")).toContain("var(--hcal-gutter-width)");
+      expect(node.getAttribute("style")).not.toContain("56px");
+    }
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("--hcal-gutter-width: 56px;");
+  });
+});
+
+describe("allday-row", () => {
+  it('"auto" hides the row when no all-day event is in the visible range', () => {
+    const el = mount({ date: "2026-07-06", view: "week", "allday-row": "auto" });
+    expect(sr(el).querySelector(".tg-allday")).toBeNull();
+  });
+
+  it('"auto" shows the row once an all-day event is in range', () => {
+    const el = mount({ date: "2026-07-06", view: "week", "allday-row": "auto" });
+    el.events = [ev("a", "2026-07-06", "2026-07-07")];
+    expect(sr(el).querySelector(".tg-allday")).toBeTruthy();
+  });
+
+  it('"never" hides the row even with an all-day event present', () => {
+    const el = mount({ date: "2026-07-06", view: "week", "allday-row": "never" });
+    el.events = [ev("a", "2026-07-06", "2026-07-07")];
+    expect(sr(el).querySelector(".tg-allday")).toBeNull();
+  });
+
+  it('"always" (default) shows the row even with no all-day events, matching today\'s behaviour', () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    expect(sr(el).querySelector(".tg-allday")).toBeTruthy();
+  });
+
+  it("carries part=allday-label on the row's text label", () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    expect(sr(el).querySelector('[part="allday-label"]')).toBeTruthy();
+  });
+});
+
+describe("now-indicator", () => {
+  it('"none" renders no now-line even in today\'s column', () => {
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const el = mount({ date: todayIso, view: "week", "now-indicator": "none" });
+    expect(sr(el).querySelectorAll(".now-line").length).toBe(0);
+  });
+
+  it("the now-line element carries no inline colour; the color comes from --hcal-now-color in styles", () => {
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const el = mount({ date: todayIso, view: "week" });
+    const nowLine = sr(el).querySelector(".now-line") as HTMLElement;
+    expect(nowLine).toBeTruthy();
+    expect(nowLine.style.getPropertyValue("background")).toBe("");
+    expect(nowLine.getAttribute("style")).not.toMatch(/background/);
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toContain("var(--hcal-now-color)");
+    // D8 (WCAG AA contrast fix): #ea4335 measured ≈3.92:1 for the now-label text on white,
+    // below the 4.5:1 AA minimum for normal text; #c5321f clears it (≈5.45:1).
+    expect(css).toContain("--hcal-now-color: #c5321f;");
+  });
+
+  it('"line-label" renders part="now-label" with "Now · <time>", honoring time-format, and is re-rendered by the minute timer', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(Date.UTC(2026, 6, 6, 13, 30)));
+      const el = mount({
+        date: "2026-07-06",
+        view: "week",
+        "now-indicator": "line-label",
+        timezone: "UTC",
+      });
+      expect(sr(el).querySelector('[part="now-label"]')!.textContent).toBe("Now · 1:30 PM");
+
+      const el24 = mount({
+        date: "2026-07-06",
+        view: "week",
+        "now-indicator": "line-label",
+        timezone: "UTC",
+        "time-format": "24",
+      });
+      expect(sr(el24).querySelector('[part="now-label"]')!.textContent).toBe("Now · 13:30");
+
+      // Advancing the mocked clock by exactly one minute-timer tick (rather than calling
+      // setSystemTime again) keeps Date.now() and the fake timer engine in sync.
+      vi.advanceTimersByTime(60000);
+      expect(sr(el).querySelector('[part="now-label"]')!.textContent).toBe("Now · 1:31 PM");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('"line" (default) and "none" render no now-label', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(Date.UTC(2026, 6, 6, 13, 30)));
+      const line = mount({ date: "2026-07-06", view: "week", timezone: "UTC" });
+      expect(sr(line).querySelector('[part="now-label"]')).toBeNull();
+      const none = mount({
+        date: "2026-07-06",
+        view: "week",
+        "now-indicator": "none",
+        timezone: "UTC",
+      });
+      expect(sr(none).querySelector('[part="now-label"]')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("time-label-position", () => {
+  it("carries part=time-label on gutter hour labels", () => {
+    const el = mount({ date: "2026-07-06", view: "week" });
+    expect(sr(el).querySelectorAll('[part="time-label"]').length).toBeGreaterThan(0);
+  });
+
+  it('default ("line") and "cell" are both reachable, backed by a CSS variant selector', () => {
+    const line = mount({ date: "2026-07-06", view: "week" });
+    expect(line.timeLabelPosition).toBe("line");
+    const cell = mount({ date: "2026-07-06", view: "week", "time-label-position": "cell" });
+    expect(cell.timeLabelPosition).toBe("cell");
+    const css = sr(cell).querySelector("style")!.textContent!;
+    expect(css).toContain(':host([time-label-position="cell"])');
+  });
+});
+
 describe("day view", () => {
   it("renders a single column anchored at the date", () => {
-    const el = mount({ date: "2026-07-06", view: "day" });
+    const el = mount({ date: "2026-07-06", view: "day", numerals: "latn" });
     expect(sr(el).querySelectorAll(".tg-day-col").length).toBe(1);
     const h = cal.gregorianToHijri(new Date(Date.UTC(2026, 6, 6)));
     expect(sr(el).querySelector(".tg-col-head")!.textContent).toContain(String(h.day));

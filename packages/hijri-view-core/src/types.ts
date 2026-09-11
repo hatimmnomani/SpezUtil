@@ -6,9 +6,30 @@ export interface CalendarEvent {
   start: string;
   /** Exclusive for timed events, inclusive date for all-day. Defaults: +1h timed, same day all-day. */
   end?: string;
+  /**
+   * Used to derive `end` when `end` is absent, for timed events only. Ignored when `end` is
+   * present, and ignored (falls back to the default +1h duration) when not a positive number.
+   */
+  durationMinutes?: number;
   allDay?: boolean;
   /** CSS color used as the event chip background. */
   color?: string;
+  /** Second text line (e.g. location). Rendered as part="event-subtitle" in week/day/agenda. */
+  subtitle?: string;
+  /**
+   * Short label (e.g. event type). Carried through to hosts on `renderEvent`'s `ctx.event.tag`
+   * and never rendered by the built-in chip/block/agenda renderers — a host that wants it
+   * visible draws it in a `renderEvent` hook.
+   */
+  tag?: string;
+  /** Per-event override of the component's `event-style`. */
+  style?: "solid" | "tinted" | "outline";
+  /**
+   * Free token exported as part="event variant-<variant>" and data-variant, for host ::part()
+   * styling. Must match /^[a-z0-9-]+$/ — values that don't are dropped (with a console warning)
+   * because they are interpolated into a `part` attribute.
+   */
+  variant?: string;
   /** Opaque host payload, passed back in interaction event details. */
   data?: unknown;
 }

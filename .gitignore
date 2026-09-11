@@ -8,6 +8,8 @@ storybook-static/
 build/
 .docusaurus/
 apps/docs/static/storybook/
+playwright-report/
+test-results/
 
 # Local dev-tool output — never commit
 .playwright-mcp/
