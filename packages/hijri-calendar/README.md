@@ -8,7 +8,7 @@ Hijri-first interactive calendar view Web Component (Fatimid/Bohra calendar) —
 - Multi-day event spanning, per-event colors/`subtitle`/`tag`/`variant`, `durationMinutes`, "+N more" overflow, current-time indicator (optionally labelled)
 - Three event chip/block styles (`event-style="solid|tinted|outline"`) and configurable time text (`event-time`); **note:** the default `event-style` stays `"solid"` through 0.3.x and becomes `"tinted"` at 1.0 — see [Theming](#theming)
 - `locale="translit|ar"` for UI chrome, `names="translit|ar"` for Hijri month/weekday names (independently), `numerals`/`numerals-gregorian` for Arabic-Indic vs. Latin digits (see the [API reference](https://hatimmnomani.github.io/SpezUtil/calendar/api) for the full numerals truth table), RTL, keyboard-navigable grid, ARIA semantics
-- `primary="hijri|gregorian"` + `secondary-position` to control numeral prominence/placement; `weekday-format="bilingual"`, `day-number-align`, `month-marker`, `today-marker` for further structural control
+- `primary="hijri|gregorian"` + `secondary-position` to control numeral prominence/placement; `weekday-format="bilingual"`, `day-number-align`, `month-marker`, `today-marker` for further structural control; `month-grid="gregorian"` to frame the month view by Gregorian month while keeping Hijri numerals
 - `weekend-days` for a non-Sat/Sun weekend (e.g. `weekend-days="5 6"` for Fri/Sat)
 - `renderEvent` / `renderDayCell` render hooks for fully custom chip/block/agenda-item and day-number content, without losing the component's ARIA/keyboard/click handling
 - `day-header="banner"` day-view banner with an "N events · X hours scheduled" summary; `loading` boolean for a busy overlay

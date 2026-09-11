@@ -389,3 +389,44 @@ describe("<hijri-calendar> month grid keyboard: keys from chips and more-links a
     }
   });
 });
+
+describe("month-grid", () => {
+  it("defaults to the Hijri framing", () => {
+    const el = mount({ view: "month", date: "2026-05-14" });
+    expect(el.monthGrid).toBe("hijri");
+    const inMonth = sr(el).querySelectorAll(".day-head:not(.out)");
+    const h = cal.gregorianToHijri(new Date(Date.UTC(2026, 4, 14)));
+    expect(inMonth.length).toBe(cal.monthLength(h.year, h.month));
+  });
+
+  it("frames the grid around the Gregorian month when month-grid=gregorian", () => {
+    const el = mount({ view: "month", date: "2026-05-14", "month-grid": "gregorian" });
+    expect(el.monthGrid).toBe("gregorian");
+    const cells = sr(el).querySelectorAll<HTMLElement>("[data-date]");
+    expect(cells.length).toBe(42);
+    expect(cells[0]!.dataset.date).toBe("2026-04-26");
+    expect(sr(el).querySelectorAll(".day-head:not(.out)").length).toBe(31);
+    expect(cellFor(el, "2026-05-01").classList.contains("out")).toBe(false);
+    expect(cellFor(el, "2026-04-30").classList.contains("out")).toBe(true);
+    // Title is the Hijri range the Gregorian month spans; subtitle stays the Gregorian month.
+    const primary = sr(el).querySelector('[part="title-primary"]')!.textContent ?? "";
+    expect(primary).toContain("–");
+    expect(sr(el).querySelector('[part="title-secondary"]')!.textContent).toContain("2026");
+    // range-change covers the grid.
+    expect(el.visibleRange!.start).toBe("2026-04-26");
+    expect(el.visibleRange!.end).toBe("2026-06-07");
+  });
+
+  it("steps by Gregorian month with month-grid=gregorian", () => {
+    const el = mount({ view: "month", date: "2026-05-14", "month-grid": "gregorian" });
+    (sr(el).querySelector('[part="nav-next"]') as HTMLButtonElement).click();
+    expect(el.getAttribute("date")).toBe("2026-06-01");
+    (sr(el).querySelector('[part="nav-prev"]') as HTMLButtonElement).click();
+    (sr(el).querySelector('[part="nav-prev"]') as HTMLButtonElement).click();
+    expect(el.getAttribute("date")).toBe("2026-04-01");
+    // December → January wraps the year.
+    el.setAttribute("date", "2026-12-20");
+    (sr(el).querySelector('[part="nav-next"]') as HTMLButtonElement).click();
+    expect(el.getAttribute("date")).toBe("2027-01-01");
+  });
+});

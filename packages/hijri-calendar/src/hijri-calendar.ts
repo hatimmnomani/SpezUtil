@@ -256,6 +256,7 @@ export class HijriCalendarElement extends HTMLElement {
       "agenda-days",
       "loading",
       "narrow-events",
+      "month-grid",
     ];
   }
 
@@ -496,6 +497,21 @@ export class HijriCalendarElement extends HTMLElement {
   }
   set dayNumberAlign(v: string) {
     this.reflect("day-number-align", v);
+  }
+  /**
+   * Which calendar frames the month view. `"hijri"` (default): the grid is built around the
+   * Hijri month containing `date`, prev/next step by Hijri month and the title is that Hijri
+   * month. `"gregorian"`: the grid is built around the Gregorian month containing `date`,
+   * prev/next step by Gregorian month, out-of-month cells are the Gregorian month's neighbours,
+   * and the title becomes the Hijri month *range* the Gregorian month spans (e.g.
+   * "Shawwal – Dhu al-Qa'dah 1447") over the Gregorian subtitle ("May 2026"). Numerals, markers
+   * and every other attribute are unaffected — only framing and stepping change.
+   */
+  get monthGrid(): "hijri" | "gregorian" {
+    return this.getAttribute("month-grid") === "gregorian" ? "gregorian" : "hijri";
+  }
+  set monthGrid(v: string) {
+    this.reflect("month-grid", v);
   }
   /** Which calendar's first-of-month gets a month-name marker. Default `"gregorian"` (today's behaviour). */
   get monthMarker(): "gregorian" | "hijri" | "both" | "none" {
@@ -785,6 +801,12 @@ export class HijriCalendarElement extends HTMLElement {
   }
 
   private navigate(delta: number): void {
+    if (this.view === "month" && this.monthGrid === "gregorian") {
+      const y = this.viewDate.getUTCFullYear();
+      const m = this.viewDate.getUTCMonth() + delta;
+      this.setViewDate(new Date(Date.UTC(y, m, 1)));
+      return;
+    }
     if (this.view === "month") {
       const h = this.cal.gregorianToHijri(this.viewDate);
       let { year, month } = h;
@@ -1206,7 +1228,12 @@ export class HijriCalendarElement extends HTMLElement {
 
   private renderMonth(): ViewRenderResult {
     const h = this.cal.gregorianToHijri(this.viewDate);
-    const model = buildCalendarMonthModel(this.cal, { year: h.year, month: h.month }, this._events, {
+    const gregorianGrid = this.monthGrid === "gregorian";
+    const monthView = gregorianGrid
+      ? { year: this.viewDate.getUTCFullYear(), month: this.viewDate.getUTCMonth() + 1 }
+      : { year: h.year, month: h.month };
+    const model = buildCalendarMonthModel(this.cal, monthView, this._events, {
+      anchor: this.monthGrid,
       maxLanes: this.maxEvents,
       today: zonedTodayUtc(this.timezone),
       weekStart: this.weekStart,
@@ -1217,7 +1244,9 @@ export class HijriCalendarElement extends HTMLElement {
     this.lastSegments = model.segments;
 
     const inMonth = this.lastCells.filter((c) => c.inCurrentMonth);
-    const title = `${this.nameSet.monthNames[h.month - 1] ?? ""} ${this.numH(h.year)}`;
+    const title = gregorianGrid
+      ? this.hijriRangeTitle(inMonth[0]!.hijri, inMonth[inMonth.length - 1]!.hijri)
+      : `${this.nameSet.monthNames[h.month - 1] ?? ""} ${this.numH(h.year)}`;
     const subtitle = this.gregSubtitle(
       inMonth[0]!.gregorian,
       inMonth[inMonth.length - 1]!.gregorian
