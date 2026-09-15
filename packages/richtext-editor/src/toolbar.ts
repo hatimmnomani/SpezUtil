@@ -56,6 +56,7 @@ export const ALL_TOOLBAR_GROUPS = [
   "block",
   "font",
   "inline",
+  "color",
   "list",
   "align",
   "direction",
@@ -83,12 +84,44 @@ export const DEFAULT_FONTS: readonly FontOption[] = [
   { label: "Monospace", family: "monospace" },
 ];
 
+/** One entry in the toolbar colour swatches. `value` is a CSS color value. */
+export interface ColorOption {
+  label: string;
+  value: string;
+}
+
+/**
+ * Default palette, shared by the text-colour and highlight controls. A fixed
+ * list rather than a free picker: authored content has to stay inside the
+ * host's design, and an arbitrary picker produces unreadable pairings and
+ * unpredictable exported HTML. Dark inks first (they read as text colours),
+ * then light tints (they read as highlights).
+ */
+export const DEFAULT_COLORS: readonly ColorOption[] = [
+  { label: "Black", value: "#1f2933" },
+  { label: "Grey", value: "#6b7280" },
+  { label: "Red", value: "#c62828" },
+  { label: "Orange", value: "#e07b00" },
+  { label: "Green", value: "#0b7d3e" },
+  { label: "Teal", value: "#0f766e" },
+  { label: "Blue", value: "#1d4ed8" },
+  { label: "Purple", value: "#6b21a8" },
+  { label: "Yellow", value: "#fff3a3" },
+  { label: "Mint", value: "#d7f5e3" },
+  { label: "Sky", value: "#dbeafe" },
+  { label: "White", value: "#ffffff" },
+];
+
+/** The two CSS properties the colour controls patch onto the selection. */
+type ColorProperty = "color" | "background-color";
+
 type BlockType = "paragraph" | "h1" | "h2" | "h3" | "quote" | "ayat";
 
 interface ToolbarRefs {
   buttons: Map<string, HTMLButtonElement>;
   blockSelect: HTMLSelectElement | null;
   fontSelect: HTMLSelectElement | null;
+  colorBars: Map<ColorProperty, HTMLElement>;
 }
 
 function button(
@@ -121,7 +154,7 @@ function group(name: ToolbarGroup, ...children: HTMLElement[]): HTMLElement {
 /** Popover anchored under the toolbar; closes on Escape or outside pointerdown. */
 function createPopoverOpener(host: HTMLElement, toolbar: HTMLElement) {
   let activeClose: (() => void) | null = null;
-  return (content: HTMLElement): (() => void) => {
+  return (content: HTMLElement, onClose?: () => void): (() => void) => {
     activeClose?.();
     const pop = document.createElement("div");
     pop.className = "spez-rte-popover";
@@ -140,6 +173,7 @@ function createPopoverOpener(host: HTMLElement, toolbar: HTMLElement) {
       pop.remove();
       document.removeEventListener("pointerdown", onPointerDown, true);
       document.removeEventListener("keydown", onKeyDown, true);
+      onClose?.();
     };
     document.addEventListener("pointerdown", onPointerDown, true);
     document.addEventListener("keydown", onKeyDown, true);
@@ -176,6 +210,55 @@ function textInputPopover(
   ok.addEventListener("click", submit);
   wrap.append(input, ok);
   return wrap;
+}
+
+/**
+ * Grid of fixed colour swatches, plus a leading "none" swatch that clears the
+ * property. Swatches are buttons like the rest of the toolbar, so they keep
+ * the editor selection by cancelling the default pointerdown focus shift.
+ */
+/**
+ * Canonical form of a CSS colour, through the DOM's own parser.
+ *
+ * The palette stores what the author wrote (`#c62828`), but a colour that has been
+ * through an HTML save/load cycle comes back normalised (`rgb(198, 40, 40)`) — see
+ * the import allowlist in nodes/text-style.ts. Comparing the two as raw strings marks
+ * a freshly-picked colour as active and the same colour loaded from storage as not,
+ * so both sides are put through one lens first. Returns "" for an unparseable value.
+ */
+function canonicalColor(value: string): string {
+  if (value === "") return "";
+  const probe = document.createElement("span");
+  probe.style.color = value;
+  return probe.style.color;
+}
+
+function swatchGrid(
+  colors: readonly ColorOption[],
+  noneLabel: string,
+  current: string,
+  onPick: (value: string | null) => void,
+): HTMLElement {
+  const grid = document.createElement("div");
+  grid.className = "spez-rte-swatches";
+  grid.setAttribute("role", "group");
+  const swatch = (label: string, value: string | null) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = value === null ? "spez-rte-swatch spez-rte-swatch-none" : "spez-rte-swatch";
+    btn.title = label;
+    btn.setAttribute("aria-label", label);
+    btn.setAttribute(
+      "aria-pressed",
+      String(value === null ? current === "" : canonicalColor(value) === canonicalColor(current)),
+    );
+    if (value !== null) btn.style.background = value;
+    btn.addEventListener("pointerdown", (event) => event.preventDefault());
+    btn.addEventListener("click", () => onPick(value));
+    return btn;
+  };
+  grid.append(swatch(noneLabel, null), ...colors.map((c) => swatch(c.label, c.value)));
+  return grid;
 }
 
 /**
@@ -245,9 +328,15 @@ export function buildToolbar(
   groups: readonly ToolbarGroup[],
   locale: EditorLocale,
   fonts: readonly FontOption[] = DEFAULT_FONTS,
+  colors: readonly ColorOption[] = DEFAULT_COLORS,
 ): ToolbarInstance {
   const t: LocaleStrings = getLocaleStrings(locale);
-  const refs: ToolbarRefs = { buttons: new Map(), blockSelect: null, fontSelect: null };
+  const refs: ToolbarRefs = {
+    buttons: new Map(),
+    blockSelect: null,
+    fontSelect: null,
+    colorBars: new Map(),
+  };
   const toolbar = document.createElement("div");
   toolbar.className = "spez-rte-toolbar";
   toolbar.setAttribute("role", "toolbar");
@@ -257,6 +346,36 @@ export function buildToolbar(
   };
   const align = (type: ElementFormatType) => () => {
     editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, type);
+  };
+  const colorControl = (property: ColorProperty, glyph: string, title: string) => {
+    const btn = button(glyph, title, () => {
+      const current = editor.getEditorState().read(() => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) return "";
+        return $getSelectionStyleValueForProperty(selection, property, "");
+      });
+      const grid = swatchGrid(colors, t.colorNone, current, (value) => {
+        editor.update(() => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) return;
+          $patchStyleText(selection, { [property]: value });
+        });
+        editor.focus();
+        close();
+      });
+      const close = openPopover(grid, () => btn.setAttribute("aria-expanded", "false"));
+      btn.setAttribute("aria-expanded", "true");
+      (grid.firstElementChild as HTMLElement | null)?.focus();
+    }, refs);
+    btn.classList.add("spez-rte-color-button");
+    btn.setAttribute("aria-haspopup", "true");
+    btn.setAttribute("aria-expanded", "false");
+    // Bar under the glyph, mirroring the colour currently on the selection.
+    const bar = document.createElement("span");
+    bar.className = "spez-rte-color-bar";
+    btn.append(bar);
+    refs.colorBars.set(property, bar);
+    return btn;
   };
 
   for (const name of groups) {
@@ -332,6 +451,17 @@ export function buildToolbar(
           ),
         );
         break;
+      case "color": {
+        if (colors.length === 0) break;
+        toolbar.append(
+          group(
+            name,
+            colorControl("color", "A", t.textColor),
+            colorControl("background-color", "🖍", t.highlight),
+          ),
+        );
+        break;
+      }
       case "list":
         toolbar.append(
           group(
@@ -469,6 +599,10 @@ export function buildToolbar(
         // Unknown families (e.g. pasted content) fall back to the default row.
         refs.fontSelect.value = family;
         if (refs.fontSelect.value !== family) refs.fontSelect.value = "";
+      }
+      for (const [property, bar] of refs.colorBars) {
+        const value = $getSelectionStyleValueForProperty(selection, property, "");
+        bar.style.background = value === "" ? "transparent" : value;
       }
       setPressed("bullet", listType === "bullet");
       setPressed("number", listType === "number");

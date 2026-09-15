@@ -152,6 +152,29 @@ editor.fonts = [
 
 Custom fonts must be loaded on the page (your own `@font-face` or a font service) — the editor only applies the `font-family` value. Setting `fonts = null` restores the defaults. The simple attribute form `fonts="Amiri, Tahoma"` is also supported for plain-HTML usage.
 
+## Colour and highlight
+
+The toolbar's `color` group applies a text colour and a highlight to the selection (stored
+as inline `color` / `background-color` styles, the same mechanism as the font selector).
+Both controls draw from one fixed palette rather than a free colour picker, so exported
+HTML stays predictable. Replace it via the `colors` property, or spread `DEFAULT_COLORS`
+to extend it:
+
+```js
+import { DEFAULT_COLORS } from "@spezutil/richtext-editor";
+
+const editor = document.querySelector("spez-richtext");
+editor.colors = [
+  ...DEFAULT_COLORS,
+  { label: "Brand gold", value: "#b8860b" },
+];
+```
+
+Swatch labels come from the palette, not the locale table, so an Arabic-facing console
+should pass its own labelled palette (`{ label: "ذهبي", value: "#b8860b" }`). Setting
+`colors = null` restores the defaults, and the attribute form `colors="#1f2933, #c62828"`
+is supported for plain-HTML usage (the value doubles as the label).
+
 ## Theming
 
 All styling hangs off CSS custom properties on the host element:

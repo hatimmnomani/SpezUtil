@@ -230,3 +230,108 @@ describe("toolbar font selector", () => {
     expect(fontSelect(el).title).toBe("الخط");
   });
 });
+
+describe("toolbar color controls", () => {
+  function swatches(el: SpezRichtext, title: string): HTMLButtonElement[] {
+    clickButton(el, title);
+    const grid = el.querySelector(".spez-rte-popover .spez-rte-swatches");
+    expect(grid, `swatch grid for "${title}"`).not.toBeNull();
+    return [...grid!.querySelectorAll<HTMLButtonElement>("button")];
+  }
+
+  function pick(el: SpezRichtext, title: string, swatch: string): void {
+    const btn = swatches(el, title).find((b) => b.title === swatch);
+    expect(btn, `swatch "${swatch}"`).toBeDefined();
+    btn!.click();
+    flush(el);
+  }
+
+  function styleOf(el: SpezRichtext): string {
+    return el.editor.getEditorState().read(() => $getRoot().getAllTextNodes()[0]!.getStyle());
+  }
+
+  it("renders the color group with both controls", () => {
+    const el = create();
+    const group = el.querySelector('.spez-rte-toolbar [data-group="color"]');
+    expect(group).not.toBeNull();
+    const titles = [...group!.querySelectorAll("button")].map((b) => b.title);
+    expect(titles).toEqual(["Text color", "Highlight color"]);
+  });
+
+  it("swatch applies the text color to the selection", () => {
+    const el = create();
+    el.setHTML("<p>hello</p>");
+    el.editor.update(() => $selectAll(), { discrete: true });
+    pick(el, "Text color", "Red");
+    expect(styleOf(el)).toContain("color: #c62828");
+  });
+
+  it("swatch applies the highlight to the selection", () => {
+    const el = create();
+    el.setHTML("<p>hello</p>");
+    el.editor.update(() => $selectAll(), { discrete: true });
+    pick(el, "Highlight color", "Yellow");
+    expect(styleOf(el)).toContain("background-color: #fff3a3");
+  });
+
+  it("the none swatch clears the color again", () => {
+    const el = create();
+    el.setHTML("<p>hello</p>");
+    el.editor.update(() => $selectAll(), { discrete: true });
+    pick(el, "Text color", "Blue");
+    expect(styleOf(el)).toContain("color: #1d4ed8");
+    el.editor.update(() => $selectAll(), { discrete: true });
+    pick(el, "Text color", "None");
+    expect(styleOf(el)).not.toContain("#1d4ed8");
+  });
+
+  it("colors property replaces the default palette", () => {
+    const el = create();
+    el.colors = [{ label: "Brand", value: "#123456" }];
+    expect(swatches(el, "Text color").map((b) => b.title)).toEqual(["None", "Brand"]);
+  });
+
+  it("colors attribute provides a simple comma-separated list", () => {
+    const el = create({ colors: "#111111, #222222" });
+    expect(swatches(el, "Highlight color").map((b) => b.title)).toEqual([
+      "None",
+      "#111111",
+      "#222222",
+    ]);
+  });
+
+  it("colors property drops malformed entries", () => {
+    const el = create();
+    el.colors = [
+      { label: "Good", value: "#0b7d3e" },
+      { label: "NoValue", value: "" },
+      // deliberately malformed: consumers pass plain JS
+      { label: 3 } as unknown as { label: string; value: string },
+    ];
+    expect(swatches(el, "Text color").map((b) => b.title)).toEqual(["None", "Good"]);
+  });
+
+  // Regression: the palette stores hex, but colour that has been through an HTML
+  // save/load cycle comes back as rgb(). Both spellings must mark the same swatch
+  // active, or a reopened document looks as though it has no colour set.
+  it("marks the active swatch for colour loaded from saved HTML", () => {
+    const el = create();
+    el.setHTML('<p><span style="color: rgb(198, 40, 40);">نص</span></p>');
+    flush(el);
+    el.editor.update(() => $selectAll(), { discrete: true });
+
+    const pressed = swatches(el, "Text color")
+      .filter((b) => b.getAttribute("aria-pressed") === "true")
+      .map((b) => b.title);
+    expect(pressed).toEqual(["Red"]);
+  });
+
+  it("uses Arabic labels for the color controls when locale=ar", () => {
+    const el = create({ locale: "ar" });
+    const group = el.querySelector('.spez-rte-toolbar [data-group="color"]')!;
+    expect([...group.querySelectorAll("button")].map((b) => b.title)).toEqual([
+      "لون النص",
+      "لون التظليل",
+    ]);
+  });
+});

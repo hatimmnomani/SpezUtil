@@ -58,3 +58,4 @@ export {
   INSERT_IMAGE_COMMAND,
 } from "./image-node";
 export type { SerializedImageNode, InsertImagePayload } from "./image-node";
+export { $importTextStyles } from "./text-style";

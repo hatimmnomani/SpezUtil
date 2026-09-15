@@ -93,6 +93,22 @@ export const styles: string = `
   color: var(--rte-fg);
 }
 
+.spez-rte-toolbar button.spez-rte-color-button {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.spez-rte-color-bar {
+  display: block;
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--rte-border);
+}
+
 .spez-rte-shell {
   position: relative;
 }
@@ -251,6 +267,37 @@ export const styles: string = `
   align-items: center;
   gap: 4px;
 }
+.spez-rte-swatches {
+  display: grid;
+  grid-template-columns: repeat(6, 22px);
+  gap: 4px;
+}
+.spez-rte-popover button.spez-rte-swatch {
+  width: 22px;
+  height: 22px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid var(--rte-border);
+  border-radius: 4px;
+  background: var(--rte-bg);
+}
+.spez-rte-popover button.spez-rte-swatch[aria-pressed="true"] {
+  outline: 2px solid var(--rte-accent);
+  outline-offset: 1px;
+}
+/* The "none" swatch reads as an empty cell with a diagonal strike. */
+.spez-rte-popover button.spez-rte-swatch-none {
+  background:
+    linear-gradient(
+      to top left,
+      transparent calc(50% - 1px),
+      var(--rte-muted) calc(50% - 1px),
+      var(--rte-muted) calc(50% + 1px),
+      transparent calc(50% + 1px)
+    ),
+    var(--rte-bg);
+}
+
 .spez-rte-popover button {
   font: inherit;
   font-size: 0.85rem;

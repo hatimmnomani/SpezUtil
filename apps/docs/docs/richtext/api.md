@@ -12,8 +12,9 @@ title: API reference
 | `placeholder` | string | Shown while empty. |
 | `dir` | `rtl` \| `ltr` \| `auto` | Base direction (default `auto`; paragraphs still auto-detect from their first strong character). |
 | `locale` | `en` \| `ar` | Toolbar language (default `en`). |
-| `toolbar` | comma-separated groups or `none` | Groups: `history`, `block`, `font`, `inline`, `list`, `align`, `direction`, `insert`. |
+| `toolbar` | comma-separated groups or `none` | Groups: `history`, `block`, `font`, `inline`, `color`, `list`, `align`, `direction`, `insert`. |
 | `fonts` | comma-separated font families | Simple form of the toolbar font list, e.g. `fonts="Amiri, Tahoma, Arial"`. Use the `fonts` *property* for labels and full font stacks. |
+| `colors` | comma-separated CSS colours | Simple form of the toolbar colour palette, e.g. `colors="#1f2933, #c62828"` (each value doubles as its label). Use the `colors` *property* for labelled swatches. |
 
 ## Properties
 
@@ -22,6 +23,7 @@ title: API reference
 | `value` | `string \| null` | Serialized Lexical editor state JSON (get/set; canonical persistence format). |
 | `initialHtml` | `string \| null` | HTML applied on first init when no `value` was set. |
 | `fonts` | `FontOption[] \| null` | Toolbar font list (`{ label, family }[]`). Replaces the defaults; spread the exported `DEFAULT_FONTS` to extend them instead. `null` restores the defaults. |
+| `colors` | `ColorOption[] \| null` | Toolbar colour palette (`{ label, value }[]`) shared by the text-colour and highlight controls. Replaces the defaults; spread the exported `DEFAULT_COLORS` to extend them instead. `null` restores the defaults. |
 | `editor` | `LexicalEditor` | Escape hatch for advanced use (custom commands, transforms, …). Throws before first connect. |
 
 ## Methods

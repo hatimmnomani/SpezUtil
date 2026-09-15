@@ -8,8 +8,8 @@ export { insertHijriDate } from "./hijri-insert";
 export { injectGlobalStyles, styles } from "./styles";
 export { getLocaleStrings } from "./locale";
 export type { EditorLocale, LocaleStrings } from "./locale";
-export { ALL_TOOLBAR_GROUPS, DEFAULT_FONTS } from "./toolbar";
-export type { FontOption, ToolbarGroup } from "./toolbar";
+export { ALL_TOOLBAR_GROUPS, DEFAULT_COLORS, DEFAULT_FONTS } from "./toolbar";
+export type { ColorOption, FontOption, ToolbarGroup } from "./toolbar";
 export {
   AyatNode,
   $createAyatNode,

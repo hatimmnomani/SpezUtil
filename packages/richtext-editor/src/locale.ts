@@ -14,6 +14,9 @@ export interface LocaleStrings {
   italic: string;
   underline: string;
   strikethrough: string;
+  textColor: string;
+  highlight: string;
+  colorNone: string;
   bulletList: string;
   numberList: string;
   alignStart: string;
@@ -53,6 +56,9 @@ const en: LocaleStrings = {
   italic: "Italic",
   underline: "Underline",
   strikethrough: "Strikethrough",
+  textColor: "Text color",
+  highlight: "Highlight color",
+  colorNone: "None",
   bulletList: "Bulleted list",
   numberList: "Numbered list",
   alignStart: "Align start",
@@ -92,6 +98,9 @@ const ar: LocaleStrings = {
   italic: "مائل",
   underline: "تسطير",
   strikethrough: "يتوسطه خط",
+  textColor: "لون النص",
+  highlight: "لون التظليل",
+  colorNone: "بدون لون",
   bulletList: "قائمة نقطية",
   numberList: "قائمة مرقمة",
   alignStart: "محاذاة البداية",

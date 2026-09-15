@@ -7,8 +7,10 @@ import { insertHijriDate } from "./hijri-insert";
 import { injectGlobalStyles } from "./styles";
 import {
   ALL_TOOLBAR_GROUPS,
+  DEFAULT_COLORS,
   DEFAULT_FONTS,
   buildToolbar,
+  type ColorOption,
   type FontOption,
   type ToolbarGroup,
   type ToolbarInstance,
@@ -32,7 +34,7 @@ const CHANGE_DEBOUNCE_MS = 150;
  */
 export class SpezRichtext extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ["readonly", "placeholder", "dir", "locale", "toolbar", "fonts"];
+    return ["readonly", "placeholder", "dir", "locale", "toolbar", "fonts", "colors"];
   }
 
   #editor: LexicalEditor | null = null;
@@ -44,6 +46,7 @@ export class SpezRichtext extends HTMLElement {
   #pendingValue: string | null = null;
   #pendingHtml: string | null = null;
   #fonts: FontOption[] | null = null;
+  #colors: ColorOption[] | null = null;
   #changeTimer: ReturnType<typeof setTimeout> | undefined;
 
   /** Escape hatch for advanced consumers; throws before first connect. */
@@ -106,6 +109,27 @@ export class SpezRichtext extends HTMLElement {
         : list.filter(
             (f): f is FontOption =>
               typeof f?.label === "string" && typeof f?.family === "string" && f.family !== "",
+          );
+    this.#buildToolbar();
+  }
+
+  /**
+   * Toolbar colour palette, shared by the text-colour and highlight controls.
+   * Set to replace the defaults; spread `DEFAULT_COLORS` to extend them.
+   * `null` restores the defaults (or the `colors` attribute, when present).
+   * Invalid entries are dropped.
+   */
+  get colors(): readonly ColorOption[] {
+    return this.#colorOptions();
+  }
+
+  set colors(list: readonly ColorOption[] | null) {
+    this.#colors =
+      list === null
+        ? null
+        : list.filter(
+            (c): c is ColorOption =>
+              typeof c?.label === "string" && typeof c?.value === "string" && c.value !== "",
           );
     this.#buildToolbar();
   }
@@ -202,6 +226,7 @@ export class SpezRichtext extends HTMLElement {
       case "locale":
       case "toolbar":
       case "fonts":
+      case "colors":
         this.#buildToolbar();
         break;
     }
@@ -254,6 +279,18 @@ export class SpezRichtext extends HTMLElement {
       .map((family) => ({ label: family.replace(/["']/g, ""), family }));
   }
 
+  /** Property wins over the `colors` attribute (comma-separated CSS colors). */
+  #colorOptions(): readonly ColorOption[] {
+    if (this.#colors !== null) return this.#colors;
+    const attr = this.getAttribute("colors");
+    if (attr === null || attr.trim() === "") return DEFAULT_COLORS;
+    return attr
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s !== "")
+      .map((value) => ({ label: value, value }));
+  }
+
   #toolbarGroups(): readonly ToolbarGroup[] {
     const attr = this.getAttribute("toolbar");
     if (attr === null || attr.trim() === "") return ALL_TOOLBAR_GROUPS;
@@ -269,7 +306,14 @@ export class SpezRichtext extends HTMLElement {
     this.#toolbar = null;
     const groups = this.#toolbarGroups();
     if (groups.length === 0) return;
-    this.#toolbar = buildToolbar(this.#editor, this, groups, this.locale, this.#fontOptions());
+    this.#toolbar = buildToolbar(
+      this.#editor,
+      this,
+      groups,
+      this.locale,
+      this.#fontOptions(),
+      this.#colorOptions(),
+    );
     this.prepend(this.#toolbar.element);
   }
 

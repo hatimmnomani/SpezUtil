@@ -15,9 +15,10 @@ export const SpezRichtext = createComponent({
   },
 });
 
-export { DEFAULT_FONTS } from "@spezutil/richtext-editor";
+export { DEFAULT_COLORS, DEFAULT_FONTS } from "@spezutil/richtext-editor";
 export type {
   ChangeDetail,
+  ColorOption,
   EditorLocale,
   FontOption,
   ToolbarGroup,

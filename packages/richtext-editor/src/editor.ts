@@ -2,11 +2,8 @@ import {
   $getSelection,
   $insertNodes,
   $isRangeSelection,
-  $isTextNode,
   COMMAND_PRIORITY_EDITOR,
   createEditor,
-  TextNode,
-  type DOMConversionMap,
   type LexicalEditor,
 } from "lexical";
 import { registerRichText } from "@lexical/rich-text";
@@ -16,6 +13,7 @@ import { registerTablePlugin, registerTableSelectionObserver } from "@lexical/ta
 import { $toggleLink, TOGGLE_LINK_COMMAND, type LinkAttributes } from "@lexical/link";
 import { mergeRegister } from "@lexical/utils";
 import {
+  $importTextStyles,
   EDITOR_NODES,
   TranslitPairNode,
   normalizeTranslitPair,
@@ -23,50 +21,6 @@ import {
 } from "./nodes";
 import { $createImageNode, INSERT_IMAGE_COMMAND } from "./nodes/image-node";
 import { registerAutoDirection, registerDirectionCommand } from "./direction";
-
-/**
- * Lexical's HTML import only maps text *formats* (bold, italic, …) from
- * inline styles; it drops presentational styles like font-family. Wrap
- * TextNode's importers so those survive the toolbar's export → import
- * round-trip.
- */
-const IMPORTED_TEXT_STYLES = ["font-family"] as const;
-
-function $importTextStyles(): DOMConversionMap {
-  const importMap: DOMConversionMap = {};
-  for (const [tag, importer] of Object.entries(TextNode.importDOM() ?? {})) {
-    importMap[tag] = (node) => {
-      const original = importer(node);
-      if (original === null) return null;
-      return {
-        ...original,
-        conversion: (element) => {
-          const output = original.conversion(element);
-          if (output === null || output.forChild === undefined) return output;
-          const styles = IMPORTED_TEXT_STYLES.map((prop) => {
-            const value = element.style.getPropertyValue(prop);
-            return value === "" ? "" : `${prop}: ${value};`;
-          })
-            .join(" ")
-            .trim();
-          if (styles === "") return output;
-          const { forChild } = output;
-          return {
-            ...output,
-            forChild: (child, parent) => {
-              const result = forChild(child, parent);
-              if ($isTextNode(result)) {
-                result.setStyle(`${result.getStyle()} ${styles}`.trim());
-              }
-              return result;
-            },
-          };
-        },
-      };
-    };
-  }
-  return importMap;
-}
 
 const theme = {
   text: {
