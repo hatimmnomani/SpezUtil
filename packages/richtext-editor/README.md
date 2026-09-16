@@ -105,7 +105,7 @@ Programmatic insertion: `editor.insertHijriDate({ year: 1446, month: 9, day: 17 
 | `placeholder` | string | Shown while empty |
 | `dir` | `rtl` \| `ltr` \| `auto` | Base direction (default `auto`; paragraphs still auto-detect) |
 | `locale` | `en` \| `ar` | Toolbar language (default `en`) |
-| `toolbar` | comma-separated groups or `none` | Groups: `history,block,font,inline,list,align,direction,insert` |
+| `toolbar` | comma-separated groups or `none` | Groups: `history,block,font,inline,color,list,align,direction,insert` |
 | `fonts` | comma-separated font families | Simple form of the font list, e.g. `fonts="Amiri, Tahoma, Arial"` (use the `fonts` *property* for labels and full font stacks) |
 
 ### Properties
@@ -151,6 +151,10 @@ editor.fonts = [
 ```
 
 Custom fonts must be loaded on the page (your own `@font-face` or a font service) — the editor only applies the `font-family` value. Setting `fonts = null` restores the defaults. The simple attribute form `fonts="Amiri, Tahoma"` is also supported for plain-HTML usage.
+
+## Text and highlight color
+
+The toolbar's `color` group has two controls — **text color** and **highlight color** — each opening a palette popover with 12 preset swatches, a native custom color picker, and a **Reset** action that removes the color again. Colors are stored as inline `color` / `background-color` styles on the text (preserved across HTML export/import, where browsers normalize them to `rgb(…)`). The toolbar swatch bar reflects the color under the caret. Omit the group via `toolbar="history,block,font,inline,list,…"` to hide it.
 
 ## Theming
 

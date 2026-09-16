@@ -14,6 +14,23 @@ export interface LocaleStrings {
   italic: string;
   underline: string;
   strikethrough: string;
+  textColor: string;
+  highlightColor: string;
+  customColor: string;
+  resetColor: string;
+  colorBlack: string;
+  colorDarkGray: string;
+  colorGray: string;
+  colorWhite: string;
+  colorBrown: string;
+  colorRed: string;
+  colorOrange: string;
+  colorYellow: string;
+  colorGreen: string;
+  colorTeal: string;
+  colorBlue: string;
+  colorPurple: string;
+  colorPink: string;
   bulletList: string;
   numberList: string;
   alignStart: string;
@@ -53,6 +70,23 @@ const en: LocaleStrings = {
   italic: "Italic",
   underline: "Underline",
   strikethrough: "Strikethrough",
+  textColor: "Text color",
+  highlightColor: "Highlight color",
+  customColor: "Custom…",
+  resetColor: "Reset",
+  colorBlack: "Black",
+  colorDarkGray: "Dark gray",
+  colorGray: "Gray",
+  colorWhite: "White",
+  colorBrown: "Brown",
+  colorRed: "Red",
+  colorOrange: "Orange",
+  colorYellow: "Yellow",
+  colorGreen: "Green",
+  colorTeal: "Teal",
+  colorBlue: "Blue",
+  colorPurple: "Purple",
+  colorPink: "Pink",
   bulletList: "Bulleted list",
   numberList: "Numbered list",
   alignStart: "Align start",
@@ -92,6 +126,23 @@ const ar: LocaleStrings = {
   italic: "مائل",
   underline: "تسطير",
   strikethrough: "يتوسطه خط",
+  textColor: "لون النص",
+  highlightColor: "لون التظليل",
+  customColor: "لون مخصص…",
+  resetColor: "إزالة اللون",
+  colorBlack: "أسود",
+  colorDarkGray: "رمادي داكن",
+  colorGray: "رمادي",
+  colorWhite: "أبيض",
+  colorBrown: "بني",
+  colorRed: "أحمر",
+  colorOrange: "برتقالي",
+  colorYellow: "أصفر",
+  colorGreen: "أخضر",
+  colorTeal: "أزرق مخضرّ",
+  colorBlue: "أزرق",
+  colorPurple: "بنفسجي",
+  colorPink: "وردي",
   bulletList: "قائمة نقطية",
   numberList: "قائمة مرقمة",
   alignStart: "محاذاة البداية",

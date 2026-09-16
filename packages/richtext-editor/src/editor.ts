@@ -26,11 +26,11 @@ import { registerAutoDirection, registerDirectionCommand } from "./direction";
 
 /**
  * Lexical's HTML import only maps text *formats* (bold, italic, …) from
- * inline styles; it drops presentational styles like font-family. Wrap
- * TextNode's importers so those survive the toolbar's export → import
+ * inline styles; it drops presentational styles like font-family and color.
+ * Wrap TextNode's importers so those survive the toolbar's export → import
  * round-trip.
  */
-const IMPORTED_TEXT_STYLES = ["font-family"] as const;
+const IMPORTED_TEXT_STYLES = ["font-family", "color", "background-color"] as const;
 
 function $importTextStyles(): DOMConversionMap {
   const importMap: DOMConversionMap = {};

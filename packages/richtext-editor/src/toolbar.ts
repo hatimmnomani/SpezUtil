@@ -8,6 +8,7 @@ import {
   COMMAND_PRIORITY_LOW,
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
+  HISTORY_MERGE_TAG,
   REDO_COMMAND,
   UNDO_COMMAND,
   type ElementFormatType,
@@ -56,6 +57,7 @@ export const ALL_TOOLBAR_GROUPS = [
   "block",
   "font",
   "inline",
+  "color",
   "list",
   "align",
   "direction",
@@ -85,16 +87,62 @@ export const DEFAULT_FONTS: readonly FontOption[] = [
 
 type BlockType = "paragraph" | "h1" | "h2" | "h3" | "quote" | "ayat";
 
+type ColorProperty = "color" | "background-color";
+
+interface PaletteEntry {
+  name: keyof LocaleStrings;
+  value: string;
+}
+
+const TEXT_COLORS: readonly PaletteEntry[] = [
+  { name: "colorBlack", value: "#000000" },
+  { name: "colorDarkGray", value: "#4b5563" },
+  { name: "colorGray", value: "#9ca3af" },
+  { name: "colorBrown", value: "#6d4c41" },
+  { name: "colorRed", value: "#c62828" },
+  { name: "colorOrange", value: "#ef6c00" },
+  { name: "colorYellow", value: "#f9a825" },
+  { name: "colorGreen", value: "#2e7d32" },
+  { name: "colorTeal", value: "#00838f" },
+  { name: "colorBlue", value: "#1565c0" },
+  { name: "colorPurple", value: "#6a1b9a" },
+  { name: "colorPink", value: "#ad1457" },
+];
+
+const HIGHLIGHT_COLORS: readonly PaletteEntry[] = [
+  { name: "colorYellow", value: "#fff59d" },
+  { name: "colorOrange", value: "#ffe0b2" },
+  { name: "colorRed", value: "#ffcdd2" },
+  { name: "colorPink", value: "#f8bbd0" },
+  { name: "colorPurple", value: "#e1bee7" },
+  { name: "colorBlue", value: "#bbdefb" },
+  { name: "colorTeal", value: "#b2dfdb" },
+  { name: "colorGreen", value: "#c8e6c9" },
+  { name: "colorBrown", value: "#d7ccc8" },
+  { name: "colorGray", value: "#e0e0e0" },
+  { name: "colorDarkGray", value: "#bdbdbd" },
+  { name: "colorWhite", value: "#ffffff" },
+];
+
+const PALETTE_COLUMNS = 6;
+
+interface ColorControl {
+  button: HTMLButtonElement;
+  swatch: HTMLElement;
+  value: string;
+}
+
 interface ToolbarRefs {
   buttons: Map<string, HTMLButtonElement>;
   blockSelect: HTMLSelectElement | null;
   fontSelect: HTMLSelectElement | null;
+  colors: Map<ColorProperty, ColorControl>;
 }
 
 function button(
   label: string,
   title: string,
-  onClick: () => void,
+  onClick: (btn: HTMLButtonElement) => void,
   refs: ToolbarRefs,
   refKey?: string,
 ): HTMLButtonElement {
@@ -105,9 +153,24 @@ function button(
   btn.setAttribute("aria-label", title);
   // Preserve the editor selection: buttons must not steal focus on click.
   btn.addEventListener("pointerdown", (event) => event.preventDefault());
-  btn.addEventListener("click", onClick);
+  btn.addEventListener("click", () => onClick(btn));
   if (refKey) refs.buttons.set(refKey, btn);
   return btn;
+}
+
+/** `<input type="color">` only accepts `#rrggbb`; stored styles may be any CSS color. */
+function toHexColor(value: string): string | null {
+  const v = value.trim().toLowerCase();
+  if (/^#[0-9a-f]{6}$/.test(v)) return v;
+  if (/^#[0-9a-f]{3}$/.test(v)) return `#${[...v.slice(1)].map((c) => c + c).join("")}`;
+  const rgb = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/.exec(v);
+  if (rgb) {
+    return `#${rgb
+      .slice(1, 4)
+      .map((n) => Math.min(255, Number(n)).toString(16).padStart(2, "0"))
+      .join("")}`;
+  }
+  return null;
 }
 
 function group(name: ToolbarGroup, ...children: HTMLElement[]): HTMLElement {
@@ -118,17 +181,31 @@ function group(name: ToolbarGroup, ...children: HTMLElement[]): HTMLElement {
   return div;
 }
 
-/** Popover anchored under the toolbar; closes on Escape or outside pointerdown. */
+const POPOVER_INSET = 8;
+
+/**
+ * Popover under the toolbar, aligned to `anchor`'s inline-start edge when
+ * given (clamped inside the host); closes on Escape or outside pointerdown.
+ */
 function createPopoverOpener(host: HTMLElement, toolbar: HTMLElement) {
   let activeClose: (() => void) | null = null;
-  return (content: HTMLElement): (() => void) => {
+  return (content: HTMLElement, anchor?: HTMLElement): (() => void) => {
     activeClose?.();
     const pop = document.createElement("div");
     pop.className = "spez-rte-popover";
     pop.style.insetBlockStart = `${toolbar.offsetTop + toolbar.offsetHeight + 2}px`;
-    pop.style.insetInlineStart = "8px";
     pop.append(content);
     host.append(pop);
+    let start = POPOVER_INSET;
+    if (anchor) {
+      const hostRect = host.getBoundingClientRect();
+      const rect = anchor.getBoundingClientRect();
+      const rtl = getComputedStyle(host).direction === "rtl";
+      start = rtl ? hostRect.right - rect.right : rect.left - hostRect.left;
+      start = Math.max(POPOVER_INSET, Math.min(start, host.clientWidth - pop.offsetWidth - POPOVER_INSET));
+      anchor.setAttribute("aria-expanded", "true");
+    }
+    pop.style.insetInlineStart = `${start}px`;
     const onPointerDown = (event: Event) => {
       if (!pop.contains(event.target as Node)) close();
     };
@@ -138,16 +215,164 @@ function createPopoverOpener(host: HTMLElement, toolbar: HTMLElement) {
     const close = () => {
       if (activeClose === close) activeClose = null;
       pop.remove();
+      anchor?.setAttribute("aria-expanded", "false");
       document.removeEventListener("pointerdown", onPointerDown, true);
       document.removeEventListener("keydown", onKeyDown, true);
     };
     document.addEventListener("pointerdown", onPointerDown, true);
     document.addEventListener("keydown", onKeyDown, true);
     activeClose = close;
-    const input = pop.querySelector("input");
-    if (input) input.focus();
+    const focusTarget = pop.querySelector<HTMLElement>("[data-autofocus], input");
+    if (focusTarget) focusTarget.focus();
     return close;
   };
+}
+
+type PopoverOpener = ReturnType<typeof createPopoverOpener>;
+
+function colorPopover(
+  property: ColorProperty,
+  palette: readonly PaletteEntry[],
+  current: string,
+  t: LocaleStrings,
+  apply: (value: string | null, merge: boolean) => void,
+  done: () => void,
+): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.className = "spez-rte-color-popover";
+  wrap.dataset.property = property;
+
+  const grid = document.createElement("div");
+  grid.className = "spez-rte-color-grid";
+  grid.setAttribute("role", "group");
+  grid.setAttribute("aria-label", property === "color" ? t.textColor : t.highlightColor);
+  const currentHex = toHexColor(current);
+  const swatches: HTMLButtonElement[] = [];
+  for (const { name, value } of palette) {
+    const swatch = document.createElement("button");
+    swatch.type = "button";
+    swatch.className = "spez-rte-swatch";
+    swatch.style.setProperty("--swatch", value);
+    swatch.title = t[name];
+    swatch.setAttribute("aria-label", t[name]);
+    swatch.setAttribute("aria-pressed", String(value === currentHex));
+    swatch.dataset.value = value;
+    swatch.addEventListener("click", () => {
+      apply(value, false);
+      done();
+    });
+    swatches.push(swatch);
+    grid.append(swatch);
+  }
+  (swatches.find((s) => s.getAttribute("aria-pressed") === "true") ?? swatches[0])?.setAttribute(
+    "data-autofocus",
+    "",
+  );
+  grid.addEventListener("keydown", (event) => {
+    const index = swatches.indexOf(event.target as HTMLButtonElement);
+    if (index === -1) return;
+    const rtl = getComputedStyle(grid).direction === "rtl";
+    const delta: Record<string, number> = {
+      ArrowRight: rtl ? -1 : 1,
+      ArrowLeft: rtl ? 1 : -1,
+      ArrowDown: PALETTE_COLUMNS,
+      ArrowUp: -PALETTE_COLUMNS,
+    };
+    const step = delta[event.key];
+    if (step === undefined) return;
+    const next = swatches[index + step];
+    if (next) {
+      event.preventDefault();
+      next.focus();
+    }
+  });
+
+  const actions = document.createElement("div");
+  actions.className = "spez-rte-color-actions";
+
+  const custom = document.createElement("label");
+  custom.className = "spez-rte-color-custom";
+  const preview = document.createElement("span");
+  preview.className = "spez-rte-color-preview";
+  const input = document.createElement("input");
+  input.type = "color";
+  input.value = currentHex ?? (property === "color" ? "#000000" : "#ffff00");
+  input.setAttribute("aria-label", t.customColor);
+  preview.style.setProperty("--swatch", input.value);
+  // Browsers fire `input` continuously while the native picker is open; the
+  // first pick creates one history entry and later ones merge into it, so
+  // undo reverts the whole picking session at once.
+  let picking = false;
+  let lastApplied: string | null = null;
+  const applyCustom = () => {
+    if (input.value === lastApplied) return;
+    lastApplied = input.value;
+    preview.style.setProperty("--swatch", input.value);
+    apply(input.value, picking);
+    picking = true;
+  };
+  input.addEventListener("input", applyCustom);
+  input.addEventListener("change", () => {
+    applyCustom();
+    done();
+  });
+  custom.append(preview, input, document.createTextNode(t.customColor));
+
+  const reset = document.createElement("button");
+  reset.type = "button";
+  reset.className = "spez-rte-color-reset";
+  reset.textContent = t.resetColor;
+  reset.addEventListener("click", () => {
+    apply(null, false);
+    done();
+  });
+
+  actions.append(custom, reset);
+  wrap.append(grid, actions);
+  return wrap;
+}
+
+function colorControl(
+  editor: LexicalEditor,
+  property: ColorProperty,
+  palette: readonly PaletteEntry[],
+  t: LocaleStrings,
+  openPopover: PopoverOpener,
+  refs: ToolbarRefs,
+): HTMLButtonElement {
+  const title = property === "color" ? t.textColor : t.highlightColor;
+  const apply = (value: string | null, merge: boolean) => {
+    editor.update(
+      () => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) return;
+        $patchStyleText(selection, { [property]: value });
+      },
+      merge ? { tag: HISTORY_MERGE_TAG } : undefined,
+    );
+  };
+  const btn = button("", title, (self) => {
+    const control = refs.colors.get(property)!;
+    const close = openPopover(
+      colorPopover(property, palette, control.value, t, apply, () => {
+        close();
+        editor.focus();
+      }),
+      self,
+    );
+  }, refs);
+  btn.className = "spez-rte-color-btn";
+  btn.dataset.property = property;
+  btn.setAttribute("aria-haspopup", "dialog");
+  btn.setAttribute("aria-expanded", "false");
+  const glyph = document.createElement("span");
+  glyph.className = "spez-rte-color-glyph";
+  glyph.textContent = "A";
+  const swatch = document.createElement("span");
+  swatch.className = "spez-rte-color-bar";
+  btn.append(glyph, swatch);
+  refs.colors.set(property, { button: btn, swatch, value: "" });
+  return btn;
 }
 
 function textInputPopover(
@@ -247,7 +472,12 @@ export function buildToolbar(
   fonts: readonly FontOption[] = DEFAULT_FONTS,
 ): ToolbarInstance {
   const t: LocaleStrings = getLocaleStrings(locale);
-  const refs: ToolbarRefs = { buttons: new Map(), blockSelect: null, fontSelect: null };
+  const refs: ToolbarRefs = {
+    buttons: new Map(),
+    blockSelect: null,
+    fontSelect: null,
+    colors: new Map(),
+  };
   const toolbar = document.createElement("div");
   toolbar.className = "spez-rte-toolbar";
   toolbar.setAttribute("role", "toolbar");
@@ -332,6 +562,15 @@ export function buildToolbar(
           ),
         );
         break;
+      case "color":
+        toolbar.append(
+          group(
+            name,
+            colorControl(editor, "color", TEXT_COLORS, t, openPopover, refs),
+            colorControl(editor, "background-color", HIGHLIGHT_COLORS, t, openPopover, refs),
+          ),
+        );
+        break;
       case "list":
         toolbar.append(
           group(
@@ -378,8 +617,8 @@ export function buildToolbar(
         toolbar.append(
           group(
             name,
-            button("🔗", t.link, () => {
-              if (refs.buttons.get("link")?.getAttribute("aria-pressed") === "true") {
+            button("🔗", t.link, (self) => {
+              if (self.getAttribute("aria-pressed") === "true") {
                 editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
                 return;
               }
@@ -388,17 +627,19 @@ export function buildToolbar(
                   editor.dispatchCommand(TOGGLE_LINK_COMMAND, url);
                   close();
                 }),
+                self,
               );
             }, refs, "link"),
-            button("🖼", t.image, () => {
+            button("🖼", t.image, (self) => {
               const close = openPopover(
                 textInputPopover(t.imagePlaceholder, t.insert, (src) => {
                   editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src });
                   close();
                 }),
+                self,
               );
             }, refs),
-            button("⊞", t.table, () => {
+            button("⊞", t.table, (self) => {
               const wrap = document.createElement("div");
               wrap.style.display = "contents";
               const rows = document.createElement("input");
@@ -424,10 +665,10 @@ export function buildToolbar(
                 close();
               });
               wrap.append(rowsLabel, colsLabel, ok);
-              const close = openPopover(wrap);
+              const close = openPopover(wrap, self);
             }, refs),
-            button("📅", t.hijriDate, () => {
-              openHijriDatePicker(editor, locale, openPopover);
+            button("📅", t.hijriDate, (self) => {
+              openHijriDatePicker(editor, locale, (content) => openPopover(content, self));
             }, refs),
             button("۞", t.ayat, () => $setBlock(editor, "ayat"), refs),
             button("ت/t", t.translit, () => insertTranslitPair(editor), refs),
@@ -469,6 +710,13 @@ export function buildToolbar(
         // Unknown families (e.g. pasted content) fall back to the default row.
         refs.fontSelect.value = family;
         if (refs.fontSelect.value !== family) refs.fontSelect.value = "";
+      }
+      for (const [property, control] of refs.colors) {
+        const value = $getSelectionStyleValueForProperty(selection, property, "");
+        control.value = value;
+        control.swatch.style.background = value;
+        if (value === "") control.button.removeAttribute("data-value");
+        else control.button.setAttribute("data-value", value);
       }
       setPressed("bullet", listType === "bullet");
       setPressed("number", listType === "number");

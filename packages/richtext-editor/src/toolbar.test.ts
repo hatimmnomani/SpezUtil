@@ -230,3 +230,147 @@ describe("toolbar font selector", () => {
     expect(fontSelect(el).title).toBe("الخط");
   });
 });
+
+describe("toolbar color controls", () => {
+  function colorButton(el: SpezRichtext, property: "color" | "background-color"): HTMLButtonElement {
+    const btn = el.querySelector<HTMLButtonElement>(
+      `.spez-rte-toolbar [data-group="color"] button[data-property="${property}"]`,
+    );
+    expect(btn, `color button "${property}"`).not.toBeNull();
+    return btn!;
+  }
+
+  function popover(el: SpezRichtext): HTMLElement {
+    const pop = el.querySelector<HTMLElement>(".spez-rte-popover");
+    expect(pop, "color popover").not.toBeNull();
+    return pop!;
+  }
+
+  function firstTextStyle(el: SpezRichtext): string {
+    return el.editor.getEditorState().read(() => $getRoot().getAllTextNodes()[0]!.getStyle());
+  }
+
+  function selectAllText(el: SpezRichtext, html = "<p>hello</p>"): void {
+    el.setHTML(html);
+    el.editor.update(() => $selectAll(), { discrete: true });
+  }
+
+  it("renders text and highlight color buttons in the color group", () => {
+    const el = create();
+    expect(colorButton(el, "color").title).toBe("Text color");
+    expect(colorButton(el, "background-color").title).toBe("Highlight color");
+  });
+
+  it("opens a palette popover anchored to the button", () => {
+    const el = create();
+    const btn = colorButton(el, "color");
+    btn.click();
+    const pop = popover(el);
+    expect(pop.querySelectorAll(".spez-rte-swatch").length).toBe(12);
+    expect(pop.querySelector<HTMLInputElement>('input[type="color"]')).not.toBeNull();
+    expect(btn.getAttribute("aria-expanded")).toBe("true");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    expect(el.querySelector(".spez-rte-popover")).toBeNull();
+    expect(btn.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("swatch applies the text color to the selection and closes the popover", () => {
+    const el = create();
+    selectAllText(el);
+    colorButton(el, "color").click();
+    const swatch = popover(el).querySelector<HTMLButtonElement>('.spez-rte-swatch[data-value="#c62828"]')!;
+    swatch.click();
+    flush(el);
+    expect(firstTextStyle(el)).toContain("color: #c62828");
+    expect(el.querySelector(".spez-rte-popover")).toBeNull();
+  });
+
+  it("swatch applies the highlight color as background-color", () => {
+    const el = create();
+    selectAllText(el);
+    colorButton(el, "background-color").click();
+    popover(el).querySelector<HTMLButtonElement>('.spez-rte-swatch[data-value="#fff59d"]')!.click();
+    flush(el);
+    expect(firstTextStyle(el)).toContain("background-color: #fff59d");
+  });
+
+  it("custom color input applies its value on input", () => {
+    const el = create();
+    selectAllText(el);
+    colorButton(el, "color").click();
+    const input = popover(el).querySelector<HTMLInputElement>('input[type="color"]')!;
+    input.value = "#123456";
+    input.dispatchEvent(new Event("input"));
+    flush(el);
+    expect(firstTextStyle(el)).toContain("color: #123456");
+    input.dispatchEvent(new Event("change"));
+    expect(el.querySelector(".spez-rte-popover")).toBeNull();
+  });
+
+  // CSSStyleDeclaration serializes hex colors as rgb() on export, so imported
+  // styles may carry either form.
+  const RED = /color: (#c62828|rgb\(198, 40, 40\))/;
+  const BLUE = /color: (#1565c0|rgb\(21, 101, 192\))/;
+
+  it("reset removes the color from the selection", () => {
+    const el = create();
+    selectAllText(el, '<p><span style="color: #c62828">hello</span></p>');
+    expect(firstTextStyle(el)).toMatch(RED);
+    colorButton(el, "color").click();
+    popover(el).querySelector<HTMLButtonElement>(".spez-rte-color-reset")!.click();
+    flush(el);
+    expect(firstTextStyle(el)).not.toContain("color");
+  });
+
+  it("syncs the swatch bar and data-value to the selection's current color", () => {
+    const el = create();
+    const btn = colorButton(el, "color");
+    expect(btn.hasAttribute("data-value")).toBe(false);
+    selectAllText(el, '<p><span style="color: #1565c0">hello</span></p>');
+    expect(`color: ${btn.getAttribute("data-value")}`).toMatch(BLUE);
+    expect(btn.querySelector<HTMLElement>(".spez-rte-color-bar")!.style.background).toBe(
+      "rgb(21, 101, 192)",
+    );
+    btn.click();
+    const pressed = popover(el).querySelector<HTMLButtonElement>('.spez-rte-swatch[aria-pressed="true"]');
+    expect(pressed?.dataset.value).toBe("#1565c0");
+    expect(popover(el).querySelector<HTMLInputElement>('input[type="color"]')!.value).toBe("#1565c0");
+  });
+
+  it("exports and re-imports text and highlight colors via HTML", () => {
+    const el = create();
+    selectAllText(el);
+    colorButton(el, "color").click();
+    popover(el).querySelector<HTMLButtonElement>('.spez-rte-swatch[data-value="#2e7d32"]')!.click();
+    flush(el);
+    el.editor.update(() => $selectAll(), { discrete: true });
+    colorButton(el, "background-color").click();
+    popover(el).querySelector<HTMLButtonElement>('.spez-rte-swatch[data-value="#bbdefb"]')!.click();
+    flush(el);
+    const GREEN = /(^|[^-])color: (#2e7d32|rgb\(46, 125, 50\))/;
+    const LIGHT_BLUE = /background-color: (#bbdefb|rgb\(187, 222, 251\))/;
+    const html = el.getHTML();
+    expect(html).toMatch(GREEN);
+    expect(html).toMatch(LIGHT_BLUE);
+    const el2 = create();
+    el2.setHTML(html);
+    const style = firstTextStyle(el2);
+    expect(style).toMatch(GREEN);
+    expect(style).toMatch(LIGHT_BLUE);
+  });
+
+  it("is omitted when the toolbar attribute excludes the color group", () => {
+    const el = create({ toolbar: "inline,list" });
+    expect(el.querySelector('[data-group="color"]')).toBeNull();
+    expect(el.querySelector('[data-group="inline"]')).not.toBeNull();
+  });
+
+  it("uses Arabic labels for locale=ar", () => {
+    const el = create({ locale: "ar" });
+    expect(colorButton(el, "color").title).toBe("لون النص");
+    expect(colorButton(el, "background-color").title).toBe("لون التظليل");
+    colorButton(el, "color").click();
+    const red = popover(el).querySelector<HTMLButtonElement>('.spez-rte-swatch[data-value="#c62828"]')!;
+    expect(red.title).toBe("أحمر");
+  });
+});
