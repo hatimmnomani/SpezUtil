@@ -12,3 +12,6 @@ apps/docs/static/storybook/
 # Local dev-tool output — never commit
 .playwright-mcp/
 /*.png
+
+# Consumer app cloned here for local integration debugging — not part of this monorepo
+/da-office-management-fe/
