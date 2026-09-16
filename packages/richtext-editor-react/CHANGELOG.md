@@ -1,5 +1,12 @@
 # @spezutil/richtext-editor-react
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [555dec6]
+  - @spezutil/richtext-editor@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
