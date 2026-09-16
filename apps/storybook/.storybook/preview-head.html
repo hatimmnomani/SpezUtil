@@ -1,0 +1,45 @@
+<!--
+  Vendored @font-face declarations for the "Editorial" stories' type ramp
+  (--font-display / --font-sans / --font-mono, plan §2.1). These load from
+  public/fonts/ (served as static files via `staticDirs` in main.ts, NOT
+  base64-inlined) rather than Google Fonts, so the visual-regression tests
+  (task-6) never depend on a network font fetch. Amiri
+  (--hcal-font-family-arabic) is not declared here: it ships embedded inside
+  the hijri-calendar component itself.
+
+  Each family is OFL-1.1 licensed; its license file sits alongside the TTF in
+  public/fonts/, same obligation the repo already honours for Amiri at
+  assets/fonts/OFL-Amiri.txt.
+
+  font-display is deliberately "block", not the usual "swap": these are same-origin static
+  files loaded specifically for a screenshot-diff suite, and "swap" is a race between first
+  paint and font load — a screenshot taken mid-swap would differ from the baseline for no real
+  visual reason. "block" makes the browser wait (briefly; a short timeout, then fallback) for
+  the real font instead of ever painting a fallback face. See tests/visual/README.md for the
+  matching await document.fonts.ready guidance for spec authors.
+-->
+<style>
+  @font-face {
+    font-family: "Newsreader";
+    src: url("/fonts/Newsreader-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+  }
+
+  @font-face {
+    font-family: "Public Sans";
+    src: url("/fonts/PublicSans-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+  }
+
+  @font-face {
+    font-family: "JetBrains Mono";
+    src: url("/fonts/JetBrainsMono-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: block;
+  }
+</style>

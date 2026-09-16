@@ -1,5 +1,12 @@
 # @spezutil/richtext-editor
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [5d1d377]
+  - @spezutil/hijri-core@0.2.0
+
 ## 0.2.0
 
 ### Minor Changes

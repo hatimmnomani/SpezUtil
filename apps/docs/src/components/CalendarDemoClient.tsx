@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { HijriCalendar, type CalendarEvent } from "@spezutil/hijri-calendar-react";
+import {
+  HijriCalendar,
+  type CalendarEvent,
+  type RenderEventContext,
+  type RenderDayCellContext,
+} from "@spezutil/hijri-calendar-react";
 
 export interface CalendarDemoProps {
   view?: string;
@@ -12,6 +17,34 @@ export interface CalendarDemoProps {
   timeFormat?: string;
   maxEvents?: number;
   events?: CalendarEvent[];
+  // Events-parity API (Phase 0-5) — all optional, all default to today's behaviour.
+  titleLayout?: string;
+  names?: string;
+  numerals?: string;
+  numeralsGregorian?: string;
+  weekdayFormat?: string;
+  weekendDays?: string;
+  dayNumberAlign?: string;
+  monthMarker?: string;
+  todayMarker?: string;
+  eventStyle?: string;
+  eventTime?: string;
+  slotMinutes?: number;
+  alldayRow?: string;
+  nowIndicator?: string;
+  timeLabelPosition?: string;
+  dayHeader?: string;
+  agendaDays?: number;
+  loading?: boolean;
+  narrowEvents?: string;
+  toolbar?: string;
+  views?: string;
+  renderEvent?: (ctx: RenderEventContext) => Node | string | null;
+  renderDayCell?: (ctx: RenderDayCellContext) => Node | string | null;
+  /** Demo-only: wraps the calendar in a fixed-width host div (recipes use this to show the `narrow`/`medium` size bands without resizing the browser). */
+  hostWidth?: number;
+  /** Demo-only: extra inline styles (typically `--hcal-*` custom properties) on the wrapping host div — recipes use this for theming without a separate `<style>` block. */
+  hostStyle?: React.CSSProperties;
 }
 
 const defaultEvents: CalendarEvent[] = [
@@ -28,19 +61,26 @@ export default function CalendarDemoClient(props: CalendarDemoProps): JSX.Elemen
   const [out, setOut] = useState("(interact with the calendar)");
   const log = (label: string) => (e: Event) =>
     setOut(`${label}: ${JSON.stringify((e as CustomEvent).detail)}`);
-  const { events, ...rest } = props;
+  const { events, hostWidth, hostStyle, ...rest } = props;
+  const wrapperStyle: React.CSSProperties = {
+    ...(hostWidth ? { width: hostWidth, maxWidth: "100%" } : undefined),
+    ...hostStyle,
+  };
   return (
     <div className="hijri-demo">
-      <HijriCalendar
-        {...rest}
-        events={events ?? defaultEvents}
-        onEventClick={log("event-click")}
-        onDateClick={log("date-click")}
-        onSlotClick={log("slot-click")}
-        onMoreClick={log("more-click")}
-        onViewChange={log("view-change")}
-        onDateChange={log("date-change")}
-      />
+      <div style={wrapperStyle}>
+        <HijriCalendar
+          {...rest}
+          events={events ?? defaultEvents}
+          onEventClick={log("event-click")}
+          onDateClick={log("date-click")}
+          onSlotClick={log("slot-click")}
+          onMoreClick={log("more-click")}
+          onViewChange={log("view-change")}
+          onDateChange={log("date-change")}
+          onRangeChange={log("range-change")}
+        />
+      </div>
       <pre style={{ marginTop: 8 }}>{out}</pre>
     </div>
   );

@@ -8,6 +8,7 @@ import {
   type MoreClickDetail,
   type ViewChangeDetail,
   type DateChangeDetail,
+  type RangeChangeDetail,
 } from "@spezutil/hijri-calendar";
 
 export const HijriCalendar = createComponent({
@@ -21,17 +22,25 @@ export const HijriCalendar = createComponent({
     onMoreClick: "more-click" as EventName<CustomEvent<MoreClickDetail>>,
     onViewChange: "view-change" as EventName<CustomEvent<ViewChangeDetail>>,
     onDateChange: "date-change" as EventName<CustomEvent<DateChangeDetail>>,
+    onRangeChange: "range-change" as EventName<CustomEvent<RangeChangeDetail>>,
   },
 });
 
+export { SIZE_BANDS } from "@spezutil/hijri-calendar";
 export type {
   CalendarEvent,
   CalendarView,
+  EventFieldSource,
   EventClickDetail,
   DateClickDetail,
   SlotClickDetail,
   MoreClickDetail,
   ViewChangeDetail,
   DateChangeDetail,
+  RangeChangeDetail,
+  RenderEventContext,
+  RenderDayCellContext,
   HijriDate,
+  SizeBand,
+  NarrowEventsMode,
 } from "@spezutil/hijri-calendar";

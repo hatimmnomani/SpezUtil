@@ -6,7 +6,7 @@ export {
   hijriToJd,
   jdToHijri,
 } from "./tabular";
-export { formatHijri, parseHijri } from "./format";
+export { formatHijri, formatNumerals, parseHijri } from "./format";
 export { zonedTodayUtc, zonedNowMinutes } from "./zone";
 export { arMonthNames, arWeekdayNames, translitMonthNames, weekdayNames } from "./locale";
 export {

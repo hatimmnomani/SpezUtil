@@ -36,7 +36,12 @@ export class ExampleComponent {
 }
 ```
 
-Inputs mirror the element attributes (`view`, `date`, `locale`, `dir`, `weekStart`, `dayStart`, `dayEnd`, `timeFormat`, `maxEvents`, `primary`, `secondaryPosition`, `events`); outputs emit the typed details (`eventClick`, `dateClick`, `slotClick`, `moreClick`, `viewChange`, `dateChange`).
+Inputs mirror the element attributes/properties (`view`, `date`, `locale`, `dir`, `weekStart`, `dayStart`, `dayEnd`, `timeFormat`, `maxEvents`, `primary`, `secondaryPosition`, `timezone`, `events`, `eventFields`) plus the full events-parity API (`views`, `toolbar`, `titleLayout`, `names`, `numerals`, `numeralsGregorian`, `weekdayFormat`, `weekendDays`, `dayNumberAlign`, `monthMarker`, `todayMarker`, `eventStyle`, `eventTime`, `slotMinutes`, `alldayRow`, `nowIndicator`, `timeLabelPosition`, `dayHeader`, `agendaDays`, `loading`, `narrowEvents`, `renderEvent`, `renderDayCell`; see the [full reference](https://hatimmnomani.github.io/SpezUtil/calendar/api)); outputs emit the typed details (`eventClick`, `dateClick`, `slotClick`, `moreClick`, `viewChange`, `dateChange`, `rangeChange`). Slots `toolbar-start`, `toolbar-end`, and `subheader` are exposed via `<ng-content select="[slot=...]">` inside `<hijri-calendar-ng>`.
+
+`(rangeChange)` fires on every visible-range change **after** the component initializes, but
+misses the connect-time `init` fire the same way the React wrapper does — read the underlying
+element's `visibleRange` property (e.g. via `@ViewChild` in `ngAfterViewInit`) for the initial
+fetch. See [Fetching events for the visible range](https://hatimmnomani.github.io/SpezUtil/calendar/getting-started#fetching-events-for-the-visible-range).
 
 ## Docs
 
