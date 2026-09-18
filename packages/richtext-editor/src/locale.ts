@@ -10,10 +10,15 @@ export interface LocaleStrings {
   quote: string;
   font: string;
   fontDefault: string;
+  fontSize: string;
   bold: string;
   italic: string;
   underline: string;
   strikethrough: string;
+  subscript: string;
+  superscript: string;
+  inlineCode: string;
+  clearFormatting: string;
   textColor: string;
   highlightColor: string;
   customColor: string;
@@ -33,6 +38,8 @@ export interface LocaleStrings {
   colorPink: string;
   bulletList: string;
   numberList: string;
+  indent: string;
+  outdent: string;
   alignStart: string;
   alignCenter: string;
   alignEnd: string;
@@ -54,6 +61,8 @@ export interface LocaleStrings {
   translit: string;
   translitArabicPlaceholder: string;
   translitLatinPlaceholder: string;
+  wordCount: string;
+  characterCount: string;
 }
 
 const en: LocaleStrings = {
@@ -66,10 +75,15 @@ const en: LocaleStrings = {
   quote: "Quote",
   font: "Font",
   fontDefault: "Default",
+  fontSize: "Font size",
   bold: "Bold",
   italic: "Italic",
   underline: "Underline",
   strikethrough: "Strikethrough",
+  subscript: "Subscript",
+  superscript: "Superscript",
+  inlineCode: "Inline code",
+  clearFormatting: "Clear formatting",
   textColor: "Text color",
   highlightColor: "Highlight color",
   customColor: "Custom…",
@@ -89,6 +103,8 @@ const en: LocaleStrings = {
   colorPink: "Pink",
   bulletList: "Bulleted list",
   numberList: "Numbered list",
+  indent: "Indent",
+  outdent: "Outdent",
   alignStart: "Align start",
   alignCenter: "Align center",
   alignEnd: "Align end",
@@ -110,6 +126,8 @@ const en: LocaleStrings = {
   translit: "Transliteration pair",
   translitArabicPlaceholder: "Arabic",
   translitLatinPlaceholder: "Transliteration",
+  wordCount: "{count} words",
+  characterCount: "{count} characters",
 };
 
 const ar: LocaleStrings = {
@@ -122,10 +140,15 @@ const ar: LocaleStrings = {
   quote: "اقتباس",
   font: "الخط",
   fontDefault: "افتراضي",
+  fontSize: "حجم الخط",
   bold: "غامق",
   italic: "مائل",
   underline: "تسطير",
   strikethrough: "يتوسطه خط",
+  subscript: "منخفض",
+  superscript: "مرتفع",
+  inlineCode: "شفرة برمجية",
+  clearFormatting: "إزالة التنسيق",
   textColor: "لون النص",
   highlightColor: "لون التظليل",
   customColor: "لون مخصص…",
@@ -145,6 +168,8 @@ const ar: LocaleStrings = {
   colorPink: "وردي",
   bulletList: "قائمة نقطية",
   numberList: "قائمة مرقمة",
+  indent: "زيادة المسافة البادئة",
+  outdent: "إنقاص المسافة البادئة",
   alignStart: "محاذاة البداية",
   alignCenter: "توسيط",
   alignEnd: "محاذاة النهاية",
@@ -166,6 +191,8 @@ const ar: LocaleStrings = {
   translit: "نص مع النقل الحرفي",
   translitArabicPlaceholder: "النص العربي",
   translitLatinPlaceholder: "النقل الحرفي",
+  wordCount: "{count} كلمة",
+  characterCount: "{count} حرف",
 };
 
 const tables: Record<EditorLocale, LocaleStrings> = { en, ar };

@@ -61,6 +61,11 @@ export const styles: string = `
   padding-inline-start: 8px;
   border-inline-start: 1px solid var(--rte-border);
 }
+.spez-rte-clear-btn {
+  margin-inline-start: 6px;
+  padding-inline-start: 8px;
+  border-inline-start: 1px solid var(--rte-border);
+}
 .spez-rte-toolbar button {
   appearance: none;
   display: inline-flex;
@@ -173,6 +178,12 @@ export const styles: string = `
   pointer-events: none;
   user-select: none;
 }
+.spez-rte-status {
+  padding: 4px 14px 8px;
+  font-size: 0.75rem;
+  color: var(--rte-muted);
+  text-align: end;
+}
 
 .spez-rte-editor p {
   margin: 0 0 0.5em;
@@ -204,6 +215,14 @@ export const styles: string = `
 .spez-rte-underline { text-decoration: underline; }
 .spez-rte-strikethrough { text-decoration: line-through; }
 .spez-rte-underline.spez-rte-strikethrough { text-decoration: underline line-through; }
+.spez-rte-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  background: var(--rte-toolbar-bg);
+  border: 1px solid var(--rte-border);
+}
 
 .spez-rte-link {
   color: var(--rte-accent);

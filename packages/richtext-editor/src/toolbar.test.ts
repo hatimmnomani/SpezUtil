@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { $createTextNode, $getRoot, $isParagraphNode, $selectAll } from "lexical";
+import {
+  $createTextNode,
+  $getRoot,
+  $getSelection,
+  $isParagraphNode,
+  $isRangeSelection,
+  $selectAll,
+} from "lexical";
 import { $isHeadingNode } from "@lexical/rich-text";
+import { $patchStyleText } from "@lexical/selection";
 import "./index";
 import { $isAyatNode } from "./nodes/ayat-node";
 import {
@@ -9,6 +17,27 @@ import {
   $isTranslitPairNode,
 } from "./nodes/translit-nodes";
 import type { SpezRichtext } from "./richtext-editor";
+
+// jsdom implements Element.getBoundingClientRect but not Range.getBoundingClientRect,
+// which Lexical's scroll-into-view path calls when the editor root holds DOM focus
+// (e.g. after an explicit editor.focus() from a toolbar select's change handler).
+if (typeof Range !== "undefined" && !Range.prototype.getBoundingClientRect) {
+  Range.prototype.getBoundingClientRect = function (this: Range) {
+    return {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      toJSON() {
+        return this;
+      },
+    } as DOMRect;
+  };
+}
 
 function create(attrs: Record<string, string> = {}): SpezRichtext {
   const el = document.createElement("spez-richtext");
@@ -372,5 +401,210 @@ describe("toolbar color controls", () => {
     colorButton(el, "color").click();
     const red = popover(el).querySelector<HTMLButtonElement>('.spez-rte-swatch[data-value="#c62828"]')!;
     expect(red.title).toBe("أحمر");
+  });
+});
+
+describe("toolbar font-size selector", () => {
+  // The font-size select is the second <select> in the "font" group, after
+  // the font-family select — locale-independent, unlike matching on title.
+  function fontSizeSelect(el: SpezRichtext): HTMLSelectElement {
+    const selects = el.querySelectorAll<HTMLSelectElement>('.spez-rte-toolbar [data-group="font"] select');
+    expect(selects.length, "font-size select").toBeGreaterThanOrEqual(2);
+    return selects[1]!;
+  }
+
+  it("renders the default size list plus a default row", () => {
+    const el = create();
+    const options = [...fontSizeSelect(el).options];
+    expect(options[0]!.value).toBe("");
+    expect(options.map((o) => o.value)).toContain("16px");
+    expect(options.length).toBeGreaterThan(3);
+  });
+
+  it("applies the chosen font-size to the selection", () => {
+    const el = create();
+    el.setHTML("<p>hello</p>");
+    el.editor.update(() => $selectAll(), { discrete: true });
+    const select = fontSizeSelect(el);
+    select.value = "24px";
+    select.dispatchEvent(new Event("change"));
+    flush(el);
+    const style = el.editor.getEditorState().read(() => {
+      return $getRoot().getAllTextNodes()[0]!.getStyle();
+    });
+    expect(style).toContain("font-size: 24px");
+  });
+
+  it("clears the font-size when the default row is chosen", () => {
+    const el = create();
+    el.setHTML('<p><span style="font-size: 24px">hello</span></p>');
+    el.editor.update(() => $selectAll(), { discrete: true });
+    const select = fontSizeSelect(el);
+    expect(select.value).toBe("24px");
+    select.value = "";
+    select.dispatchEvent(new Event("change"));
+    flush(el);
+    const style = el.editor.getEditorState().read(() => {
+      return $getRoot().getAllTextNodes()[0]!.getStyle();
+    });
+    expect(style).not.toContain("font-size");
+  });
+
+  it("syncs to the selection's current font-size, falling back to default", () => {
+    const el = create();
+    el.setHTML('<p><span style="font-size: 18px">hello</span></p>');
+    el.editor.update(() => $selectAll(), { discrete: true });
+    expect(fontSizeSelect(el).value).toBe("18px");
+  });
+
+  it("exports and re-imports the inline font-size via HTML", () => {
+    const el = create();
+    el.setHTML("<p>hello</p>");
+    el.editor.update(() => $selectAll(), { discrete: true });
+    const select = fontSizeSelect(el);
+    select.value = "28px";
+    select.dispatchEvent(new Event("change"));
+    flush(el);
+    const html = el.getHTML();
+    expect(html).toContain("font-size: 28px");
+    const el2 = create();
+    el2.setHTML(html);
+    const style = el2.editor.getEditorState().read(() => {
+      return $getRoot().getAllTextNodes()[0]!.getStyle();
+    });
+    expect(style).toContain("font-size: 28px");
+  });
+
+  it("uses Arabic label for the font-size control when locale=ar", () => {
+    const el = create({ locale: "ar" });
+    expect(fontSizeSelect(el).title).toBe("حجم الخط");
+  });
+});
+
+describe("toolbar text format buttons", () => {
+  function hasFormat(el: SpezRichtext, format: "subscript" | "superscript" | "code"): boolean {
+    return el.editor.getEditorState().read(() => $getRoot().getAllTextNodes()[0]!.hasFormat(format));
+  }
+
+  it("subscript button toggles subscript and reflects aria-pressed", () => {
+    const el = create();
+    el.setHTML("<p>hello</p>");
+    el.editor.update(() => $selectAll(), { discrete: true });
+    clickButton(el, "Subscript");
+    expect(hasFormat(el, "subscript")).toBe(true);
+    const btn = [...el.querySelectorAll<HTMLButtonElement>("button")].find(
+      (b) => b.title === "Subscript",
+    )!;
+    expect(btn.getAttribute("aria-pressed")).toBe("true");
+    clickButton(el, "Subscript");
+    expect(hasFormat(el, "subscript")).toBe(false);
+  });
+
+  it("superscript button toggles superscript and reflects aria-pressed", () => {
+    const el = create();
+    el.setHTML("<p>hello</p>");
+    el.editor.update(() => $selectAll(), { discrete: true });
+    clickButton(el, "Superscript");
+    expect(hasFormat(el, "superscript")).toBe(true);
+    const btn = [...el.querySelectorAll<HTMLButtonElement>("button")].find(
+      (b) => b.title === "Superscript",
+    )!;
+    expect(btn.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("inline code button toggles code and reflects aria-pressed", () => {
+    const el = create();
+    el.setHTML("<p>hello</p>");
+    el.editor.update(() => $selectAll(), { discrete: true });
+    clickButton(el, "Inline code");
+    expect(hasFormat(el, "code")).toBe(true);
+    const btn = [...el.querySelectorAll<HTMLButtonElement>("button")].find(
+      (b) => b.title === "Inline code",
+    )!;
+    expect(btn.getAttribute("aria-pressed")).toBe("true");
+  });
+});
+
+describe("toolbar indent/outdent", () => {
+  function firstBlockIndent(el: SpezRichtext): number {
+    return el.editor.getEditorState().read(() => $getRoot().getFirstChild()!.getIndent());
+  }
+
+  it("indent button increases the block's indent", () => {
+    const el = create();
+    el.setHTML("<p>hello</p>");
+    el.editor.update(() => $selectAll(), { discrete: true });
+    clickButton(el, "Indent");
+    expect(firstBlockIndent(el)).toBe(1);
+  });
+
+  it("outdent button decreases the block's indent", () => {
+    const el = create();
+    el.setHTML("<p>hello</p>");
+    el.editor.update(() => $selectAll(), { discrete: true });
+    clickButton(el, "Indent");
+    clickButton(el, "Outdent");
+    expect(firstBlockIndent(el)).toBe(0);
+  });
+
+  it("Tab key dispatches indent, Shift+Tab dispatches outdent", () => {
+    const el = create();
+    el.setHTML("<p>hello</p>");
+    el.editor.update(() => $selectAll(), { discrete: true });
+    const root = el.editor.getRootElement()!;
+    root.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
+    flush(el);
+    expect(firstBlockIndent(el)).toBe(1);
+    root.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }),
+    );
+    flush(el);
+    expect(firstBlockIndent(el)).toBe(0);
+  });
+});
+
+describe("toolbar clear formatting", () => {
+  it("removes active text formats and inline styles from the selection", () => {
+    const el = create();
+    el.setHTML("<p>hello</p>");
+    el.editor.update(
+      () => {
+        $selectAll();
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) return;
+        selection.formatText("bold");
+        selection.formatText("subscript");
+        $patchStyleText(selection, { "font-size": "24px", color: "#c62828" });
+      },
+      { discrete: true },
+    );
+    el.editor.update(() => $selectAll(), { discrete: true });
+
+    clickButton(el, "Clear formatting");
+
+    el.editor.getEditorState().read(() => {
+      const textNode = $getRoot().getAllTextNodes()[0]!;
+      expect(textNode.hasFormat("bold")).toBe(false);
+      expect(textNode.hasFormat("subscript")).toBe(false);
+      expect(textNode.getStyle()).not.toContain("font-size");
+      expect(textNode.getStyle()).not.toContain("color");
+    });
+  });
+});
+
+describe("word-count status", () => {
+  it("does not render a status line by default", () => {
+    const el = create();
+    expect(el.querySelector(".spez-rte-status")).toBeNull();
+  });
+
+  it("renders and updates the word/character count when the word-count attribute is set", () => {
+    const el = create({ "word-count": "" });
+    const status = el.querySelector(".spez-rte-status");
+    expect(status).not.toBeNull();
+    el.setHTML("<p>hello world</p>");
+    flush(el);
+    expect(status!.textContent).toContain("2");
+    expect(status!.textContent).toContain("11");
   });
 });

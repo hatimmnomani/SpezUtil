@@ -9,8 +9,9 @@
   - **Ayat block** — distinctly styled container for Quranic ayat / kalemat nooraniyah
   - **Transliteration pair** — an Arabic line + its transliteration that move, edit, and export as one unit
   - **Hijri date token** — atomic inline date backed by [`@spezutil/hijri-core`](https://www.npmjs.com/package/@spezutil/hijri-core) (Bohra/Misri tabular calendar); stores the actual `{year, month, day}`, not just text
-- Core formatting: bold / italic / underline / strikethrough, headings, quote, lists, alignment, undo/redo
+- Core formatting: bold / italic / underline / strikethrough / subscript / superscript / inline code, font size, headings, quote, lists, indent/outdent, alignment, undo/redo, clear formatting
 - Links, images (by URL), tables
+- Optional word/character count status line
 - Output: **Lexical JSON** (canonical, lossless) + **HTML** export/import
 - Localized toolbar (`en`, `ar`)
 
@@ -105,8 +106,10 @@ Programmatic insertion: `editor.insertHijriDate({ year: 1446, month: 9, day: 17 
 | `placeholder` | string | Shown while empty |
 | `dir` | `rtl` \| `ltr` \| `auto` | Base direction (default `auto`; paragraphs still auto-detect) |
 | `locale` | `en` \| `ar` | Toolbar language (default `en`) |
-| `toolbar` | comma-separated groups or `none` | Groups: `history,block,font,inline,color,list,align,direction,insert` |
+| `toolbar` | comma-separated groups or `none` | Groups: `history,block,font,inline,color,list,indent,align,direction,insert` |
 | `fonts` | comma-separated font families | Simple form of the font list, e.g. `fonts="Amiri, Tahoma, Arial"` (use the `fonts` *property* for labels and full font stacks) |
+| `font-sizes` | comma-separated font sizes | Simple form of the font-size list, e.g. `font-sizes="12px, 16px, 24px"` (use the `fontSizes` *property* for labels that differ from the CSS value) |
+| `word-count` | boolean | Shows a word/character count status line below the editor |
 
 ### Properties
 
@@ -115,6 +118,7 @@ Programmatic insertion: `editor.insertHijriDate({ year: 1446, month: 9, day: 17 
 | `value` | `string \| null` | Serialized Lexical editor state JSON (get/set; canonical persistence format) |
 | `initialHtml` | `string \| null` | HTML applied on first init when no `value` was set |
 | `fonts` | `FontOption[] \| null` | Toolbar font list — see [Font selector](#font-selector) |
+| `fontSizes` | `FontSizeOption[] \| null` | Toolbar font-size list — see [Font size](#font-size) |
 | `editor` | `LexicalEditor` | Escape hatch for advanced use (custom commands, transforms, …) |
 
 ### Methods
@@ -152,9 +156,31 @@ editor.fonts = [
 
 Custom fonts must be loaded on the page (your own `@font-face` or a font service) — the editor only applies the `font-family` value. Setting `fonts = null` restores the defaults. The simple attribute form `fonts="Amiri, Tahoma"` is also supported for plain-HTML usage.
 
+## Font size
+
+The toolbar's `font` group also has a font-size selector, next to the font family selector, applying an inline `font-size` style to the selection (survives HTML export/import). The default list is 12–48px. Replace it via the `fontSizes` property, or spread `DEFAULT_FONT_SIZES` to extend it:
+
+```js
+import { DEFAULT_FONT_SIZES } from "@spezutil/richtext-editor";
+
+const editor = document.querySelector("spez-richtext");
+editor.fontSizes = [...DEFAULT_FONT_SIZES, { label: "64px", size: "64px" }];
+```
+
+Setting `fontSizes = null` restores the defaults. The simple attribute form `font-sizes="12px, 16px, 24px"` is also supported for plain-HTML usage.
+
 ## Text and highlight color
 
 The toolbar's `color` group has two controls — **text color** and **highlight color** — each opening a palette popover with 12 preset swatches, a native custom color picker, and a **Reset** action that removes the color again. Colors are stored as inline `color` / `background-color` styles on the text (preserved across HTML export/import, where browsers normalize them to `rgb(…)`). The toolbar swatch bar reflects the color under the caret. Omit the group via `toolbar="history,block,font,inline,list,…"` to hide it.
+
+## Word / character count
+
+Set the boolean `word-count` attribute to show a status line below the editor content with a live word and character count (`spez-richtext word-count`). It updates on every edit via `editor.registerUpdateListener`.
+
+## Indent, subscript/superscript/code, clear formatting
+
+- The `indent` toolbar group adds indent/outdent buttons (`INDENT_CONTENT_COMMAND` / `OUTDENT_CONTENT_COMMAND`); **Tab** / **Shift+Tab** inside the editor do the same.
+- The `inline` group also has subscript, superscript, and inline-code toggle buttons, alongside a **Clear formatting** button that removes all active text formats and inline styles (font, size, color, highlight) from the selection.
 
 ## Theming
 

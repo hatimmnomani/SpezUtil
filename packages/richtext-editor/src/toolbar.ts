@@ -9,6 +9,8 @@ import {
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
   HISTORY_MERGE_TAG,
+  INDENT_CONTENT_COMMAND,
+  OUTDENT_CONTENT_COMMAND,
   REDO_COMMAND,
   UNDO_COMMAND,
   type ElementFormatType,
@@ -59,6 +61,7 @@ export const ALL_TOOLBAR_GROUPS = [
   "inline",
   "color",
   "list",
+  "indent",
   "align",
   "direction",
   "insert",
@@ -83,6 +86,25 @@ export const DEFAULT_FONTS: readonly FontOption[] = [
   { label: "Arial", family: "Arial, sans-serif" },
   { label: "Georgia", family: "Georgia, serif" },
   { label: "Monospace", family: "monospace" },
+];
+
+/** One entry in the toolbar font-size selector. `size` is a CSS length (e.g. `"16px"`). */
+export interface FontSizeOption {
+  label: string;
+  size: string;
+}
+
+export const DEFAULT_FONT_SIZES: readonly FontSizeOption[] = [
+  { label: "12px", size: "12px" },
+  { label: "14px", size: "14px" },
+  { label: "16px", size: "16px" },
+  { label: "18px", size: "18px" },
+  { label: "20px", size: "20px" },
+  { label: "24px", size: "24px" },
+  { label: "28px", size: "28px" },
+  { label: "32px", size: "32px" },
+  { label: "36px", size: "36px" },
+  { label: "48px", size: "48px" },
 ];
 
 type BlockType = "paragraph" | "h1" | "h2" | "h3" | "quote" | "ayat";
@@ -126,6 +148,17 @@ const HIGHLIGHT_COLORS: readonly PaletteEntry[] = [
 
 const PALETTE_COLUMNS = 6;
 
+/** Text formats the toolbar exposes as toggle buttons; "Clear formatting" turns off whichever are active. */
+const CLEARABLE_TEXT_FORMATS: readonly TextFormatType[] = [
+  "bold",
+  "italic",
+  "underline",
+  "strikethrough",
+  "subscript",
+  "superscript",
+  "code",
+];
+
 interface ColorControl {
   button: HTMLButtonElement;
   swatch: HTMLElement;
@@ -136,6 +169,7 @@ interface ToolbarRefs {
   buttons: Map<string, HTMLButtonElement>;
   blockSelect: HTMLSelectElement | null;
   fontSelect: HTMLSelectElement | null;
+  fontSizeSelect: HTMLSelectElement | null;
   colors: Map<ColorProperty, ColorControl>;
 }
 
@@ -470,12 +504,14 @@ export function buildToolbar(
   groups: readonly ToolbarGroup[],
   locale: EditorLocale,
   fonts: readonly FontOption[] = DEFAULT_FONTS,
+  fontSizes: readonly FontSizeOption[] = DEFAULT_FONT_SIZES,
 ): ToolbarInstance {
   const t: LocaleStrings = getLocaleStrings(locale);
   const refs: ToolbarRefs = {
     buttons: new Map(),
     blockSelect: null,
     fontSelect: null,
+    fontSizeSelect: null,
     colors: new Map(),
   };
   const toolbar = document.createElement("div");
@@ -523,35 +559,81 @@ export function buildToolbar(
         break;
       }
       case "font": {
-        if (fonts.length === 0) break;
-        const select = document.createElement("select");
-        select.title = t.font;
-        select.setAttribute("aria-label", t.font);
-        const defaultOption = document.createElement("option");
-        defaultOption.value = "";
-        defaultOption.textContent = t.fontDefault;
-        select.append(defaultOption);
-        for (const { label, family } of fonts) {
-          const option = document.createElement("option");
-          option.value = family;
-          option.textContent = label;
-          option.style.fontFamily = family;
-          select.append(option);
+        const children: HTMLElement[] = [];
+        if (fonts.length > 0) {
+          const select = document.createElement("select");
+          select.title = t.font;
+          select.setAttribute("aria-label", t.font);
+          const defaultOption = document.createElement("option");
+          defaultOption.value = "";
+          defaultOption.textContent = t.fontDefault;
+          select.append(defaultOption);
+          for (const { label, family } of fonts) {
+            const option = document.createElement("option");
+            option.value = family;
+            option.textContent = label;
+            option.style.fontFamily = family;
+            select.append(option);
+          }
+          select.addEventListener("change", () => {
+            const family = select.value;
+            editor.update(() => {
+              const selection = $getSelection();
+              if (!$isRangeSelection(selection)) return;
+              $patchStyleText(selection, { "font-family": family === "" ? null : family });
+            });
+            editor.focus();
+          });
+          refs.fontSelect = select;
+          children.push(select);
         }
-        select.addEventListener("change", () => {
-          const family = select.value;
+        if (fontSizes.length > 0) {
+          const sizeSelect = document.createElement("select");
+          sizeSelect.title = t.fontSize;
+          sizeSelect.setAttribute("aria-label", t.fontSize);
+          const defaultOption = document.createElement("option");
+          defaultOption.value = "";
+          defaultOption.textContent = t.fontDefault;
+          sizeSelect.append(defaultOption);
+          for (const { label, size } of fontSizes) {
+            const option = document.createElement("option");
+            option.value = size;
+            option.textContent = label;
+            sizeSelect.append(option);
+          }
+          sizeSelect.addEventListener("change", () => {
+            const size = sizeSelect.value;
+            editor.update(() => {
+              const selection = $getSelection();
+              if (!$isRangeSelection(selection)) return;
+              $patchStyleText(selection, { "font-size": size === "" ? null : size });
+            });
+            editor.focus();
+          });
+          refs.fontSizeSelect = sizeSelect;
+          children.push(sizeSelect);
+        }
+        if (children.length > 0) toolbar.append(group(name, ...children));
+        break;
+      }
+      case "inline": {
+        const clearBtn = button("⌫", t.clearFormatting, () => {
           editor.update(() => {
             const selection = $getSelection();
             if (!$isRangeSelection(selection)) return;
-            $patchStyleText(selection, { "font-family": family === "" ? null : family });
+            for (const fmt of CLEARABLE_TEXT_FORMATS) {
+              if (selection.hasFormat(fmt)) editor.dispatchCommand(FORMAT_TEXT_COMMAND, fmt);
+            }
+            $patchStyleText(selection, {
+              "font-family": null,
+              "font-size": null,
+              color: null,
+              "background-color": null,
+            });
           });
           editor.focus();
-        });
-        refs.fontSelect = select;
-        toolbar.append(group(name, select));
-        break;
-      }
-      case "inline":
+        }, refs);
+        clearBtn.classList.add("spez-rte-clear-btn");
         toolbar.append(
           group(
             name,
@@ -559,9 +641,14 @@ export function buildToolbar(
             button("I", t.italic, format("italic"), refs, "italic"),
             button("U", t.underline, format("underline"), refs, "underline"),
             button("S", t.strikethrough, format("strikethrough"), refs, "strikethrough"),
+            button("x₂", t.subscript, format("subscript"), refs, "subscript"),
+            button("x²", t.superscript, format("superscript"), refs, "superscript"),
+            button("</>", t.inlineCode, format("code"), refs, "code"),
+            clearBtn,
           ),
         );
         break;
+      }
       case "color":
         toolbar.append(
           group(
@@ -589,6 +676,15 @@ export function buildToolbar(
                 undefined,
               );
             }, refs, "number"),
+          ),
+        );
+        break;
+      case "indent":
+        toolbar.append(
+          group(
+            name,
+            button("⇥|", t.indent, () => editor.dispatchCommand(INDENT_CONTENT_COMMAND, undefined), refs),
+            button("|⇤", t.outdent, () => editor.dispatchCommand(OUTDENT_CONTENT_COMMAND, undefined), refs),
           ),
         );
         break;
@@ -690,6 +786,9 @@ export function buildToolbar(
       setPressed("italic", selection.hasFormat("italic"));
       setPressed("underline", selection.hasFormat("underline"));
       setPressed("strikethrough", selection.hasFormat("strikethrough"));
+      setPressed("subscript", selection.hasFormat("subscript"));
+      setPressed("superscript", selection.hasFormat("superscript"));
+      setPressed("code", selection.hasFormat("code"));
 
       const anchorNode = selection.anchor.getNode();
       const top = anchorNode.getTopLevelElement();
@@ -710,6 +809,12 @@ export function buildToolbar(
         // Unknown families (e.g. pasted content) fall back to the default row.
         refs.fontSelect.value = family;
         if (refs.fontSelect.value !== family) refs.fontSelect.value = "";
+      }
+      if (refs.fontSizeSelect) {
+        const size = $getSelectionStyleValueForProperty(selection, "font-size", "");
+        // Unknown sizes (e.g. pasted content) fall back to the default row.
+        refs.fontSizeSelect.value = size;
+        if (refs.fontSizeSelect.value !== size) refs.fontSizeSelect.value = "";
       }
       for (const [property, control] of refs.colors) {
         const value = $getSelectionStyleValueForProperty(selection, property, "");

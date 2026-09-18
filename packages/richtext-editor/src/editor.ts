@@ -4,7 +4,11 @@ import {
   $isRangeSelection,
   $isTextNode,
   COMMAND_PRIORITY_EDITOR,
+  COMMAND_PRIORITY_LOW,
   createEditor,
+  INDENT_CONTENT_COMMAND,
+  KEY_TAB_COMMAND,
+  OUTDENT_CONTENT_COMMAND,
   TextNode,
   type DOMConversionMap,
   type LexicalEditor,
@@ -30,7 +34,7 @@ import { registerAutoDirection, registerDirectionCommand } from "./direction";
  * Wrap TextNode's importers so those survive the toolbar's export → import
  * round-trip.
  */
-const IMPORTED_TEXT_STYLES = ["font-family", "color", "background-color"] as const;
+const IMPORTED_TEXT_STYLES = ["font-family", "font-size", "color", "background-color"] as const;
 
 function $importTextStyles(): DOMConversionMap {
   const importMap: DOMConversionMap = {};
@@ -74,6 +78,7 @@ const theme = {
     italic: "spez-rte-italic",
     underline: "spez-rte-underline",
     strikethrough: "spez-rte-strikethrough",
+    code: "spez-rte-code",
   },
   quote: "spez-rte-quote",
   link: "spez-rte-link",
@@ -104,6 +109,22 @@ function registerLinkCommand(editor: LexicalEditor): () => void {
       return true;
     },
     COMMAND_PRIORITY_EDITOR,
+  );
+}
+
+/** Tab/Shift+Tab indentation is normally wired by @lexical/react's TabIndentationPlugin, which this vanilla package doesn't use. */
+function registerTabIndentation(editor: LexicalEditor): () => void {
+  return editor.registerCommand(
+    KEY_TAB_COMMAND,
+    (event) => {
+      event.preventDefault();
+      editor.dispatchCommand(
+        event.shiftKey ? OUTDENT_CONTENT_COMMAND : INDENT_CONTENT_COMMAND,
+        undefined,
+      );
+      return true;
+    },
+    COMMAND_PRIORITY_LOW,
   );
 }
 
@@ -144,6 +165,7 @@ export function createEditorInstance(rootElement: HTMLElement): EditorInstance {
     registerTableSelectionObserver(editor),
     registerLinkCommand(editor),
     registerImageCommand(editor),
+    registerTabIndentation(editor),
     registerDecoratorMounter(editor),
     registerAutoDirection(editor),
     registerDirectionCommand(editor),

@@ -8,12 +8,14 @@ import { injectGlobalStyles } from "./styles";
 import {
   ALL_TOOLBAR_GROUPS,
   DEFAULT_FONTS,
+  DEFAULT_FONT_SIZES,
   buildToolbar,
   type FontOption,
+  type FontSizeOption,
   type ToolbarGroup,
   type ToolbarInstance,
 } from "./toolbar";
-import type { EditorLocale } from "./locale";
+import { getLocaleStrings, type EditorLocale } from "./locale";
 import { DEFAULT_HIJRI_FORMAT } from "./nodes/hijri-date-node";
 
 export interface ChangeDetail {
@@ -32,7 +34,16 @@ const CHANGE_DEBOUNCE_MS = 150;
  */
 export class SpezRichtext extends HTMLElement {
   static get observedAttributes(): string[] {
-    return ["readonly", "placeholder", "dir", "locale", "toolbar", "fonts"];
+    return [
+      "readonly",
+      "placeholder",
+      "dir",
+      "locale",
+      "toolbar",
+      "fonts",
+      "font-sizes",
+      "word-count",
+    ];
   }
 
   #editor: LexicalEditor | null = null;
@@ -41,9 +52,12 @@ export class SpezRichtext extends HTMLElement {
   #shell: HTMLElement | null = null;
   #editable: HTMLElement | null = null;
   #placeholderEl: HTMLElement | null = null;
+  #statusEl: HTMLElement | null = null;
   #pendingValue: string | null = null;
   #pendingHtml: string | null = null;
   #fonts: FontOption[] | null = null;
+  #fontSizes: FontSizeOption[] | null = null;
+  #unregisterStatus: (() => void) | null = null;
   #changeTimer: ReturnType<typeof setTimeout> | undefined;
 
   /** Escape hatch for advanced consumers; throws before first connect. */
@@ -110,6 +124,26 @@ export class SpezRichtext extends HTMLElement {
     this.#buildToolbar();
   }
 
+  /**
+   * Toolbar font-size list. Set to replace the defaults entirely; spread
+   * `DEFAULT_FONT_SIZES` to extend them instead. `null` restores the defaults
+   * (or the `font-sizes` attribute, when present). Invalid entries are dropped.
+   */
+  get fontSizes(): readonly FontSizeOption[] {
+    return this.#fontSizeOptions();
+  }
+
+  set fontSizes(list: readonly FontSizeOption[] | null) {
+    this.#fontSizes =
+      list === null
+        ? null
+        : list.filter(
+            (f): f is FontSizeOption =>
+              typeof f?.label === "string" && typeof f?.size === "string" && f.size !== "",
+          );
+    this.#buildToolbar();
+  }
+
   connectedCallback(): void {
     if (this.#editor !== null) return;
     injectGlobalStyles(this.ownerDocument);
@@ -137,6 +171,7 @@ export class SpezRichtext extends HTMLElement {
 
     this.#applyDir();
     this.#applyPlaceholderText();
+    this.#syncStatusVisibility();
     editor.setEditable(!this.readonly);
 
     if (this.#pendingValue != null) {
@@ -175,12 +210,15 @@ export class SpezRichtext extends HTMLElement {
     clearTimeout(this.#changeTimer);
     this.#toolbar?.dispose();
     this.#toolbar = null;
+    this.#unregisterStatus?.();
+    this.#unregisterStatus = null;
     this.#disposeEditor?.();
     this.#disposeEditor = null;
     this.#editor = null;
     this.#shell = null;
     this.#editable = null;
     this.#placeholderEl = null;
+    this.#statusEl = null;
     this.replaceChildren();
   }
 
@@ -200,9 +238,16 @@ export class SpezRichtext extends HTMLElement {
         this.#applyDir();
         break;
       case "locale":
+        this.#buildToolbar();
+        this.#updateStatusText();
+        break;
       case "toolbar":
       case "fonts":
+      case "font-sizes":
         this.#buildToolbar();
+        break;
+      case "word-count":
+        this.#syncStatusVisibility();
         break;
     }
   }
@@ -254,6 +299,18 @@ export class SpezRichtext extends HTMLElement {
       .map((family) => ({ label: family.replace(/["']/g, ""), family }));
   }
 
+  /** Property wins over the `font-sizes` attribute (comma-separated sizes). */
+  #fontSizeOptions(): readonly FontSizeOption[] {
+    if (this.#fontSizes !== null) return this.#fontSizes;
+    const attr = this.getAttribute("font-sizes");
+    if (attr === null || attr.trim() === "") return DEFAULT_FONT_SIZES;
+    return attr
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s !== "")
+      .map((size) => ({ label: size, size }));
+  }
+
   #toolbarGroups(): readonly ToolbarGroup[] {
     const attr = this.getAttribute("toolbar");
     if (attr === null || attr.trim() === "") return ALL_TOOLBAR_GROUPS;
@@ -269,7 +326,14 @@ export class SpezRichtext extends HTMLElement {
     this.#toolbar = null;
     const groups = this.#toolbarGroups();
     if (groups.length === 0) return;
-    this.#toolbar = buildToolbar(this.#editor, this, groups, this.locale, this.#fontOptions());
+    this.#toolbar = buildToolbar(
+      this.#editor,
+      this,
+      groups,
+      this.locale,
+      this.#fontOptions(),
+      this.#fontSizeOptions(),
+    );
     this.prepend(this.#toolbar.element);
   }
 
@@ -294,6 +358,36 @@ export class SpezRichtext extends HTMLElement {
       .getEditorState()
       .read(() => $canShowPlaceholder(this.#editor!.isComposing()));
     this.#placeholderEl.style.display = show ? "" : "none";
+  }
+
+  #syncStatusVisibility(): void {
+    if (this.#editor === null || this.#shell === null) return;
+    const shouldShow = this.hasAttribute("word-count");
+    const statusEl = this.#statusEl;
+    if (shouldShow && statusEl === null) {
+      const el = document.createElement("div");
+      el.className = "spez-rte-status";
+      this.#shell.append(el);
+      this.#statusEl = el;
+      this.#unregisterStatus = this.#editor.registerUpdateListener(() => this.#updateStatusText());
+      this.#updateStatusText();
+    } else if (!shouldShow && statusEl !== null) {
+      this.#unregisterStatus?.();
+      this.#unregisterStatus = null;
+      statusEl.remove();
+      this.#statusEl = null;
+    } else if (shouldShow) {
+      this.#updateStatusText();
+    }
+  }
+
+  #updateStatusText(): void {
+    if (this.#editor === null || this.#statusEl === null) return;
+    const text = this.#editor.getEditorState().read(() => $getRoot().getTextContent());
+    const words = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+    const characters = text.length;
+    const t = getLocaleStrings(this.locale);
+    this.#statusEl.textContent = `${t.wordCount.replace("{count}", String(words))} · ${t.characterCount.replace("{count}", String(characters))}`;
   }
 
   #emitChange(): void {
