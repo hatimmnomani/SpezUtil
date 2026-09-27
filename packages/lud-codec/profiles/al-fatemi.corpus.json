@@ -1,0 +1,10 @@
+{
+  "profile": "al-fatemi",
+  "allowDraft": true,
+  "cases": [
+    { "name": "peh", "typed": "ثثر", "unicode": "پر", "display": "پر", "html": "پر", "confirmed": false },
+    { "name": "yeh-barree-final", "typed": "نسس", "unicode": "نے", "display": "نسس", "html": "نسس", "confirmed": false },
+    { "name": "tteh", "typed": "سوطط", "unicode": "سوٹ", "display": "سوطط", "html": "سوطط", "confirmed": false },
+    { "name": "heh-goal-fallback", "typed": "ہم", "unicode": "ہم", "display": "ہم", "html": "<span class=\"lud-fallback\" style=\"font-family:&quot;Noto Naskh Arabic&quot;\">ہ</span>م", "confirmed": false }
+  ]
+}

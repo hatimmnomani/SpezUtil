@@ -10,6 +10,8 @@ pnpm/turbo monorepo. Published scope: `@spezutil/*`. Hijri (Bohra/Misri) calenda
 - `hijri-datepicker` — `<hijri-datepicker>` Web Component (single/range date picker + optional time). Ships CSS-in-JS (`src/styles.ts`).
 - `richtext-editor` — `<spez-richtext>` rich-text editor Web Component for Arabic / Lisan-ud-Dawat content, built on Lexical (`lexical` + `@lexical/*` as regular deps, version-matched). Ayat blocks, transliteration pairs, atomic Hijri date tokens, RTL auto-direction, en/ar toolbar. **Renders in light DOM** (Lexical selection breaks in shadow roots — facebook/lexical#8125); styles are `spez-rte-`-prefixed and injected once into `document.head`. `@spezutil/hijri-datepicker` is an optional peer, feature-detected at runtime for the date-picker popover.
 - `hijri-calendar-angular`, `hijri-calendar-react`, `hijri-datepicker-angular`, `hijri-datepicker-react`, `richtext-editor-angular`, `richtext-editor-react` — thin wrappers around the above Web Components, no own styling.
+- `lud-codec` — Lisan ud-Dawat text codec: converts between how people type for legacy fonts (Al Kanz, Al-Fatemi, Kanz al-Marjaan) and Unicode, one JSON profile per font, no font files shipped.
+- `tools/lud-font-probe` — font probe tool for `lud-codec`: generates candidate typed↔Unicode mappings for a new legacy font so a person can confirm them before a profile ships.
 
 Build: `tsup` per package (`pnpm --filter <pkg> build`). Test: `vitest` (`pnpm --filter <pkg> test`).
 
