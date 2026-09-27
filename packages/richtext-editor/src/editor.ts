@@ -83,6 +83,8 @@ const theme = {
   },
   quote: "spez-rte-quote",
   link: "spez-rte-link",
+  mark: "spez-rte-comment",
+  markOverlap: "spez-rte-comment-overlap",
 };
 
 /** Mounts DecoratorNode outputs (ImageNode) into their container elements. */
