@@ -9,6 +9,7 @@ import {
   ALL_TOOLBAR_GROUPS,
   DEFAULT_FONTS,
   DEFAULT_FONT_SIZES,
+  DEFAULT_TOOLBAR_GROUPS,
   buildToolbar,
   type FontOption,
   type FontSizeOption,
@@ -313,7 +314,7 @@ export class SpezRichtext extends HTMLElement {
 
   #toolbarGroups(): readonly ToolbarGroup[] {
     const attr = this.getAttribute("toolbar");
-    if (attr === null || attr.trim() === "") return ALL_TOOLBAR_GROUPS;
+    if (attr === null || attr.trim() === "") return DEFAULT_TOOLBAR_GROUPS;
     if (attr.trim() === "none") return [];
     const requested = attr.split(",").map((s) => s.trim());
     return ALL_TOOLBAR_GROUPS.filter((g) => requested.includes(g));

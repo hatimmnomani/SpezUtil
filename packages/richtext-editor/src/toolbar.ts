@@ -53,11 +53,13 @@ import { SET_DIRECTION_COMMAND } from "./direction";
 import { openHijriDatePicker } from "./hijri-insert";
 import { getLocaleStrings, type EditorLocale, type LocaleStrings } from "./locale";
 import { ARABIC_FONT_FAMILY } from "./font-arabic";
+import { listLudFonts, ludFontForFamily } from "./lud-fonts";
 
 export const ALL_TOOLBAR_GROUPS = [
   "history",
   "block",
   "font",
+  "lud",
   "inline",
   "color",
   "list",
@@ -65,9 +67,16 @@ export const ALL_TOOLBAR_GROUPS = [
   "align",
   "direction",
   "insert",
+  "comment",
+  "diagram",
 ] as const;
 
 export type ToolbarGroup = (typeof ALL_TOOLBAR_GROUPS)[number];
+
+/** Groups shown when no `toolbar` attribute is set: the 0.4.0 toolbar. `lud`, `comment`, `diagram` are opt-in. */
+export const DEFAULT_TOOLBAR_GROUPS: readonly ToolbarGroup[] = ALL_TOOLBAR_GROUPS.filter(
+  (g) => g !== "lud" && g !== "comment" && g !== "diagram",
+);
 
 /** One entry in the toolbar font selector. `family` is a CSS font-family value. */
 export interface FontOption {
@@ -170,6 +179,7 @@ interface ToolbarRefs {
   blockSelect: HTMLSelectElement | null;
   fontSelect: HTMLSelectElement | null;
   fontSizeSelect: HTMLSelectElement | null;
+  ludSelect: HTMLSelectElement | null;
   colors: Map<ColorProperty, ColorControl>;
 }
 
@@ -512,6 +522,7 @@ export function buildToolbar(
     blockSelect: null,
     fontSelect: null,
     fontSizeSelect: null,
+    ludSelect: null,
     colors: new Map(),
   };
   const toolbar = document.createElement("div");
@@ -616,6 +627,41 @@ export function buildToolbar(
         if (children.length > 0) toolbar.append(group(name, ...children));
         break;
       }
+      case "lud": {
+        const select = document.createElement("select");
+        select.title = t.ludFont;
+        select.setAttribute("aria-label", t.ludFont);
+        const none = document.createElement("option");
+        none.value = "";
+        none.textContent = t.ludFontNone;
+        select.append(none);
+        const families = new Map<string, string>();
+        for (const font of listLudFonts()) {
+          const option = document.createElement("option");
+          option.value = font.id;
+          option.textContent = font.draft ? `${font.label} ${t.ludFontDraft}` : font.label;
+          option.style.fontFamily = font.family;
+          families.set(font.id, font.family);
+          select.append(option);
+        }
+        select.addEventListener("change", () => {
+          const family = families.get(select.value) ?? null;
+          editor.update(() => {
+            const selection = $getSelection();
+            if (!$isRangeSelection(selection)) return;
+            // lud-sync.ts turns text carrying a LuD family into lud-text (and back).
+            $patchStyleText(selection, { "font-family": family });
+          });
+          editor.focus();
+        });
+        refs.ludSelect = select;
+        toolbar.append(group(name, select));
+        break;
+      }
+      case "comment":
+        break;
+      case "diagram":
+        break;
       case "inline": {
         const clearBtn = button("⌫", t.clearFormatting, () => {
           editor.update(() => {
@@ -809,6 +855,11 @@ export function buildToolbar(
         // Unknown families (e.g. pasted content) fall back to the default row.
         refs.fontSelect.value = family;
         if (refs.fontSelect.value !== family) refs.fontSelect.value = "";
+      }
+      if (refs.ludSelect) {
+        const family = $getSelectionStyleValueForProperty(selection, "font-family", "");
+        refs.ludSelect.value = ludFontForFamily(family) ?? "";
+        if (refs.ludSelect.value !== (ludFontForFamily(family) ?? "")) refs.ludSelect.value = "";
       }
       if (refs.fontSizeSelect) {
         const size = $getSelectionStyleValueForProperty(selection, "font-size", "");

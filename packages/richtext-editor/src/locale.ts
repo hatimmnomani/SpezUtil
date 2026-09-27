@@ -61,6 +61,11 @@ export interface LocaleStrings {
   translit: string;
   translitArabicPlaceholder: string;
   translitLatinPlaceholder: string;
+  ludFont: string;
+  ludFontNone: string;
+  ludFontDraft: string;
+  comment: string;
+  diagram: string;
   wordCount: string;
   characterCount: string;
 }
@@ -126,6 +131,11 @@ const en: LocaleStrings = {
   translit: "Transliteration pair",
   translitArabicPlaceholder: "Arabic",
   translitLatinPlaceholder: "Transliteration",
+  ludFont: "LuD font",
+  ludFontNone: "None",
+  ludFontDraft: "(draft)",
+  comment: "Comment",
+  diagram: "Diagram",
   wordCount: "{count} words",
   characterCount: "{count} characters",
 };
@@ -191,6 +201,11 @@ const ar: LocaleStrings = {
   translit: "نص مع النقل الحرفي",
   translitArabicPlaceholder: "النص العربي",
   translitLatinPlaceholder: "النقل الحرفي",
+  ludFont: "خط لسان الدعوة",
+  ludFontNone: "بلا",
+  ludFontDraft: "(مسودة)",
+  comment: "تعليق",
+  diagram: "مخطط",
   wordCount: "{count} كلمة",
   characterCount: "{count} حرف",
 };
