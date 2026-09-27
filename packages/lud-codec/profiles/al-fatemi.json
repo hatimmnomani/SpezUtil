@@ -1,0 +1,21 @@
+{
+  "id": "al-fatemi",
+  "displayName": "Al-Fatemi (Lisaan ud-Dawat)",
+  "status": "draft",
+  "fontFamily": "AL-FATEMI-Lisaan-ud-Dawat",
+  "fontFiles": { "woff2": "AL-FATEMILisaan-ud-Dawat.woff2", "ttf": "AL-FATEMILisaan-ud-Dawat.ttf" },
+  "sequences": [
+    { "typed": "ثث", "unicode": "پ", "confirmed": false, "note": "meaning assumed from Al Kanz" },
+    { "typed": "كك", "unicode": "گ", "confirmed": false, "note": "meaning assumed from Al Kanz" },
+    { "typed": "طط", "unicode": "ٹ", "confirmed": false, "note": "meaning assumed from Al Kanz" },
+    { "typed": "سس", "unicode": "ے", "position": "final", "confirmed": false, "note": "Al-Fatemi also ligates سس mid-word; that medial glyph's meaning is unknown and is not mapped" },
+    { "typed": "}", "unicode": "ں", "confirmed": false, "note": "meaning assumed from Al Kanz" },
+    { "typed": "ظظ", "unicode": "ه", "confirmed": false, "note": "meaning assumed from Al Kanz" },
+    { "typed": "حح", "unicode": "چ", "confirmed": false, "note": "meaning assumed from Al Kanz" },
+    { "typed": "صص", "unicode": "ڈ", "confirmed": false, "note": "meaning assumed from Al Kanz" },
+    { "typed": "ضض", "unicode": "ڑ", "confirmed": false, "note": "meaning assumed from Al Kanz" }
+  ],
+  "missingGlyphs": ["ٹ", "ڈ", "ڑ", "ں", "ے", "ہ", "ھ", "ۓ"],
+  "preserve": ["ـــــ"],
+  "fallbackFont": "Noto Naskh Arabic"
+}
