@@ -56,6 +56,51 @@ describe("registry", () => {
   it("exports resolveProfile from the package's public entry point", () => {
     expect(resolveProfileFromEntryPoint("al-kanz")?.id).toBe("al-kanz");
   });
+
+  it("warns and returns undefined for undefined or empty-string ids, same as an unknown id", () => {
+    const warnings: string[] = [];
+    const onWarning = (m: string) => warnings.push(m);
+    expect(resolveProfile(undefined as unknown as string, { onWarning })).toBeUndefined();
+    expect(resolveProfile("", { onWarning })).toBeUndefined();
+    expect(warnings).toEqual(['Unknown LuD profile "undefined"', 'Unknown LuD profile ""']);
+  });
+
+  it("warns at most once per profile id per process", () => {
+    const warnings: string[] = [];
+    const onWarning = (m: string) => warnings.push(m);
+    expect(resolveProfile("warn-once-unknown", { onWarning })).toBeUndefined();
+    expect(resolveProfile("warn-once-unknown", { onWarning })).toBeUndefined();
+    expect(resolveProfile("warn-once-unknown", { onWarning })).toBeUndefined();
+    expect(warnings).toEqual(['Unknown LuD profile "warn-once-unknown"']);
+  });
+
+  it("deep-freezes a registered profile so mutation cannot bypass the draft gate", () => {
+    registerProfile(parseProfile({ ...minimal, id: "freeze-test", status: "draft", sequences: [{ typed: "ثث", unicode: "پ", confirmed: false }] }));
+    const profile = getProfile("freeze-test")!;
+
+    expect(() => {
+      (profile as { status: string }).status = "confirmed";
+    }).toThrow(TypeError);
+    expect(() => {
+      (profile.sequences[0] as { confirmed: boolean }).confirmed = true;
+    }).toThrow(TypeError);
+    expect(() => {
+      (profile.sequences as unknown[]).push({});
+    }).toThrow(TypeError);
+    expect(() => {
+      (profile.missingGlyphs as unknown[]).push("x");
+    }).toThrow(TypeError);
+    expect(() => {
+      (profile.preserve as unknown[]).push("x");
+    }).toThrow(TypeError);
+    expect(() => {
+      (profile.fontFiles as { woff2?: string }).woff2 = "x";
+    }).toThrow(TypeError);
+
+    // The gate is unaffected: still a draft, still refused without allowDraft.
+    expect(getProfile("freeze-test")!.status).toBe("draft");
+    expect(resolveProfile("freeze-test", { onWarning: () => {} })).toBeUndefined();
+  });
 });
 
 describe("parseProfile", () => {

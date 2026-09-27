@@ -55,6 +55,20 @@ describe("toUnicode (al-kanz)", () => {
     expect(warnings).toHaveLength(1);
   });
 
+  it("returns text unchanged for undefined or empty-string profile ids, same as unknown", () => {
+    expect(toUnicode("ثثر", undefined as unknown as string, quiet)).toBe("ثثر");
+    expect(toUnicode("ثثر", "", quiet)).toBe("ثثر");
+  });
+
+  it("warns at most once per profile id per process", () => {
+    const warnings: string[] = [];
+    const onWarning = (m: string) => warnings.push(m);
+    toUnicode("ثثر", "warn-once-toUnicode", { onWarning });
+    toUnicode("ثثر", "warn-once-toUnicode", { onWarning });
+    toUnicode("ثثر", "warn-once-toUnicode", { onWarning });
+    expect(warnings).toHaveLength(1);
+  });
+
   it("ignores a draft profile unless allowDraft", () => {
     expect(toUnicode("ثثر", "kanz-al-marjaan", quiet)).toBe("ثثر");
     expect(toUnicode("ثثر", "kanz-al-marjaan", { allowDraft: true })).toBe("پر");
