@@ -24,6 +24,7 @@ export default {
           "- Hijri date button opens the datepicker popover and inserts a token",
           "- Paste from Word / web preserves structure and direction",
           "- Undo/redo across all of the above",
+          "- Delete an entire LuD-font run — no empty lud-text node left in the JSON; type across two adjacent same-font runs",
         ].join("\n"),
       },
     },
