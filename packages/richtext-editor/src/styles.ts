@@ -430,6 +430,23 @@ export const styles: string = `
     transition: none;
   }
 }
+
+.spez-rte {
+  --rte-comment-bg: rgba(255, 212, 0, 0.28);
+  --rte-comment-active-bg: rgba(255, 170, 0, 0.55);
+}
+.spez-rte mark.spez-rte-comment {
+  background: transparent;
+  color: inherit;
+}
+.spez-rte mark.spez-rte-comment[data-visible] {
+  background: var(--rte-comment-bg);
+  border-bottom: 2px solid rgba(255, 170, 0, 0.8);
+  cursor: pointer;
+}
+.spez-rte mark.spez-rte-comment[data-active] {
+  background: var(--rte-comment-active-bg);
+}
 `;
 
 export function injectGlobalStyles(doc: Document = document): void {
