@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getProfile, listProfiles, registerProfile, resolveProfile } from "./registry";
 import { parseProfile } from "./validate";
+import { resolveProfile as resolveProfileFromEntryPoint } from "./index";
 
 const minimal = {
   id: "test-font",
@@ -50,6 +51,10 @@ describe("registry", () => {
   it("registers a new profile", () => {
     registerProfile(parseProfile(minimal));
     expect(getProfile("test-font")?.displayName).toBe("Test");
+  });
+
+  it("exports resolveProfile from the package's public entry point", () => {
+    expect(resolveProfileFromEntryPoint("al-kanz")?.id).toBe("al-kanz");
   });
 });
 
