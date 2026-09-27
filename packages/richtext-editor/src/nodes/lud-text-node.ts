@@ -1,0 +1,153 @@
+import {
+  $applyNodeReplacement,
+  $isTextNode,
+  TextNode,
+  type DOMConversionMap,
+  type DOMConversionOutput,
+  type DOMExportOutput,
+  type EditorConfig,
+  type LexicalNode,
+  type LexicalUpdateJSON,
+  type NodeKey,
+  type SerializedTextNode,
+  type Spread,
+  type TextFormatType,
+} from "lexical";
+import { familyForLudFont, normalizeLudFontId } from "../lud-fonts";
+
+export type SerializedLudTextNode = Spread<{ ludFont: string }, SerializedTextNode>;
+
+const FORMAT_TAGS: ReadonlyArray<[TextFormatType, string]> = [
+  ["code", "code"],
+  ["subscript", "sub"],
+  ["superscript", "sup"],
+  ["underline", "u"],
+  ["strikethrough", "s"],
+  ["italic", "i"],
+  ["bold", "b"],
+];
+
+/**
+ * Text typed for a legacy Lisan ud-Dawat font, stored EXACTLY as typed (never converted),
+ * tagged with the codec profile id it was typed in. The profile's font-family is also kept
+ * in `style`, so Lexical operations that spawn plain TextNodes (splitText, paste) carry the
+ * font along and lud-sync.ts can restore the lud-text type.
+ */
+export class LudTextNode extends TextNode {
+  __ludFont: string;
+
+  static getType(): string {
+    return "lud-text";
+  }
+
+  static clone(node: LudTextNode): LudTextNode {
+    return new LudTextNode(node.__text, node.__ludFont, node.__key);
+  }
+
+  constructor(text: string, ludFont: string, key?: NodeKey) {
+    super(text, key);
+    this.__ludFont = normalizeLudFontId(ludFont);
+  }
+
+  afterCloneFrom(prevNode: this): void {
+    super.afterCloneFrom(prevNode);
+    this.__ludFont = prevNode.__ludFont;
+  }
+
+  getLudFont(): string {
+    return this.getLatest().__ludFont;
+  }
+
+  setLudFont(id: string): this {
+    const self = this.getWritable();
+    self.__ludFont = normalizeLudFontId(id);
+    return self;
+  }
+
+  createDOM(config: EditorConfig): HTMLElement {
+    const dom = super.createDOM(config);
+    dom.setAttribute("data-lud-font", this.__ludFont);
+    return dom;
+  }
+
+  updateDOM(prevNode: this, dom: HTMLElement, config: EditorConfig): boolean {
+    const recreate = super.updateDOM(prevNode, dom, config);
+    if (!recreate) dom.setAttribute("data-lud-font", this.__ludFont);
+    return recreate;
+  }
+
+  static importDOM(): DOMConversionMap | null {
+    return {
+      span: (node: HTMLElement) =>
+        node.hasAttribute("data-lud-font")
+          ? { conversion: $convertLudSpan, priority: 1 as const }
+          : null,
+    };
+  }
+
+  exportDOM(): DOMExportOutput {
+    const span = document.createElement("span");
+    span.setAttribute("data-lud-font", this.getLudFont());
+    const style = this.getStyle();
+    if (style !== "") span.setAttribute("style", style);
+    // NOT "pre-wrap"/"pre": @lexical/html's text importer special-cases any ancestor whose
+    // white-space starts with "pre" (isNodePre / findParentPreDOMNode) into a raw multi-node
+    // path that discards this span's forChild conversion, so re-importing the exported HTML
+    // would silently keep the text as a plain TextNode instead of round-tripping to lud-text.
+    // "break-spaces" preserves runs of spaces the same way pre-wrap would for a static render,
+    // without tripping that special case.
+    span.style.whiteSpace = "break-spaces";
+    span.textContent = this.getTextContent();
+    let element: HTMLElement = span;
+    for (const [format, tag] of FORMAT_TAGS) {
+      if (!this.hasFormat(format)) continue;
+      const wrapper = document.createElement(tag);
+      wrapper.append(element);
+      element = wrapper;
+    }
+    return { element };
+  }
+
+  static importJSON(serializedNode: SerializedLudTextNode): LudTextNode {
+    return $createLudTextNode(serializedNode.text, serializedNode.ludFont).updateFromJSON(serializedNode);
+  }
+
+  updateFromJSON(serializedNode: LexicalUpdateJSON<SerializedLudTextNode>): this {
+    return super.updateFromJSON(serializedNode).setLudFont(serializedNode.ludFont);
+  }
+
+  exportJSON(): SerializedLudTextNode {
+    return { ...super.exportJSON(), type: "lud-text", ludFont: this.getLudFont() };
+  }
+}
+
+function $convertLudSpan(element: HTMLElement): DOMConversionOutput {
+  const ludFont = normalizeLudFontId(element.getAttribute("data-lud-font"));
+  const extra = ["color", "background-color", "font-size"]
+    .map((prop) => {
+      const value = element.style.getPropertyValue(prop);
+      return value === "" ? "" : `${prop}: ${value};`;
+    })
+    .filter((s) => s !== "")
+    .join(" ");
+  return {
+    node: null,
+    forChild: (child) => {
+      if (!$isTextNode(child) || $isLudTextNode(child)) return child;
+      const lud = $createLudTextNode(child.getTextContent(), ludFont);
+      lud.setFormat(child.getFormat());
+      if (extra !== "") lud.setStyle(`${lud.getStyle()} ${extra}`);
+      return lud;
+    },
+  };
+}
+
+export function $createLudTextNode(text: string, ludFont: string): LudTextNode {
+  const node = new LudTextNode(text, ludFont);
+  node.setStyle(`font-family: ${familyForLudFont(node.__ludFont)};`);
+  return $applyNodeReplacement(node);
+}
+
+export function $isLudTextNode(node: LexicalNode | null | undefined): node is LudTextNode {
+  return node instanceof LudTextNode;
+}
