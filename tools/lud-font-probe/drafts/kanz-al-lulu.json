@@ -1,0 +1,74 @@
+{
+  "id": "kanz-al-lulu",
+  "displayName": "Kanz al-Lulu",
+  "status": "draft",
+  "fontFamily": "Kanz-al-Lulu",
+  "fontFiles": {
+    "ttf": "KanzalLulu-Regular.ttf"
+  },
+  "sequences": [
+    {
+      "typed": "ثث",
+      "unicode": "پ",
+      "position": "any",
+      "confirmed": false,
+      "note": "meaning assumed from Al Kanz; confirm before shipping"
+    },
+    {
+      "typed": "حح",
+      "unicode": "چ",
+      "position": "any",
+      "confirmed": false,
+      "note": "meaning assumed from Al Kanz; confirm before shipping"
+    },
+    {
+      "typed": "صص",
+      "unicode": "ڈ",
+      "position": "final",
+      "confirmed": false,
+      "note": "meaning assumed from Al Kanz; confirm before shipping"
+    },
+    {
+      "typed": "ضض",
+      "unicode": "ڑ",
+      "position": "any",
+      "confirmed": false,
+      "note": "meaning assumed from Al Kanz; confirm before shipping"
+    },
+    {
+      "typed": "طط",
+      "unicode": "ٹ",
+      "position": "final",
+      "confirmed": false,
+      "note": "meaning assumed from Al Kanz; confirm before shipping"
+    },
+    {
+      "typed": "كك",
+      "unicode": "گ",
+      "position": "any",
+      "confirmed": false,
+      "note": "meaning assumed from Al Kanz; confirm before shipping"
+    },
+    {
+      "typed": "نن",
+      "unicode": "",
+      "position": "final",
+      "confirmed": false,
+      "note": "meaning unknown; a person must fill in unicode"
+    },
+    {
+      "typed": "هه",
+      "unicode": "",
+      "position": "final",
+      "confirmed": false,
+      "note": "meaning unknown; a person must fill in unicode"
+    }
+  ],
+  "missingGlyphs": [
+    "ژ"
+  ],
+  "preserve": [
+    "ـــــ"
+  ],
+  "fallbackFont": "Noto Naskh Arabic"
+}
