@@ -115,4 +115,26 @@ describe("lud sync", () => {
     seedParagraph(editor, () => $createLudTextNode("x", "kanz-al-lulu"));
     expect(describeNodes(editor)).toEqual([{ type: "lud-text", text: "x", ludFont: "kanz-al-lulu" }]);
   });
+
+  it("removes an emptied lud-text node without leaving a dangling selection", () => {
+    const { editor } = makeEditor();
+    seedParagraph(editor, () => $createLudTextNode("x", "al-kanz"));
+    expect(() => {
+      editor.update(
+        () => {
+          const node = ($getRoot().getFirstChild() as ElementNode).getFirstChild() as LudTextNode;
+          node.select(0, node.getTextContentSize());
+          const selection = $getSelection();
+          if ($isRangeSelection(selection)) selection.removeText();
+        },
+        { discrete: true },
+      );
+    }).not.toThrow();
+    editor.getEditorState().read(() => {
+      expect(describeNodes(editor)).toEqual([]);
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) throw new Error("expected range selection");
+      expect(selection.anchor.getNode().isAttached()).toBe(true);
+    });
+  });
 });
