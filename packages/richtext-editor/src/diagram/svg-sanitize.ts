@@ -55,8 +55,11 @@ const ATTRIBUTE_PREFIX = /^(?:aria|data)-[a-z][a-z0-9-]*$/;
 const XML_ATTRIBUTES = new Set(["space", "lang"]);
 const NAMESPACE_DECLARATIONS = new Set([SVG_NS, XLINK_NS, XML_NS]);
 
-/** The root id a scoped stylesheet may reference: a plain CSS identifier, so `#id` needs no escaping. */
-const PLAIN_ID = /^[A-Za-z_][-\w]*$/;
+/**
+ * The root id a scoped stylesheet may reference: what Mermaid (`mermaid-…`) and our renderer
+ * (`spez-rte-mermaid-<n>`, see renderer.ts) generate, plain id characters only so `#id` needs no escaping.
+ */
+const PLAIN_ROOT_ID = /^(?:mermaid|spez-rte)-[A-Za-z0-9_-]{1,64}$/;
 
 // ---------------------------------------------------------------------------------------------
 // CSS
@@ -82,7 +85,15 @@ const UNSAFE_CSS =
  * or a comment delimiter, would be decoded or split differently by the browser: rejected outright.
  */
 const CSS_AMBIGUOUS = /\\|\/\*|\*\//;
-const UNSAFE_PROPERTIES = new Set(["behavior", "-ms-behavior", "-moz-binding"]);
+/** Selectors and declarations may not carry `<` either: nothing in a diagram sheet needs it. */
+const CSS_REJECT = /[\\<]|\/\*|\*\//;
+/** Legacy binding properties, and layout-escape properties that could place a box outside the SVG. */
+const UNSAFE_PROPERTIES = new Set([
+  "behavior", "-ms-behavior", "-moz-binding",
+  "z-index", "inset", "top", "left", "right", "bottom",
+]);
+/** `position` is kept only for values that cannot leave the diagram's box. */
+const SAFE_POSITION = /^(?:static|relative|absolute)(?:\s*!important)?$/i;
 
 /** Resolves CSS escapes (`\75rl(` is `url(`) and strips comments so the regexes see what the browser sees. */
 function normalizeCss(css: string): string {
@@ -171,8 +182,10 @@ function cleanDeclarations(block: string): string[] {
     const property = match[1]!.toLowerCase();
     if (
       UNSAFE_PROPERTIES.has(property) ||
+      property.startsWith("inset-") ||
+      (property === "position" && !SAFE_POSITION.test(match[2]!.trim())) ||
       /[{}]/.test(declaration) ||
-      CSS_AMBIGUOUS.test(declaration) ||
+      CSS_REJECT.test(declaration) ||
       UNSAFE_CSS.test(declaration)
     ) {
       continue;
@@ -186,51 +199,49 @@ function cleanStyleAttribute(value: string): string {
   return cleanDeclarations(normalizeCss(value)).join(";");
 }
 
-/** `#<rootId>` alone or followed by a combinator, class, pseudo or attribute selector. */
+/**
+ * A selector that can only match inside the root: it starts with the `#<rootId>` compound (classes,
+ * pseudo-classes and attribute selectors may attach to it) and the first combinator after that
+ * compound is descendant (whitespace) or child (`>`). A sibling or column combinator there
+ * (`#id ~ body`, `#id+*`, `#id:hover~.x`, `#id||.x`) would reach outside the SVG; combinators
+ * further down (`#id .a ~ .b`) stay inside it.
+ */
 function isScopedSelector(selector: string, rootId: string): boolean {
   const prefix = `#${rootId}`;
   if (!selector.startsWith(prefix)) return false;
   const next = selector.charAt(prefix.length);
-  return next === "" || /[\s>+~.:[]/.test(next);
+  if (next !== "" && !/[\s>+~|.:[]/.test(next)) return false; // `#mermaid-1x` is another id
+  let i = prefix.length;
+  let depth = 0;
+  for (; i < selector.length; i++) {
+    const ch = selector[i]!;
+    if (ch === "(" || ch === "[") depth++;
+    else if (ch === ")" || ch === "]") depth = Math.max(0, depth - 1);
+    else if (depth === 0 && /[\s>+~|]/.test(ch)) break;
+  }
+  const combinator = selector.slice(i).trimStart().charAt(0);
+  return combinator !== "+" && combinator !== "~" && combinator !== "|";
 }
 
-const KEYFRAME_SELECTOR = /^(?:from|to|\d+(?:\.\d+)?%)(?:\s*,\s*(?:from|to|\d+(?:\.\d+)?%))*$/i;
-const MEDIA_QUERY = /^[-\w\s(),:.%<>=/]*$/;
-
-function cleanKeyframes(body: string): string {
-  let out = "";
-  forEachRule(body, (prelude, frame) => {
-    if (frame === null || !KEYFRAME_SELECTOR.test(prelude)) return;
-    const declarations = cleanDeclarations(frame);
-    if (declarations.length > 0) out += `${prelude}{${declarations.map((d) => `${d};`).join("")}}`;
-  });
-  return out;
-}
+const MEDIA_QUERY = /^[-\w\s(),:.%=/]*$/;
 
 /**
  * Re-emits the rules of a (comment-free, escape-decoded) stylesheet that are scoped under `#rootId`.
- * Statements (`@import`, `@namespace`, `@charset`) and every @-rule other than `@media` and
- * `@keyframes` are dropped.
+ * Statements (`@import`, `@namespace`, `@charset`) and every @-rule other than `@media` are dropped;
+ * `@keyframes` too, because animation names are document-global.
  */
 function cleanStylesheet(css: string, rootId: string, depth: number): string {
   if (depth > MAX_CSS_DEPTH) return "";
   let out = "";
   forEachRule(css, (prelude, body) => {
-    if (body === null || prelude === "" || CSS_AMBIGUOUS.test(prelude) || UNSAFE_CSS.test(prelude)) return;
+    if (body === null || prelude === "" || CSS_REJECT.test(prelude) || UNSAFE_CSS.test(prelude)) return;
     if (prelude.startsWith("@")) {
-      const match = /^@(-webkit-keyframes|keyframes|media)(?:\s+([\s\S]*))?$/i.exec(prelude);
+      const match = /^@media(?:\s+([\s\S]*))?$/i.exec(prelude);
       if (match === null) return;
-      const name = match[1]!.toLowerCase();
-      const argument = (match[2] ?? "").trim();
-      if (name === "media") {
-        if (!MEDIA_QUERY.test(argument)) return;
-        const inner = cleanStylesheet(body, rootId, depth + 1);
-        if (inner !== "") out += `@media ${argument}{${inner}}`;
-      } else {
-        if (!/^[-\w]+$/.test(argument)) return;
-        const frames = cleanKeyframes(body);
-        if (frames !== "") out += `@${name} ${argument}{${frames}}`;
-      }
+      const query = (match[1] ?? "").trim();
+      if (!MEDIA_QUERY.test(query)) return;
+      const inner = cleanStylesheet(body, rootId, depth + 1);
+      if (inner !== "") out += `@media ${query}{${inner}}`;
       return;
     }
     if (/[;{}]/.test(prelude)) return;
@@ -242,7 +253,7 @@ function cleanStylesheet(css: string, rootId: string, depth: number): string {
   return out;
 }
 
-/** Empties a `<style>` unless the root has a plain id; then keeps only the rules scoped under it. */
+/** Empties a `<style>` unless the root has an accepted id; then keeps only the rules scoped under it. */
 function cleanStyleElement(style: Element, rootId: string | null): void {
   style.textContent = rootId === null ? "" : cleanStylesheet(normalizeCss(style.textContent ?? ""), rootId, 0);
 }
@@ -330,7 +341,7 @@ function cleanTree(root: Element): boolean {
     if (element.localName === "style") styles.push(element);
   }
   const id = root.getAttribute("id");
-  const rootId = id !== null && PLAIN_ID.test(id) ? id : null;
+  const rootId = id !== null && PLAIN_ROOT_ID.test(id) ? id : null;
   for (const style of styles) cleanStyleElement(style, rootId);
   return true;
 }

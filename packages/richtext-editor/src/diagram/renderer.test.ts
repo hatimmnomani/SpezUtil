@@ -38,6 +38,13 @@ describe("diagram renderer", () => {
     expect(new Set(ids).size).toBe(ids.length); // unique render ids
   });
 
+  it("generates svg ids the sanitizer accepts as a <style> scope root", async () => {
+    await getDiagramRenderer()("graph TD;C");
+    const id = render.mock.calls[0]![0];
+    // Mirrors PLAIN_ROOT_ID in svg-sanitize.ts: mermaid- or spez-rte- plus 1-64 id characters.
+    expect(id).toMatch(/^(mermaid|spez-rte)-[A-Za-z0-9_-]{1,64}$/);
+  });
+
   it("passes the source through unchanged and rejects when mermaid rejects", async () => {
     render.mockRejectedValueOnce(new Error("Parse error on line 1"));
     await expect(getDiagramRenderer()("graph TD;A-->")).rejects.toThrow("Parse error on line 1");
