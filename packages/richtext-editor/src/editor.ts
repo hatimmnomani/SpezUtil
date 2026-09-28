@@ -27,6 +27,7 @@ import {
 } from "./nodes";
 import { $createImageNode, INSERT_IMAGE_COMMAND } from "./nodes/image-node";
 import { registerAutoDirection, registerDirectionCommand } from "./direction";
+import { registerLudSync } from "./lud-sync";
 
 /**
  * Lexical's HTML import only maps text *formats* (bold, italic, …) from
@@ -82,6 +83,8 @@ const theme = {
   },
   quote: "spez-rte-quote",
   link: "spez-rte-link",
+  mark: "spez-rte-comment",
+  markOverlap: "spez-rte-comment-overlap",
 };
 
 /** Mounts DecoratorNode outputs (ImageNode) into their container elements. */
@@ -171,6 +174,7 @@ export function createEditorInstance(rootElement: HTMLElement): EditorInstance {
     registerDirectionCommand(editor),
     editor.registerNodeTransform(TranslitPairNode, normalizeTranslitPair),
     registerTranslitDeletion(editor),
+    registerLudSync(editor),
     () => editor.setRootElement(null),
   );
   return { editor, dispose };

@@ -28,7 +28,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "contract"
   ],
   "scripts": {
     "build": "tsup",
@@ -41,13 +42,16 @@
     "@lexical/html": "^0.47.0",
     "@lexical/link": "^0.47.0",
     "@lexical/list": "^0.47.0",
+    "@lexical/mark": "^0.47.0",
     "@lexical/rich-text": "^0.47.0",
     "@lexical/selection": "^0.47.0",
     "@lexical/table": "^0.47.0",
     "@lexical/text": "^0.47.0",
     "@lexical/utils": "^0.47.0",
     "@spezutil/hijri-core": "workspace:^",
-    "lexical": "^0.47.0"
+    "@spezutil/lud-codec": "workspace:^",
+    "lexical": "^0.47.0",
+    "mermaid": "^11.4.0"
   },
   "peerDependencies": {
     "@spezutil/hijri-datepicker": ">=0.1.0 <2.0.0"

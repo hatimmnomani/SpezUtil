@@ -1,7 +1,24 @@
-import { $createParagraphNode, $getRoot, type LexicalEditor } from "lexical";
+import { $createParagraphNode, $getNodeByKey, $getRoot, type LexicalEditor } from "lexical";
 import { $canShowPlaceholder } from "@lexical/text";
 import type { HijriDate } from "@spezutil/hijri-core";
 import { createEditorInstance } from "./editor";
+import {
+  ADD_COMMENT_MARK_COMMAND,
+  FOCUS_COMMENT_MARK_COMMAND,
+  REMOVE_COMMENT_MARK_COMMAND,
+  registerComments,
+  type CommentClickDetail,
+  type CommentsController,
+} from "./comments/comments";
+import type { CommentRequestDetail } from "./comments/anchor";
+import {
+  $insertDiagram,
+  DEFAULT_DIAGRAM_SOURCE,
+  DIAGRAM_RENDER_TAG,
+  registerDiagrams,
+  type DiagramEditDetail,
+} from "./diagram/diagrams";
+import { $isDiagramNode } from "./nodes/diagram-node";
 import { exportHTML, importHTML } from "./html";
 import { insertHijriDate } from "./hijri-insert";
 import { injectGlobalStyles } from "./styles";
@@ -9,6 +26,7 @@ import {
   ALL_TOOLBAR_GROUPS,
   DEFAULT_FONTS,
   DEFAULT_FONT_SIZES,
+  DEFAULT_TOOLBAR_GROUPS,
   buildToolbar,
   type FontOption,
   type FontSizeOption,
@@ -59,6 +77,11 @@ export class SpezRichtext extends HTMLElement {
   #fontSizes: FontSizeOption[] | null = null;
   #unregisterStatus: (() => void) | null = null;
   #changeTimer: ReturnType<typeof setTimeout> | undefined;
+  #comments: CommentsController | null = null;
+  #disposeDiagrams: (() => void) | null = null;
+  #highlightMarks: readonly string[] | null = null;
+  #activeMark: string | null = null;
+  #lastCommentRequest: CommentRequestDetail | null = null;
 
   /** Escape hatch for advanced consumers; throws before first connect. */
   get editor(): LexicalEditor {
@@ -166,6 +189,21 @@ export class SpezRichtext extends HTMLElement {
     this.#editor = editor;
     this.#disposeEditor = dispose;
 
+    this.#comments = registerComments(editor, editable, {
+      onRequested: (detail) => {
+        this.#lastCommentRequest = detail;
+        this.dispatchEvent(new CustomEvent<CommentRequestDetail>("comment-requested", { bubbles: true, composed: true, detail }));
+      },
+      onClicked: (detail) =>
+        this.dispatchEvent(new CustomEvent<CommentClickDetail>("comment-clicked", { bubbles: true, composed: true, detail })),
+    });
+    this.#comments.setHighlight(this.#highlightMarks);
+    this.#comments.setActive(this.#activeMark);
+
+    this.#disposeDiagrams = registerDiagrams(editor, editable, {
+      onEditRequested: (detail) => this.#emitDiagramEdit(detail),
+    });
+
     this.#buildToolbar();
     this.append(shell);
 
@@ -189,6 +227,9 @@ export class SpezRichtext extends HTMLElement {
         this.#syncPlaceholderVisibility();
         if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
         if (tags.has(SET_VALUE_TAG)) return;
+        // A read-only viewer rendering a stored diagram whose svg was empty is not a user change;
+        // in an editable draft the same write is what persists the svg, so it is reported there.
+        if (tags.has(DIAGRAM_RENDER_TAG) && !editor.isEditable()) return;
         clearTimeout(this.#changeTimer);
         this.#changeTimer = setTimeout(() => this.#emitChange(), CHANGE_DEBOUNCE_MS);
       },
@@ -212,6 +253,10 @@ export class SpezRichtext extends HTMLElement {
     this.#toolbar = null;
     this.#unregisterStatus?.();
     this.#unregisterStatus = null;
+    this.#comments?.dispose();
+    this.#comments = null;
+    this.#disposeDiagrams?.();
+    this.#disposeDiagrams = null;
     this.#disposeEditor?.();
     this.#disposeEditor = null;
     this.#editor = null;
@@ -268,6 +313,81 @@ export class SpezRichtext extends HTMLElement {
     importHTML(this.editor, html);
   }
 
+  /** Thread mark ids to highlight; null (default) highlights every mark. */
+  get highlightMarks(): readonly string[] | null {
+    return this.#highlightMarks;
+  }
+
+  set highlightMarks(ids: readonly string[] | null) {
+    this.#highlightMarks = ids === null ? null : ids.filter((id) => typeof id === "string");
+    this.#comments?.setHighlight(this.#highlightMarks);
+  }
+
+  get activeMark(): string | null {
+    return this.#activeMark;
+  }
+
+  set activeMark(id: string | null) {
+    this.#activeMark = id;
+    this.#comments?.setActive(id);
+  }
+
+  /**
+   * Wraps the current selection (or, in read-only mode, the DOM selection) in a comment mark.
+   * Fires `comment-requested` and returns its detail; null when the selection is empty,
+   * blank or longer than 1,000 characters.
+   */
+  addCommentMark(markId?: string): CommentRequestDetail | null {
+    this.#lastCommentRequest = null;
+    this.editor.dispatchCommand(ADD_COMMENT_MARK_COMMAND, markId === undefined ? undefined : { markId });
+    this.editor.update(() => {}, { discrete: true });
+    return this.#lastCommentRequest;
+  }
+
+  removeCommentMark(markId: string): void {
+    this.editor.dispatchCommand(REMOVE_COMMENT_MARK_COMMAND, markId);
+    this.editor.update(() => {}, { discrete: true });
+  }
+
+  focusCommentMark(markId: string): void {
+    this.#activeMark = markId;
+    this.editor.dispatchCommand(FOCUS_COMMENT_MARK_COMMAND, markId);
+  }
+
+  /** Inserts a diagram at the selection (or appends to the root); returns the node key. */
+  insertDiagram(source?: string, drawioKey: string | null = null): string {
+    let key = "";
+    this.editor.update(
+      () => {
+        key = $insertDiagram(source ?? DEFAULT_DIAGRAM_SOURCE, drawioKey);
+      },
+      { discrete: true },
+    );
+    return key;
+  }
+
+  /** Updates a diagram's source and/or drawio key; the editor re-renders and re-sanitizes the svg. Returns false when `nodeKey` is not a diagram. */
+  updateDiagram(nodeKey: string, patch: { source?: string; drawioKey?: string | null }): boolean {
+    let found = false;
+    this.editor.update(
+      () => {
+        const node = $getNodeByKey(nodeKey);
+        if (!$isDiagramNode(node)) return;
+        found = true;
+        if (patch.source !== undefined) node.setSource(patch.source);
+        if (patch.drawioKey !== undefined) node.setDrawioKey(patch.drawioKey);
+      },
+      { discrete: true },
+    );
+    return found;
+  }
+
+  #emitDiagramEdit(detail: DiagramEditDetail): void {
+    this.dispatchEvent(
+      new CustomEvent<DiagramEditDetail>("diagram-edit-requested", { bubbles: true, composed: true, detail }),
+    );
+  }
+
   clear(): void {
     this.editor.update(
       () => {
@@ -313,7 +433,7 @@ export class SpezRichtext extends HTMLElement {
 
   #toolbarGroups(): readonly ToolbarGroup[] {
     const attr = this.getAttribute("toolbar");
-    if (attr === null || attr.trim() === "") return ALL_TOOLBAR_GROUPS;
+    if (attr === null || attr.trim() === "") return DEFAULT_TOOLBAR_GROUPS;
     if (attr.trim() === "none") return [];
     const requested = attr.split(",").map((s) => s.trim());
     return ALL_TOOLBAR_GROUPS.filter((g) => requested.includes(g));
@@ -333,6 +453,7 @@ export class SpezRichtext extends HTMLElement {
       this.locale,
       this.#fontOptions(),
       this.#fontSizeOptions(),
+      (detail) => this.#emitDiagramEdit(detail),
     );
     this.prepend(this.#toolbar.element);
   }

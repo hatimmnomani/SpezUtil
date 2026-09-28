@@ -24,6 +24,10 @@ export default {
           "- Hijri date button opens the datepicker popover and inserts a token",
           "- Paste from Word / web preserves structure and direction",
           "- Undo/redo across all of the above",
+          "- Delete an entire LuD-font run — no empty lud-text node left in the JSON; type across two adjacent same-font runs",
+          "- LuD picker: typing continues in the chosen font; Google Docs paste in Al Kanz keeps the typed text",
+          "- Comment: select, 💬, highlight appears; click a mark fires comment-clicked",
+          "- Diagram renders; double-click opens the edit prompt; no foreignObject in the SVG",
         ].join("\n"),
       },
     },
@@ -104,4 +108,52 @@ export const WithTable = Template.bind({});
 (WithTable as any).args = {
   initialHtml:
     "<table><tr><th>Item</th><th>Count</th></tr><tr><td>Thaal</td><td>12</td></tr></table>",
+};
+
+const A = "01J9ZX3M4Q8R2S5T7V9W0XYZAB";
+const B = "01J9ZX3M4Q8R2S5T7V9W0XYZAC";
+
+export const LudFonts = () => {
+  const el = document.createElement("spez-richtext");
+  el.setAttribute("toolbar", "history,block,font,lud,inline");
+  el.initialHtml = [
+    '<p><span data-lud-font="al-kanz">نسس ثثاك }</span> — Al Kanz, typed text kept as-is</p>',
+    '<p><span data-lud-font="al-fatemi">ككتاب</span> — Al-Fatemi (draft profile)</p>',
+    '<p><span data-lud-font="unicode">حاضرین</span> — Unicode fallback</p>',
+  ].join("");
+  return html`${el}`;
+};
+
+export const CommentReview = () => {
+  const el = document.createElement("spez-richtext");
+  el.setAttribute("toolbar", "history,inline,comment");
+  el.initialHtml = `<p>Students must <span data-thread-ids="${A}">attend daily</span> and <span data-thread-ids="${B}">revise weekly</span>.</p>`;
+  const log = document.createElement("pre");
+  el.addEventListener("comment-requested", (e) => (log.textContent = JSON.stringify((e as CustomEvent).detail, null, 2)));
+  el.addEventListener("comment-clicked", (e) => {
+    const [id] = (e as CustomEvent<{ threadIds: string[] }>).detail.threadIds;
+    el.activeMark = id ?? null;
+    log.textContent = JSON.stringify((e as CustomEvent).detail);
+  });
+  return html`${el}${log}`;
+};
+
+export const ReadOnlyHighlights = () => {
+  const el = document.createElement("spez-richtext");
+  el.setAttribute("readonly", "");
+  el.initialHtml = `<p>Only <span data-thread-ids="${A}">this thread</span> is visible; <span data-thread-ids="${B}">this one</span> is not.</p>`;
+  el.highlightMarks = [A];
+  return html`${el}`;
+};
+
+export const Diagram = () => {
+  const el = document.createElement("spez-richtext");
+  el.setAttribute("toolbar", "history,block,diagram");
+  el.addEventListener("rte-ready", () => el.insertDiagram("flowchart TD\n  Jadeed --> Muraja'at --> Tasmi"), { once: true });
+  el.addEventListener("diagram-edit-requested", (e) => {
+    const { nodeKey, source } = (e as CustomEvent<{ nodeKey: string; source: string }>).detail;
+    const next = window.prompt("Mermaid source", source);
+    if (next !== null) el.updateDiagram(nodeKey, { source: next });
+  });
+  return html`${el}`;
 };

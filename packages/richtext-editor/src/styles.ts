@@ -430,6 +430,30 @@ export const styles: string = `
     transition: none;
   }
 }
+
+.spez-rte {
+  --rte-comment-bg: rgba(255, 212, 0, 0.28);
+  --rte-comment-active-bg: rgba(255, 170, 0, 0.55);
+}
+.spez-rte mark.spez-rte-comment {
+  background: transparent;
+  color: inherit;
+}
+.spez-rte mark.spez-rte-comment[data-visible] {
+  background: var(--rte-comment-bg);
+  border-bottom: 2px solid rgba(255, 170, 0, 0.8);
+  cursor: pointer;
+}
+.spez-rte mark.spez-rte-comment[data-active] {
+  background: var(--rte-comment-active-bg);
+}
+
+.spez-rte .spez-rte-diagram { margin: 0.75em 0; }
+/* overflow + contain: a diagram's root-svg transform or margin cannot paint over host content. */
+.spez-rte .spez-rte-diagram-figure { margin: 0; overflow: hidden; contain: paint; text-align: center; }
+.spez-rte .spez-rte-diagram-figure svg { max-width: 100%; height: auto; }
+.spez-rte .spez-rte-diagram-error { color: #c62828; font-size: 0.875em; }
+.spez-rte .spez-rte-diagram-pending { color: var(--rte-muted); }
 `;
 
 export function injectGlobalStyles(doc: Document = document): void {

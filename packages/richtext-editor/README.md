@@ -96,6 +96,89 @@ The token is atomic (deletes/moves as one unit) and exports as:
 
 Programmatic insertion: `editor.insertHijriDate({ year: 1446, month: 9, day: 17 }, "D MMMM YYYY")`.
 
+### Diagrams
+
+Toolbar **◇** button (opt-in group `diagram`, e.g. `toolbar="history,inline,diagram"`) inserts a default
+Mermaid flowchart and fires `diagram-edit-requested` so the host can open its own editor UI:
+
+```js
+editor.addEventListener("diagram-edit-requested", (e) => {
+  const { nodeKey, source, drawioKey } = e.detail;
+  // open a Mermaid/drawio editor, then call editor.updateDiagram(nodeKey, { source, drawioKey })
+});
+```
+
+Programmatic API:
+
+- `editor.insertDiagram(source?, drawioKey?)` — inserts at the selection (or appends to the root);
+  returns the node key. `source` defaults to `DEFAULT_DIAGRAM_SOURCE` (a Mermaid flowchart).
+- `editor.updateDiagram(nodeKey, { source?, drawioKey? })` — updates a diagram's source and/or
+  drawio key; returns `false` when `nodeKey` does not name a diagram. The editor re-renders and
+  re-sanitizes the svg itself — **the host never sends svg markup**, only Mermaid source.
+  Re-submitting an unchanged `source` after a failed render (offline, a blocked Mermaid chunk)
+  retries the render.
+- `nodeKey` is a Lexical node key: it is valid for the current document only and is invalidated by
+  every `value` / `setValue()` (and by `setHTML()`). Use it while the host's edit dialog is open;
+  do not store it across a reload — `updateDiagram` then returns `false`.
+- In a `readonly` editor, rendering a stored diagram whose `svg` is empty does **not** fire `change`;
+  in an editable editor it does, so the rendered svg is persisted with the draft.
+
+By default, diagram source renders through Mermaid (loaded on first use via a dynamic import, kept
+out of the main bundle). A host can swap in its own renderer — e.g. to render drawio XML, or to
+proxy through a server:
+
+```js
+import { setDiagramRenderer } from "@spezutil/richtext-editor";
+
+setDiagramRenderer(async (source) => {
+  const svg = await myRenderer(source);
+  return svg; // sanitized by the editor before it is stored or displayed — never trust this path
+});
+```
+
+Every renderer's output — Mermaid's or a host's — is always passed through the same allow-list SVG
+sanitizer (`sanitizeSvg`) before it reaches the DOM or the document JSON, so a compromised or buggy
+renderer cannot inject a `<script>` or an event-handler attribute. Two things a host renderer must
+get right for its own styling to survive that sanitizing pass:
+
+- **The root `<svg>` needs an id matching `mermaid-*` or `spez-rte-*`.** The editor rewrites it to a
+  unique id on insert either way (so two diagrams never share a scope), but a `<style>` block is kept
+  only when every selector in it is scoped under that recognized root id — an unrecognized root id
+  causes the whole `<style>` element to be dropped rather than rescoped.
+- **`sanitizeSvg` (exported) cleans but does not rescope.** Two Mermaid outputs both rooted
+  `id="mermaid-1"` that a host sanitizes directly will still style each other; the unique
+  `spez-rte-mermaid-<ulid>` root id is given by the editor's own insert/load path. Hosts that need
+  the same isolation for markup they render themselves should pass it through the editor
+  (`insertDiagram` with a custom renderer, or HTML import of `figure[data-spez-type="diagram"]`)
+  rather than calling `sanitizeSvg` alone.
+- **Diagram authors are trusted for size and ids.** `width`/`height`/`min-height` (attributes and
+  inline style) and `id` values are not restricted: a hostile diagram can grow the figure's block
+  height (painting is clipped, layout is not) or carry an `id` that DOM-clobbers an *undeclared*
+  host global (`window.config`). Hosts should size the figure with CSS (`max-height`) and never
+  read undeclared globals.
+- **The exported `<figure data-spez-type="diagram">` carries no containment styling of its own.**
+  Inside the live editor the diagram is wrapped in `overflow:hidden; contain:paint` so a stray
+  root-svg transform or margin can't paint over the rest of the page, but `getHTML()` / `exportDOM()`
+  do not add that inline style (it would be dead weight on every publish). Hosts that render the
+  exported HTML standalone (e.g. a published handbook page) should add it themselves:
+
+  ```css
+  figure[data-spez-type="diagram"] {
+    overflow: hidden;
+    contain: paint;
+  }
+  ```
+
+Exports as:
+
+```html
+<figure data-spez-type="diagram" data-drawio-key="…">
+  <pre data-diagram="mermaid">flowchart TD
+  A[Start] --> B[End]</pre>
+  <svg id="spez-rte-mermaid-…">…</svg>
+</figure>
+```
+
 ## API
 
 ### Attributes
@@ -106,7 +189,7 @@ Programmatic insertion: `editor.insertHijriDate({ year: 1446, month: 9, day: 17 
 | `placeholder` | string | Shown while empty |
 | `dir` | `rtl` \| `ltr` \| `auto` | Base direction (default `auto`; paragraphs still auto-detect) |
 | `locale` | `en` \| `ar` | Toolbar language (default `en`) |
-| `toolbar` | comma-separated groups or `none` | Groups: `history,block,font,inline,color,list,indent,align,direction,insert` |
+| `toolbar` | comma-separated groups or `none` | Default groups: `history,block,font,inline,color,list,indent,align,direction,insert`. Opt-in groups (never on by default): `lud` (LuD font picker — see [LuD text](#lud-text-lisan-ud-dawat)), `comment` (comment button — see [Comment marks](#comment-marks)), `diagram` (◇ button — see [Diagrams](#diagrams)) |
 | `fonts` | comma-separated font families | Simple form of the font list, e.g. `fonts="Amiri, Tahoma, Arial"` (use the `fonts` *property* for labels and full font stacks) |
 | `font-sizes` | comma-separated font sizes | Simple form of the font-size list, e.g. `font-sizes="12px, 16px, 24px"` (use the `fontSizes` *property* for labels that differ from the CSS value) |
 | `word-count` | boolean | Shows a word/character count status line below the editor |
@@ -132,6 +215,8 @@ Programmatic insertion: `editor.insertHijriDate({ year: 1446, month: 9, day: 17 
 | `clear()` | Empty the editor |
 | `focus()` | Focus the editable area |
 | `insertHijriDate(date?, format?)` | Insert a Hijri date token at the caret (defaults to today) |
+| `insertDiagram(source?, drawioKey?)` | Insert a diagram (defaults to `DEFAULT_DIAGRAM_SOURCE`); returns the node key — see [Diagrams](#diagrams) |
+| `updateDiagram(nodeKey, patch)` | Update a diagram's `source` and/or `drawioKey`; returns `false` if `nodeKey` is not a diagram |
 
 ### Events
 
@@ -139,6 +224,7 @@ Programmatic insertion: `editor.insertHijriDate({ year: 1446, month: 9, day: 17 
 | --- | --- | --- |
 | `change` | `{ json: string; isEmpty: boolean }` | Debounced ~150 ms. HTML is **not** included (exporting walks the whole document) — call `getHTML()` on save/blur instead |
 | `rte-ready` | — | Fired once after the editor initializes |
+| `diagram-edit-requested` | `{ nodeKey, source, drawioKey }` | Fired on double-click of an editable diagram, and right after the toolbar's ◇ button inserts one — see [Diagrams](#diagrams) |
 
 ## Font selector
 
