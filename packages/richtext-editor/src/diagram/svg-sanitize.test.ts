@@ -299,25 +299,55 @@ describe("sanitizeSvg allow-list (XSS boundary)", () => {
     "#mermaid-1||.x",
     "#mermaid-1 || .x",
     "#mermaid-1 .a, #mermaid-1 ~ body",
-  ])("rejects a rule whose first combinator after the root compound is a sibling one: %s (round 2)", (selector) => {
-    const clean = sanitizeSvg(wrapId(`<style>${selector}{display:none;fill:red} #mermaid-1 .ok{fill:#000}</style>`));
-    expect(clean).not.toMatch(/display|fill:red|body|~|\+|\|\|/);
+    // round 3: quotes used to hide the bracket/paren from a depth walker (confirmed in Chromium)
+    "#mermaid-1:not([data-x='('])~*",
+    '#mermaid-1[data-x="["]~*',
+    '#mermaid-1:not([data-x="["])~*',
+    "#mermaid-1:not([data-x='('])~body",
+    '#mermaid-1[data-x="[" i]~*',
+    "#mermaid-1:is([data-x='(']) ~ *",
+  ])("rejects a rule whose first combinator after the root compound is a sibling one: %s (round 2/3)", (selector) => {
+    const clean = sanitizeSvg(
+      wrapId(`<style>${selector}{display:none;fill:red} @media screen{${selector}{display:none;fill:red}} #mermaid-1 .ok{fill:#000}</style>`),
+    );
+    expect(clean).not.toMatch(/display|fill:red|body|~|\+|\|\||@media/);
     expect(clean).toContain("<style>#mermaid-1 .ok{fill:#000;}</style>");
   });
 
-  it("keeps sibling and child combinators once inside the SVG, and pseudo-classes on the root (round 2)", () => {
-    const clean = sanitizeSvg(
-      wrapId(
-        "<style>#mermaid-1 .a ~ .b{fill:red} #mermaid-1 .a+.b{fill:red} #mermaid-1>.a~.b{fill:red} #mermaid-1:hover .a{fill:red} #mermaid-1:not(.z) > .a{fill:red} #mermaid-1.c .a{fill:red} #mermaid-1[data-id='a ~ b'] .a{fill:red}</style>",
-      ),
-    );
-    expect(clean).toContain("#mermaid-1 .a ~ .b{fill:red;}");
-    expect(clean).toContain("#mermaid-1 .a+.b{fill:red;}");
-    expect(clean).toContain("#mermaid-1&gt;.a~.b{fill:red;}");
-    expect(clean).toContain("#mermaid-1:hover .a{fill:red;}");
-    expect(clean).toContain("#mermaid-1:not(.z) &gt; .a{fill:red;}");
-    expect(clean).toContain("#mermaid-1.c .a{fill:red;}");
-    expect(clean).toContain("#mermaid-1[data-id='a ~ b'] .a{fill:red;}");
+  it.each([
+    "#mermaid-1.c .a",
+    "#mermaid-1:not(.z) > .a",
+    "#mermaid-1[data-id] .a",
+    "#mermaid-1[data-id='a ~ b'] .a",
+    "#mermaid-1:hoverx .a",
+    "#mermaid-1:hover(.x) .a",
+    "#mermaid-1:nth-child(1) .a",
+    "#mermaid-1:is(.a) .a",
+    "#mermaid-1::before",
+    "#mermaid-1:hover.c .a",
+    "#mermaid-1:hover[x] .a",
+    "#mermaid-1x .a",
+    "#mermaid-1-x .a",
+  ])("rejects anything other than allow-listed pseudo-classes in the root compound: %s (round 3)", (selector) => {
+    const clean = sanitizeSvg(wrapId(`<style>${selector}{fill:red} #mermaid-1 .ok{fill:#000}</style>`));
+    expect(clean).toContain("<style>#mermaid-1 .ok{fill:#000;}</style>");
+  });
+
+  it.each([
+    ["#mermaid-1 .a", "#mermaid-1 .a"],
+    ["#mermaid-1 > g", "#mermaid-1 &gt; g"],
+    ["#mermaid-1>.a~.b", "#mermaid-1&gt;.a~.b"],
+    ["#mermaid-1:hover .x", "#mermaid-1:hover .x"],
+    ["#mermaid-1:focus-within .x", "#mermaid-1:focus-within .x"],
+    ["#mermaid-1:hover:active > .x", "#mermaid-1:hover:active &gt; .x"],
+    ["#mermaid-1 .a ~ .b", "#mermaid-1 .a ~ .b"],
+    ["#mermaid-1 .a+.b", "#mermaid-1 .a+.b"],
+    ['#mermaid-1 [data-x="]"]', '#mermaid-1 [data-x="]"]'],
+    ["#mermaid-1 .a:not([data-x='(']) ~ .b", "#mermaid-1 .a:not([data-x='(']) ~ .b"],
+    ["#mermaid-1 :root", "#mermaid-1 :root"],
+  ])("keeps %s: combinators and compounds are free once inside the SVG (round 3)", (selector, emitted) => {
+    const clean = sanitizeSvg(wrapId(`<style>${selector}{fill:red}</style>`));
+    expect(clean).toContain(`<style>${emitted}{fill:red;}</style>`);
   });
 
   it("an unterminated url() in <style> is dropped, not emitted as a fetch that runs to EOF (I1a)", () => {

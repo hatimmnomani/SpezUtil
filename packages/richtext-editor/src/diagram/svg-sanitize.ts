@@ -199,27 +199,27 @@ function cleanStyleAttribute(value: string): string {
   return cleanDeclarations(normalizeCss(value)).join(";");
 }
 
+/** The only things that may follow `#<rootId>` inside its own compound. `focus-within` before `focus`. */
+const ROOT_PSEUDO_CLASSES = /^(?::(?:hover|focus-within|focus|active))*/;
+
 /**
- * A selector that can only match inside the root: it starts with the `#<rootId>` compound (classes,
- * pseudo-classes and attribute selectors may attach to it) and the first combinator after that
- * compound is descendant (whitespace) or child (`>`). A sibling or column combinator there
- * (`#id ~ body`, `#id+*`, `#id:hover~.x`, `#id||.x`) would reach outside the SVG; combinators
- * further down (`#id .a ~ .b`) stay inside it.
+ * A selector that can only match inside the root. The root compound is not parsed but matched
+ * literally: exactly `#<rootId>`, optionally followed by allow-listed pseudo-classes — no classes,
+ * attribute selectors, functional pseudo-classes, quotes or brackets, which is what let
+ * `#id:not([x='('])~*` hide a sibling combinator from a depth walker. After that compound the
+ * selector must end, or its first combinator must be descendant (whitespace) or child (`>`);
+ * `~`, `+` and `||` there would reach outside the SVG. Further compounds and combinators
+ * (`#id .a ~ .b`, `#id [data-x="]"]`) are free: they can only match inside the root.
  */
 function isScopedSelector(selector: string, rootId: string): boolean {
   const prefix = `#${rootId}`;
   if (!selector.startsWith(prefix)) return false;
-  const next = selector.charAt(prefix.length);
-  if (next !== "" && !/[\s>+~|.:[]/.test(next)) return false; // `#mermaid-1x` is another id
-  let i = prefix.length;
-  let depth = 0;
-  for (; i < selector.length; i++) {
-    const ch = selector[i]!;
-    if (ch === "(" || ch === "[") depth++;
-    else if (ch === ")" || ch === "]") depth = Math.max(0, depth - 1);
-    else if (depth === 0 && /[\s>+~|]/.test(ch)) break;
-  }
-  const combinator = selector.slice(i).trimStart().charAt(0);
+  const afterId = selector.slice(prefix.length);
+  const rest = afterId.slice(ROOT_PSEUDO_CLASSES.exec(afterId)![0].length);
+  if (rest === "") return true;
+  const first = rest.charAt(0);
+  if (first !== ">" && !/\s/.test(first)) return false; // `#idx`, `#id.c`, `#id[x]`, `#id:not(…)`, `#id~…`
+  const combinator = rest.trimStart().charAt(0);
   return combinator !== "+" && combinator !== "~" && combinator !== "|";
 }
 
