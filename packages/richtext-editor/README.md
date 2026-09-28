@@ -115,6 +115,13 @@ Programmatic API:
 - `editor.updateDiagram(nodeKey, { source?, drawioKey? })` — updates a diagram's source and/or
   drawio key; returns `false` when `nodeKey` does not name a diagram. The editor re-renders and
   re-sanitizes the svg itself — **the host never sends svg markup**, only Mermaid source.
+  Re-submitting an unchanged `source` after a failed render (offline, a blocked Mermaid chunk)
+  retries the render.
+- `nodeKey` is a Lexical node key: it is valid for the current document only and is invalidated by
+  every `value` / `setValue()` (and by `setHTML()`). Use it while the host's edit dialog is open;
+  do not store it across a reload — `updateDiagram` then returns `false`.
+- In a `readonly` editor, rendering a stored diagram whose `svg` is empty does **not** fire `change`;
+  in an editable editor it does, so the rendered svg is persisted with the draft.
 
 By default, diagram source renders through Mermaid (loaded on first use via a dynamic import, kept
 out of the main bundle). A host can swap in its own renderer — e.g. to render drawio XML, or to
@@ -138,6 +145,17 @@ get right for its own styling to survive that sanitizing pass:
   unique id on insert either way (so two diagrams never share a scope), but a `<style>` block is kept
   only when every selector in it is scoped under that recognized root id — an unrecognized root id
   causes the whole `<style>` element to be dropped rather than rescoped.
+- **`sanitizeSvg` (exported) cleans but does not rescope.** Two Mermaid outputs both rooted
+  `id="mermaid-1"` that a host sanitizes directly will still style each other; the unique
+  `spez-rte-mermaid-<ulid>` root id is given by the editor's own insert/load path. Hosts that need
+  the same isolation for markup they render themselves should pass it through the editor
+  (`insertDiagram` with a custom renderer, or HTML import of `figure[data-spez-type="diagram"]`)
+  rather than calling `sanitizeSvg` alone.
+- **Diagram authors are trusted for size and ids.** `width`/`height`/`min-height` (attributes and
+  inline style) and `id` values are not restricted: a hostile diagram can grow the figure's block
+  height (painting is clipped, layout is not) or carry an `id` that DOM-clobbers an *undeclared*
+  host global (`window.config`). Hosts should size the figure with CSS (`max-height`) and never
+  read undeclared globals.
 - **The exported `<figure data-spez-type="diagram">` carries no containment styling of its own.**
   Inside the live editor the diagram is wrapped in `overflow:hidden; contain:paint` so a stray
   root-svg transform or margin can't paint over the rest of the page, but `getHTML()` / `exportDOM()`
@@ -171,7 +189,7 @@ Exports as:
 | `placeholder` | string | Shown while empty |
 | `dir` | `rtl` \| `ltr` \| `auto` | Base direction (default `auto`; paragraphs still auto-detect) |
 | `locale` | `en` \| `ar` | Toolbar language (default `en`) |
-| `toolbar` | comma-separated groups or `none` | Groups: `history,block,font,inline,color,list,indent,align,direction,insert` |
+| `toolbar` | comma-separated groups or `none` | Default groups: `history,block,font,inline,color,list,indent,align,direction,insert`. Opt-in groups (never on by default): `lud` (LuD font picker — see [LuD text](#lud-text-lisan-ud-dawat)), `comment` (comment button — see [Comment marks](#comment-marks)), `diagram` (◇ button — see [Diagrams](#diagrams)) |
 | `fonts` | comma-separated font families | Simple form of the font list, e.g. `fonts="Amiri, Tahoma, Arial"` (use the `fonts` *property* for labels and full font stacks) |
 | `font-sizes` | comma-separated font sizes | Simple form of the font-size list, e.g. `font-sizes="12px, 16px, 24px"` (use the `fontSizes` *property* for labels that differ from the CSS value) |
 | `word-count` | boolean | Shows a word/character count status line below the editor |

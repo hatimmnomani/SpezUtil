@@ -41,7 +41,7 @@ title: API reference
 | `removeCommentMark(markId)` | Removes that id from every mark; unwraps marks left without ids. |
 | `focusCommentMark(markId)` | Makes it the active mark and scrolls it into view. |
 | `insertDiagram(source?, drawioKey?)` | Inserts a Mermaid diagram; returns its node key. Rendered to SVG (stored in the JSON). |
-| `updateDiagram(nodeKey, { source?, drawioKey? })` | Changes a diagram; a new source re-renders. |
+| `updateDiagram(nodeKey, { source?, drawioKey? })` | Changes a diagram; a new source re-renders, and re-submitting an unchanged source after a failed render retries it. `nodeKey` is a Lexical node key: valid for the current document only, invalidated by `value`/`setValue()`/`setHTML()` — do not store it across a reload. |
 
 ## Events
 
@@ -186,7 +186,8 @@ threads. Every surface that parses this JSON with Lexical must register `Comment
 `diagram` decorator nodes store Mermaid `source`, the rendered `svg` and an optional `drawioKey`.
 Mermaid is loaded on first use with `htmlLabels: false` and `securityLevel: "strict"`. Swap the
 renderer with `setDiagramRenderer(fn)`. A diagram whose `svg` is empty (render failed) cannot be
-published by the handbook API.
+published by the handbook API. In a `readonly` editor, rendering a stored diagram whose `svg` is
+empty does not fire `change`; in an editable editor it does, so the svg is persisted with the draft.
 
 The rendered diagram is wrapped in a container that clips it to its own box —
 `figure[data-spez-type="diagram"] { overflow: hidden; contain: paint }` — so a malicious or
