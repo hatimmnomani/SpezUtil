@@ -30,6 +30,7 @@ export type {
   DiagramRenderer,
   EditorLocale,
   FontOption,
+  FontSizeOption,
   LudFontOption,
   ToolbarGroup,
 } from "@spezutil/richtext-editor";
