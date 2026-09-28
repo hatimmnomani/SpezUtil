@@ -26,11 +26,17 @@ let mermaidPromise: Promise<Mermaid> | null = null;
 let renderCount = 0;
 
 function loadMermaid(): Promise<Mermaid> {
-  mermaidPromise ??= import("mermaid").then((mod) => {
-    const mermaid = (mod as unknown as { default: Mermaid }).default;
-    mermaid.initialize({ ...MERMAID_CONFIG, flowchart: { ...MERMAID_CONFIG.flowchart } });
-    return mermaid;
-  });
+  mermaidPromise ??= import("mermaid")
+    .then((mod) => {
+      const mermaid = (mod as unknown as { default: Mermaid }).default;
+      mermaid.initialize({ ...MERMAID_CONFIG, flowchart: { ...MERMAID_CONFIG.flowchart } });
+      return mermaid;
+    })
+    .catch((error: unknown) => {
+      // A failed chunk load or a throwing initialize must not poison every later render.
+      mermaidPromise = null;
+      throw error;
+    });
   return mermaidPromise;
 }
 
