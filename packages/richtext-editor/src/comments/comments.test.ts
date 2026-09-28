@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { $createTextNode, $getRoot, type ElementNode, type TextNode } from "lexical";
 import { $createLudTextNode, $isLudTextNode } from "../nodes/lud-text-node";
-import { $isCommentMarkNode } from "../nodes/comment-mark-node";
+import { $createCommentMarkNode, $isCommentMarkNode } from "../nodes/comment-mark-node";
 import { flushSync, makeEditor, seedParagraph } from "../test-utils";
 import {
   ADD_COMMENT_MARK_COMMAND,
@@ -142,5 +142,56 @@ describe("comment commands", () => {
     controller.setHighlight([A]);
     root.querySelector<HTMLElement>(`mark[data-thread-ids="${B}"]`)!.click();
     expect(onClicked).toHaveBeenLastCalledWith({ threadIds: [A] });
+  });
+
+  it("ignores a malformed FOCUS id instead of throwing", () => {
+    const { editor } = setup();
+    seedParagraph(editor, () => $createTextNode("hello world"));
+    selectText(editor, 0, 0, 11);
+    editor.dispatchCommand(ADD_COMMENT_MARK_COMMAND, { markId: A });
+    flushSync(editor);
+    expect(() => {
+      editor.dispatchCommand(FOCUS_COMMENT_MARK_COMMAND, 'not-a-ulid"]');
+      flushSync(editor);
+    }).not.toThrow();
+  });
+
+  it("stops responding to commands and clicks after dispose", () => {
+    const { editor, root, onRequested, onClicked, controller } = setup();
+    seedParagraph(editor, () => $createTextNode("hello world"));
+    selectText(editor, 0, 0, 11);
+    editor.dispatchCommand(ADD_COMMENT_MARK_COMMAND, { markId: A });
+    flushSync(editor);
+    expect(onRequested).toHaveBeenCalledTimes(1);
+    const markEl = root.querySelector<HTMLElement>(`mark[data-thread-ids="${A}"]`)!;
+
+    controller.dispose();
+
+    editor.dispatchCommand(REMOVE_COMMENT_MARK_COMMAND, A);
+    flushSync(editor);
+    expect(JSON.stringify(editor.getEditorState().toJSON())).toContain("comment-mark"); // unaffected: handler is gone
+
+    markEl.click();
+    expect(onClicked).not.toHaveBeenCalled();
+    expect(onRequested).toHaveBeenCalledTimes(1);
+  });
+
+  it("removes one id from a two-id mark and keeps it wrapped with the other", () => {
+    // A node holding two ids can arise from importing the backend's minimal
+    // {type:"comment-mark", ids:[...]} JSON (global constraint 7); build that state directly
+    // rather than via two ADD dispatches, which nest a new mark instead of merging ids.
+    const { editor } = setup();
+    seedParagraph(editor, () => {
+      const mark = $createCommentMarkNode([A, B]);
+      mark.append($createTextNode("hello world"));
+      return mark;
+    });
+    editor.dispatchCommand(REMOVE_COMMENT_MARK_COMMAND, A);
+    flushSync(editor);
+    const para = editor.getEditorState().toJSON().root.children[0] as any;
+    expect(para.children).toHaveLength(1);
+    expect(para.children[0].type).toBe("comment-mark");
+    expect(para.children[0].ids).toEqual([B]);
+    expect(editor.read(() => $getRoot().getTextContent())).toBe("hello world");
   });
 });

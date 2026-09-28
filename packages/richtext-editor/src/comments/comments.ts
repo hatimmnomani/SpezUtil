@@ -12,7 +12,7 @@ import {
 } from "lexical";
 import { $createCommentMarkNode, $isCommentMarkNode } from "../nodes/comment-mark-node";
 import { $commentAnchor, isQuoteAcceptable, type CommentRequestDetail } from "./anchor";
-import { generateMarkId } from "./mark-id";
+import { generateMarkId, isMarkId } from "./mark-id";
 
 export const ADD_COMMENT_MARK_COMMAND: LexicalCommand<{ markId?: string } | undefined> =
   createCommand("ADD_COMMENT_MARK_COMMAND");
@@ -114,6 +114,10 @@ export function registerComments(
     editor.registerCommand(
       FOCUS_COMMENT_MARK_COMMAND,
       (id) => {
+        // A malformed id (e.g. containing `"`) can never be safely interpolated into the
+        // attribute selector below, even with the CSS.escape guard (jsdom has no CSS global
+        // to escape with) — treat it as handled, no-op, rather than risk a DOMException.
+        if (!isMarkId(id)) return true;
         active = id;
         apply();
         const sel = typeof CSS !== "undefined" && CSS.escape ? CSS.escape(id) : id;
