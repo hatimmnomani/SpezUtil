@@ -1,4 +1,4 @@
-import { $createParagraphNode, $getRoot, type LexicalEditor } from "lexical";
+import { $createParagraphNode, $getNodeByKey, $getRoot, type LexicalEditor } from "lexical";
 import { $canShowPlaceholder } from "@lexical/text";
 import type { HijriDate } from "@spezutil/hijri-core";
 import { createEditorInstance } from "./editor";
@@ -11,6 +11,13 @@ import {
   type CommentsController,
 } from "./comments/comments";
 import type { CommentRequestDetail } from "./comments/anchor";
+import {
+  $insertDiagram,
+  DEFAULT_DIAGRAM_SOURCE,
+  registerDiagrams,
+  type DiagramEditDetail,
+} from "./diagram/diagrams";
+import { $isDiagramNode } from "./nodes/diagram-node";
 import { exportHTML, importHTML } from "./html";
 import { insertHijriDate } from "./hijri-insert";
 import { injectGlobalStyles } from "./styles";
@@ -70,6 +77,7 @@ export class SpezRichtext extends HTMLElement {
   #unregisterStatus: (() => void) | null = null;
   #changeTimer: ReturnType<typeof setTimeout> | undefined;
   #comments: CommentsController | null = null;
+  #disposeDiagrams: (() => void) | null = null;
   #highlightMarks: readonly string[] | null = null;
   #activeMark: string | null = null;
   #lastCommentRequest: CommentRequestDetail | null = null;
@@ -191,6 +199,10 @@ export class SpezRichtext extends HTMLElement {
     this.#comments.setHighlight(this.#highlightMarks);
     this.#comments.setActive(this.#activeMark);
 
+    this.#disposeDiagrams = registerDiagrams(editor, editable, {
+      onEditRequested: (detail) => this.#emitDiagramEdit(detail),
+    });
+
     this.#buildToolbar();
     this.append(shell);
 
@@ -239,6 +251,8 @@ export class SpezRichtext extends HTMLElement {
     this.#unregisterStatus = null;
     this.#comments?.dispose();
     this.#comments = null;
+    this.#disposeDiagrams?.();
+    this.#disposeDiagrams = null;
     this.#disposeEditor?.();
     this.#disposeEditor = null;
     this.#editor = null;
@@ -336,6 +350,40 @@ export class SpezRichtext extends HTMLElement {
     this.editor.dispatchCommand(FOCUS_COMMENT_MARK_COMMAND, markId);
   }
 
+  /** Inserts a diagram at the selection (or appends to the root); returns the node key. */
+  insertDiagram(source?: string, drawioKey: string | null = null): string {
+    let key = "";
+    this.editor.update(
+      () => {
+        key = $insertDiagram(source ?? DEFAULT_DIAGRAM_SOURCE, drawioKey);
+      },
+      { discrete: true },
+    );
+    return key;
+  }
+
+  /** Updates a diagram's source and/or drawio key; the editor re-renders and re-sanitizes the svg. Returns false when `nodeKey` is not a diagram. */
+  updateDiagram(nodeKey: string, patch: { source?: string; drawioKey?: string | null }): boolean {
+    let found = false;
+    this.editor.update(
+      () => {
+        const node = $getNodeByKey(nodeKey);
+        if (!$isDiagramNode(node)) return;
+        found = true;
+        if (patch.source !== undefined) node.setSource(patch.source);
+        if (patch.drawioKey !== undefined) node.setDrawioKey(patch.drawioKey);
+      },
+      { discrete: true },
+    );
+    return found;
+  }
+
+  #emitDiagramEdit(detail: DiagramEditDetail): void {
+    this.dispatchEvent(
+      new CustomEvent<DiagramEditDetail>("diagram-edit-requested", { bubbles: true, composed: true, detail }),
+    );
+  }
+
   clear(): void {
     this.editor.update(
       () => {
@@ -401,6 +449,7 @@ export class SpezRichtext extends HTMLElement {
       this.locale,
       this.#fontOptions(),
       this.#fontSizeOptions(),
+      (detail) => this.#emitDiagramEdit(detail),
     );
     this.prepend(this.#toolbar.element);
   }

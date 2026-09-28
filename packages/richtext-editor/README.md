@@ -96,6 +96,71 @@ The token is atomic (deletes/moves as one unit) and exports as:
 
 Programmatic insertion: `editor.insertHijriDate({ year: 1446, month: 9, day: 17 }, "D MMMM YYYY")`.
 
+### Diagrams
+
+Toolbar **◇** button (opt-in group `diagram`, e.g. `toolbar="history,inline,diagram"`) inserts a default
+Mermaid flowchart and fires `diagram-edit-requested` so the host can open its own editor UI:
+
+```js
+editor.addEventListener("diagram-edit-requested", (e) => {
+  const { nodeKey, source, drawioKey } = e.detail;
+  // open a Mermaid/drawio editor, then call editor.updateDiagram(nodeKey, { source, drawioKey })
+});
+```
+
+Programmatic API:
+
+- `editor.insertDiagram(source?, drawioKey?)` — inserts at the selection (or appends to the root);
+  returns the node key. `source` defaults to `DEFAULT_DIAGRAM_SOURCE` (a Mermaid flowchart).
+- `editor.updateDiagram(nodeKey, { source?, drawioKey? })` — updates a diagram's source and/or
+  drawio key; returns `false` when `nodeKey` does not name a diagram. The editor re-renders and
+  re-sanitizes the svg itself — **the host never sends svg markup**, only Mermaid source.
+
+By default, diagram source renders through Mermaid (loaded on first use via a dynamic import, kept
+out of the main bundle). A host can swap in its own renderer — e.g. to render drawio XML, or to
+proxy through a server:
+
+```js
+import { setDiagramRenderer } from "@spezutil/richtext-editor";
+
+setDiagramRenderer(async (source) => {
+  const svg = await myRenderer(source);
+  return svg; // sanitized by the editor before it is stored or displayed — never trust this path
+});
+```
+
+Every renderer's output — Mermaid's or a host's — is always passed through the same allow-list SVG
+sanitizer (`sanitizeSvg`) before it reaches the DOM or the document JSON, so a compromised or buggy
+renderer cannot inject a `<script>` or an event-handler attribute. Two things a host renderer must
+get right for its own styling to survive that sanitizing pass:
+
+- **The root `<svg>` needs an id matching `mermaid-*` or `spez-rte-*`.** The editor rewrites it to a
+  unique id on insert either way (so two diagrams never share a scope), but a `<style>` block is kept
+  only when every selector in it is scoped under that recognized root id — an unrecognized root id
+  causes the whole `<style>` element to be dropped rather than rescoped.
+- **The exported `<figure data-spez-type="diagram">` carries no containment styling of its own.**
+  Inside the live editor the diagram is wrapped in `overflow:hidden; contain:paint` so a stray
+  root-svg transform or margin can't paint over the rest of the page, but `getHTML()` / `exportDOM()`
+  do not add that inline style (it would be dead weight on every publish). Hosts that render the
+  exported HTML standalone (e.g. a published handbook page) should add it themselves:
+
+  ```css
+  figure[data-spez-type="diagram"] {
+    overflow: hidden;
+    contain: paint;
+  }
+  ```
+
+Exports as:
+
+```html
+<figure data-spez-type="diagram" data-drawio-key="…">
+  <pre data-diagram="mermaid">flowchart TD
+  A[Start] --> B[End]</pre>
+  <svg id="spez-rte-mermaid-…">…</svg>
+</figure>
+```
+
 ## API
 
 ### Attributes
@@ -132,6 +197,8 @@ Programmatic insertion: `editor.insertHijriDate({ year: 1446, month: 9, day: 17 
 | `clear()` | Empty the editor |
 | `focus()` | Focus the editable area |
 | `insertHijriDate(date?, format?)` | Insert a Hijri date token at the caret (defaults to today) |
+| `insertDiagram(source?, drawioKey?)` | Insert a diagram (defaults to `DEFAULT_DIAGRAM_SOURCE`); returns the node key — see [Diagrams](#diagrams) |
+| `updateDiagram(nodeKey, patch)` | Update a diagram's `source` and/or `drawioKey`; returns `false` if `nodeKey` is not a diagram |
 
 ### Events
 
@@ -139,6 +206,7 @@ Programmatic insertion: `editor.insertHijriDate({ year: 1446, month: 9, day: 17 
 | --- | --- | --- |
 | `change` | `{ json: string; isEmpty: boolean }` | Debounced ~150 ms. HTML is **not** included (exporting walks the whole document) — call `getHTML()` on save/blur instead |
 | `rte-ready` | — | Fired once after the editor initializes |
+| `diagram-edit-requested` | `{ nodeKey, source, drawioKey }` | Fired on double-click of an editable diagram, and right after the toolbar's ◇ button inserts one — see [Diagrams](#diagrams) |
 
 ## Font selector
 

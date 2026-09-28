@@ -20,6 +20,11 @@ export type { CommentRequestDetail } from "./comments/anchor";
 export { generateMarkId, isMarkId } from "./comments/mark-id";
 export { listLudFonts, UNICODE_LUD_FONT } from "./lud-fonts";
 export type { LudFontOption } from "./lud-fonts";
+export { INSERT_DIAGRAM_COMMAND, DEFAULT_DIAGRAM_SOURCE } from "./diagram/diagrams";
+export type { DiagramEditDetail } from "./diagram/diagrams";
+export { setDiagramRenderer, MERMAID_CONFIG } from "./diagram/renderer";
+export type { DiagramRenderer } from "./diagram/renderer";
+export { sanitizeSvg } from "./diagram/svg-sanitize";
 export {
   AyatNode,
   $createAyatNode,
@@ -47,6 +52,9 @@ export {
   CommentMarkNode,
   $createCommentMarkNode,
   $isCommentMarkNode,
+  DiagramNode,
+  $createDiagramNode,
+  $isDiagramNode,
 } from "./nodes";
 export type {
   SerializedAyatNode,
@@ -58,6 +66,7 @@ export type {
   TranslitRole,
   SerializedLudTextNode,
   SerializedCommentMarkNode,
+  SerializedDiagramNode,
 } from "./nodes";
 
 if (typeof customElements !== "undefined" && !customElements.get("spez-richtext")) {

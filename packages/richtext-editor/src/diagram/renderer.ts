@@ -48,7 +48,15 @@ const mermaidRenderer: DiagramRenderer = async (source) => {
 
 let current: DiagramRenderer = mermaidRenderer;
 
-/** Replaces the renderer for every diagram in the page; `null` restores Mermaid. */
+/**
+ * Replaces the renderer for every diagram in the page; `null` restores Mermaid.
+ *
+ * The result is always sanitized (`sanitizeSvg`) and given a unique root id before it is stored or
+ * displayed, so a compromised or buggy renderer cannot inject a `<script>` or an event-handler
+ * attribute. For the renderer's own `<style>` rules to survive that pass, the svg it returns must
+ * have a root id matching `mermaid-*` or `spez-rte-*` — any other root id causes the whole `<style>`
+ * element to be dropped rather than rescoped (see the package README's "Diagrams" section).
+ */
 export function setDiagramRenderer(renderer: DiagramRenderer | null): void {
   current = renderer ?? mermaidRenderer;
 }

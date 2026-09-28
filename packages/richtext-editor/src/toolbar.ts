@@ -55,6 +55,7 @@ import { getLocaleStrings, type EditorLocale, type LocaleStrings } from "./local
 import { ARABIC_FONT_FAMILY } from "./font-arabic";
 import { listLudFonts, ludFontForFamily } from "./lud-fonts";
 import { ADD_COMMENT_MARK_COMMAND } from "./comments/comments";
+import { $insertDiagram, DEFAULT_DIAGRAM_SOURCE, type DiagramEditDetail } from "./diagram/diagrams";
 
 export const ALL_TOOLBAR_GROUPS = [
   "history",
@@ -516,6 +517,7 @@ export function buildToolbar(
   locale: EditorLocale,
   fonts: readonly FontOption[] = DEFAULT_FONTS,
   fontSizes: readonly FontSizeOption[] = DEFAULT_FONT_SIZES,
+  onDiagramInserted?: (detail: DiagramEditDetail) => void,
 ): ToolbarInstance {
   const t: LocaleStrings = getLocaleStrings(locale);
   const refs: ToolbarRefs = {
@@ -668,6 +670,22 @@ export function buildToolbar(
         );
         break;
       case "diagram":
+        toolbar.append(
+          group(
+            name,
+            button("◇", t.diagram, () => {
+              let detail: DiagramEditDetail | null = null;
+              editor.update(
+                () => {
+                  const nodeKey = $insertDiagram(DEFAULT_DIAGRAM_SOURCE);
+                  detail = { nodeKey, source: DEFAULT_DIAGRAM_SOURCE, drawioKey: null };
+                },
+                { discrete: true },
+              );
+              if (detail !== null) onDiagramInserted?.(detail);
+            }, refs, "diagram"),
+          ),
+        );
         break;
       case "inline": {
         const clearBtn = button("⌫", t.clearFormatting, () => {
