@@ -70,6 +70,47 @@ describe("DiagramNode", () => {
     expect(JSON.stringify(json)).not.toContain("boom");
   });
 
+  it("loads JSON without a source as an empty source with a render error, never a pending spinner (final review M11)", () => {
+    const { editor, root } = makeEditor();
+    const state = {
+      root: {
+        type: "root", version: 1, direction: null, format: "", indent: 0,
+        children: [
+          { type: "diagram", version: 1 },
+          { type: "diagram", version: 1, source: 42, svg: "", drawioKey: null },
+          { type: "diagram", version: 1, source: "   ", svg: "", drawioKey: null },
+        ],
+      },
+    };
+    editor.setEditorState(editor.parseEditorState(JSON.stringify(state)));
+    editor.update(() => {}, { discrete: true });
+    const nodes = editor.read(() => $getRoot().getChildren() as DiagramNode[]);
+    // A missing or non-string source becomes ""; a stored blank one is kept verbatim.
+    expect(editor.read(() => nodes.map((n) => n.getSource()))).toEqual(["", "", "   "]);
+    for (const node of nodes) {
+      expect(editor.read(() => [node.getSvg(), node.getDrawioKey()])).toEqual(["", null]);
+      expect(editor.read(() => node.getRenderError())).toBe("The diagram has no source");
+    }
+    expect(root.querySelectorAll(".spez-rte-diagram-pending")).toHaveLength(0);
+    expect(root.querySelectorAll(".spez-rte-diagram-error")).toHaveLength(3);
+    const json = editor.getEditorState().toJSON().root.children as unknown as SerializedDiagramNode[];
+    expect(json[0]).toEqual({ type: "diagram", version: 1, source: "", svg: "", drawioKey: null });
+  });
+
+  it("keeps a stored svg when the JSON has no source (the svg is what the reader sees)", () => {
+    const { editor } = makeEditor();
+    const state = {
+      root: {
+        type: "root", version: 1, direction: null, format: "", indent: 0,
+        children: [{ type: "diagram", version: 1, svg: SVG }],
+      },
+    };
+    editor.setEditorState(editor.parseEditorState(JSON.stringify(state)));
+    const node = editor.read(() => $getRoot().getFirstChild() as DiagramNode);
+    expect(editor.read(() => node.getSvg())).toContain("<text>A</text>");
+    expect(editor.read(() => node.getRenderError())).toBe("");
+  });
+
   it("decorates with the sanitized svg, or the error text", () => {
     const { editor, root } = seed(() => $createDiagramNode("a", SVG));
     expect(root.querySelector(".spez-rte-diagram svg")).not.toBeNull();

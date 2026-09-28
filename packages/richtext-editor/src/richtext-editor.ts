@@ -14,6 +14,7 @@ import type { CommentRequestDetail } from "./comments/anchor";
 import {
   $insertDiagram,
   DEFAULT_DIAGRAM_SOURCE,
+  DIAGRAM_RENDER_TAG,
   registerDiagrams,
   type DiagramEditDetail,
 } from "./diagram/diagrams";
@@ -226,6 +227,9 @@ export class SpezRichtext extends HTMLElement {
         this.#syncPlaceholderVisibility();
         if (dirtyElements.size === 0 && dirtyLeaves.size === 0) return;
         if (tags.has(SET_VALUE_TAG)) return;
+        // A read-only viewer rendering a stored diagram whose svg was empty is not a user change;
+        // in an editable draft the same write is what persists the svg, so it is reported there.
+        if (tags.has(DIAGRAM_RENDER_TAG) && !editor.isEditable()) return;
         clearTimeout(this.#changeTimer);
         this.#changeTimer = setTimeout(() => this.#emitChange(), CHANGE_DEBOUNCE_MS);
       },

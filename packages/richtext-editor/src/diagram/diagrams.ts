@@ -18,6 +18,12 @@ import { getDiagramRenderer } from "./renderer";
 
 export const DEFAULT_DIAGRAM_SOURCE = "flowchart TD\n  A[Start] --> B[End]";
 
+/**
+ * Tag on the update that writes a rendered svg back into a node. `<spez-richtext>` uses it to keep
+ * a read-only viewer from emitting `change` for a stored diagram it merely rendered.
+ */
+export const DIAGRAM_RENDER_TAG = "spez-diagram-render";
+
 export const INSERT_DIAGRAM_COMMAND: LexicalCommand<{ source?: string; drawioKey?: string | null } | undefined> =
   createCommand("INSERT_DIAGRAM_COMMAND");
 
@@ -68,7 +74,7 @@ export function registerDiagrams(editor: LexicalEditor, root: HTMLElement, handl
         if ($isDiagramNode(node) && node.getSource() === source) change(node);
       },
       // The svg is derived from the source: it should not be its own undo step.
-      { tag: HISTORY_MERGE_TAG },
+      { tag: [HISTORY_MERGE_TAG, DIAGRAM_RENDER_TAG] },
     );
   };
 

@@ -70,4 +70,38 @@ describe("<spez-richtext> diagrams", () => {
     expect(figure.innerHTML).not.toContain("onload");
     expect((window as unknown as { __diagramPwned?: boolean }).__diagramPwned).toBeUndefined();
   });
+
+  describe("change event on render (final review M8)", () => {
+    const unrendered = () =>
+      JSON.stringify({
+        root: {
+          type: "root", version: 1, direction: null, format: "", indent: 0,
+          children: [{ type: "diagram", version: 1, source: "graph TD;A", svg: "", drawioKey: null }],
+        },
+      });
+    const settle = () => new Promise((r) => setTimeout(r, 300));
+
+    it("does not fire change in a read-only viewer when a stored unrendered diagram renders", async () => {
+      const el = create({ readonly: "" });
+      const handler = vi.fn();
+      el.addEventListener("change", handler);
+      el.value = unrendered();
+      await vi.waitFor(() => expect(el.querySelector(".spez-rte-diagram svg")).not.toBeNull());
+      await settle();
+      expect(handler).not.toHaveBeenCalled();
+      // The render itself is not lost: the state carries the svg for the host to read on demand.
+      expect(el.getJSON()).toContain("<text>graph TD;A</text>");
+    });
+
+    it("still fires change in an editable editor, so the rendered svg is persisted", async () => {
+      const el = create();
+      const handler = vi.fn();
+      el.addEventListener("change", handler);
+      el.value = unrendered();
+      await vi.waitFor(() => expect(el.querySelector(".spez-rte-diagram svg")).not.toBeNull());
+      await settle();
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(handler.mock.calls[0]![0].detail.json).toContain("<text>graph TD;A</text>");
+    });
+  });
 });

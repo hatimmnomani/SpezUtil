@@ -122,6 +122,46 @@ describe("registerDiagrams", () => {
     await vi.waitFor(() => expect(svgOf(editor)).toContain("<text>a</text>"));
   });
 
+  it("re-renders after a failure when the same source is set again (final review I3)", async () => {
+    const renderer = vi.fn(async (s: string) => svgFor(s));
+    renderer.mockRejectedValueOnce(new Error("chunk load failed"));
+    setDiagramRenderer(renderer);
+    const { editor } = setup();
+    let key = "";
+    editor.update(
+      () => {
+        $getRoot().clear();
+        key = $insertDiagram("a");
+      },
+      { discrete: true },
+    );
+    await vi.waitFor(() => expect(errorOf(editor)).toBe("chunk load failed"));
+    expect(renderer).toHaveBeenCalledTimes(1);
+    // The host's edit dialog re-submits the unchanged text: that must be a retry, not a no-op.
+    editor.update(() => ($getNodeByKey(key) as DiagramNode).setSource("a"), { discrete: true });
+    await vi.waitFor(() => expect(svgOf(editor)).toContain("<text>a</text>"));
+    expect(renderer).toHaveBeenCalledTimes(2);
+    expect(errorOf(editor)).toBe("");
+  });
+
+  it("setting the same source on a rendered diagram does not re-render it", async () => {
+    const renderer = vi.fn(async (s: string) => svgFor(s));
+    setDiagramRenderer(renderer);
+    const { editor } = setup();
+    let key = "";
+    editor.update(
+      () => {
+        $getRoot().clear();
+        key = $insertDiagram("a");
+      },
+      { discrete: true },
+    );
+    await vi.waitFor(() => expect(svgOf(editor)).toContain("<text>a</text>"));
+    editor.update(() => ($getNodeByKey(key) as DiagramNode).setSource("a"), { discrete: true });
+    await tick();
+    expect(renderer).toHaveBeenCalledTimes(1);
+  });
+
   it("ignores a stale render when the source changed meanwhile", async () => {
     let release!: () => void;
     const gate = new Promise<void>((r) => (release = r));

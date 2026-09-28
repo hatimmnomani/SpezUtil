@@ -28,6 +28,9 @@ function cleanDiagramSvg(svg: string): string {
   return sanitizeSvg(withUniqueRootId(svg));
 }
 
+/** Shown for stored JSON that carries neither a source nor an svg: there is nothing to render. */
+export const MISSING_SOURCE_MESSAGE = "The diagram has no source";
+
 /** Block Mermaid diagram. `svg` is what the editor rendered from `source`; the handbook API publishes it (sanitized). */
 export class DiagramNode extends DecoratorNode<HTMLElement> {
   __source: string;
@@ -69,14 +72,18 @@ export class DiagramNode extends DecoratorNode<HTMLElement> {
     return this.getLatest().__renderError;
   }
 
-  /** A changed source invalidates the rendered svg and any error; `registerDiagrams` re-renders. */
+  /**
+   * A changed source invalidates the rendered svg; `registerDiagrams` re-renders. The render error
+   * is cleared even when the source is unchanged, so re-submitting the same text after a failed
+   * render (a flaky Mermaid chunk load, a renderer outage) is a retry rather than a no-op.
+   */
   setSource(source: string): this {
     const self = this.getWritable();
     if (self.__source !== source) {
       self.__source = source;
       self.__svg = "";
-      self.__renderError = "";
     }
+    self.__renderError = "";
     return self;
   }
   /** Stores the sanitized svg (may be `""` if nothing usable survived). */
@@ -168,12 +175,17 @@ export class DiagramNode extends DecoratorNode<HTMLElement> {
     return $createDiagramNode("").updateFromJSON(serializedNode);
   }
 
-  /** A stored `svg` (server, clipboard) is untrusted: it goes through `setSvg`. */
+  /**
+   * A stored `svg` (server, clipboard) is untrusted: it goes through `setSvg`. A missing or non-string
+   * `source` becomes `""`; with no svg either, the node records `MISSING_SOURCE_MESSAGE` instead of
+   * showing the pending placeholder forever (the mutation listener never renders a blank source).
+   */
   updateFromJSON(serializedNode: LexicalUpdateJSON<SerializedDiagramNode>): this {
     const self = super.updateFromJSON(serializedNode);
-    self.setSource(serializedNode.source ?? self.getSource());
+    self.setSource(typeof serializedNode.source === "string" ? serializedNode.source : "");
     self.setDrawioKey(serializedNode.drawioKey ?? null);
     if (serializedNode.svg) self.setSvg(serializedNode.svg);
+    if (self.getSource().trim() === "" && self.getSvg() === "") self.setRenderError(MISSING_SOURCE_MESSAGE);
     return self;
   }
 
