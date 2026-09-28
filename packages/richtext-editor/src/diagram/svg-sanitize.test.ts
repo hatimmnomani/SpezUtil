@@ -470,3 +470,36 @@ describe("sanitizeSvg allow-list (XSS boundary)", () => {
     expect(clean).toContain("#mermaid-1 .a{fill:url(#g);}");
   });
 });
+
+describe("namespace declarations (fix round 2 of the diagram node)", () => {
+  const SVG = "http://www.w3.org/2000/svg";
+
+  it.each(['svg:onload="a()"', 'svg:href="javascript:a()"', 'svg:foo="1"'])(
+    "drops xmlns:svg with the namespaced attribute %s so the root cannot come back prefixed",
+    (attr) => {
+      const clean = sanitizeSvg(`<svg ${NS} xmlns:svg="${SVG}" ${attr}><rect/></svg>`);
+      expect(clean).toMatch(/^<svg /);
+      expect(clean).not.toMatch(/xmlns:svg|onload|javascript|foo|ns1/);
+      expect(clean).toContain("<rect");
+      expect(sanitizeSvg(clean)).toBe(clean);
+    },
+  );
+
+  it("drops an invented prefixed SVG declaration on any element, keeps xlink, keeps the default", () => {
+    const clean = sanitizeSvg(
+      `<svg ${NS} xmlns:ns1="${SVG}"><g xmlns:ns2="${SVG}" ns1:onload="a()"><use xlink:href="#m"/></g></svg>`,
+    );
+    expect(clean).toMatch(/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+    expect(clean).not.toMatch(/ns1|ns2|onload/);
+    expect(clean).toContain('xmlns:xlink="http://www.w3.org/1999/xlink"');
+    expect(clean).toContain('xlink:href="#m"');
+  });
+
+  it("returns nothing rather than a prefixed root", () => {
+    // Sanity check on the output guard itself: the attribute pass already prevents this, so
+    // the guard is exercised by re-parsing a known-good result and asserting the shape holds.
+    const clean = sanitizeSvg(`<svg ${NS}><rect/></svg>`);
+    expect(clean).toMatch(/^<svg\s/);
+    expect(sanitizeSvg(`<svg:svg xmlns:svg="${SVG}"><svg:rect/></svg:svg>`)).toBe("");
+  });
+});

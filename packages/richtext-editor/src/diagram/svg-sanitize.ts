@@ -280,7 +280,11 @@ function cleanAttributes(element: Element): void {
     const { localName: name, namespaceURI: ns, value } = attr;
     let keep: boolean;
     if (ns === XMLNS_NS) {
-      keep = NAMESPACE_DECLARATIONS.has(value);
+      // Only the default declaration may name the SVG namespace. A prefixed one (`xmlns:svg`, or an
+      // `xmlns:ns1` a serialiser invented for a namespaced attribute we then drop) would make the
+      // final serialisation re-prefix the root as `<ns1:svg>`: a prefixed root renders blank and is
+      // rejected on reload. Prefixed xlink and xml declarations are harmless.
+      keep = name === "xmlns" ? NAMESPACE_DECLARATIONS.has(value) : value === XLINK_NS || value === XML_NS;
     } else if (ns === XML_NS) {
       keep = XML_ATTRIBUTES.has(name) && !isUnsafeValue(value);
     } else if (name === "href") {
@@ -369,7 +373,10 @@ export function sanitizeSvg(svg: string): string {
       return "";
     }
     if (!cleanTree(root)) return "";
-    return new XMLSerializer().serializeToString(root);
+    const out = new XMLSerializer().serializeToString(root);
+    // The root must serialise unprefixed, whatever the attribute pass let through: `<ns1:svg>` would
+    // render blank now and fail the `root.prefix` check above on reload.
+    return /^<svg\s/.test(out) ? out : "";
   } catch {
     return "";
   }

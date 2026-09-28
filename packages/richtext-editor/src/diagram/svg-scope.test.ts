@@ -68,3 +68,49 @@ describe("withUniqueRootId", () => {
     expect(idOf(clean)).toMatch(DIAGRAM_ROOT_ID);
   });
 });
+
+/** The node's exact pipeline (diagram-node.ts cleanDiagramSvg). */
+const clean = (svg: string): string => sanitizeSvg(withUniqueRootId(svg));
+const SVG = NS.slice(7, -1);
+
+describe("cleaning pipeline keeps the root unprefixed", () => {
+  it.each(['svg:onload="a()"', 'svg:href="javascript:a()"', 'svg:foo="1"'])(
+    "an SVG-namespaced root attribute (%s) plus xmlns:svg cannot re-prefix the root through an invented xmlns:ns1",
+    (attr) => {
+      const out = clean(`<svg ${NS} xmlns:svg="${SVG}" id="mermaid-1" ${attr}><rect/></svg>`);
+      expect(out).toMatch(/^<svg /);
+      expect(out).not.toMatch(/onload|javascript|foo|ns1|xmlns:svg/);
+      expect(out).toContain("<rect");
+      expect(clean(out)).toBe(out);
+    },
+  );
+
+  it("a crafted unique-form id skips rescoping, and the sanitizer alone still drops xmlns:svg", () => {
+    const input = `<svg ${NS} xmlns:svg="${SVG}" id="spez-rte-mermaid-01ARZ3NDEKTSV4RRFFQ69G5FAV" svg:onload="a()"><rect/></svg>`;
+    expect(withUniqueRootId(input)).toBe(input); // the id is kept, so nothing is stripped here
+    const out = clean(input);
+    expect(out).toMatch(/^<svg /);
+    expect(out).not.toMatch(/onload|ns1|xmlns:svg/);
+    expect(out).toContain("<rect");
+    expect(clean(out)).toBe(out);
+  });
+
+  it("an Inkscape-style drawing (xmlns:svg on the root, prefixed children, foreign attributes) still renders", () => {
+    const inkscape = `<svg ${NS} xmlns:svg="${SVG}" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" id="svg1" inkscape:version="1.3"><svg:g inkscape:label="Layer 1"><svg:rect width="1" height="1"/></svg:g></svg>`;
+    const out = clean(inkscape);
+    expect(out).toMatch(/^<svg /);
+    expect(out).not.toMatch(/inkscape|<svg:/);
+    expect(out).toContain('<rect width="1" height="1"/>');
+    expect(idOf(out)).toMatch(DIAGRAM_ROOT_ID);
+    expect(clean(out)).toBe(out);
+  });
+
+  it("rewrites #id selectors inside a prefixed <svg:style> too", () => {
+    const out = clean(
+      `<svg ${NS} xmlns:svg="${SVG}" id="mermaid-1"><svg:style>#mermaid-1 rect{fill:red}</svg:style><rect/></svg>`,
+    );
+    const id = idOf(out)!;
+    expect(id).toMatch(DIAGRAM_ROOT_ID);
+    expect(out).toContain(`<style>#${id} rect{fill:red;}</style>`);
+  });
+});

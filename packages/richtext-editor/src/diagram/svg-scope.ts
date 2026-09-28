@@ -67,7 +67,8 @@ export function withUniqueRootId(svg: string): string {
       // `#mermaid-1` but not `#mermaid-10` or `#mermaid-1_marker`: the next character must end the id.
       // PLAIN_ID admits no regex metacharacters, so the id is used unescaped.
       const selector = new RegExp(`#${oldId}(?![A-Za-z0-9_-])`, "g");
-      for (const style of root.getElementsByTagName("style")) {
+      // By namespace, so a prefixed `<svg:style>` (unprefixed on serialisation) is rewritten too.
+      for (const style of root.getElementsByTagNameNS(SVG_NS, "style")) {
         const css = style.textContent ?? "";
         if (css.includes(`#${oldId}`)) style.textContent = css.replace(selector, `#${newId}`);
       }
