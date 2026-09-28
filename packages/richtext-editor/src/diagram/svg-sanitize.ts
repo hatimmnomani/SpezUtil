@@ -53,6 +53,11 @@ const ATTRIBUTES = new Set([
   "shape-rendering", "text-rendering",
 ]);
 const ATTRIBUTE_PREFIX = /^(?:aria|data)-[a-z][a-z0-9-]*$/;
+/**
+ * Lexical reads `data-lexical-editor`, `data-lexical-decorator`, `data-lexical-slot`, … from the
+ * DOM in a few internal paths; diagram markup has no reason to carry any of them.
+ */
+const RESERVED_DATA_ATTRIBUTE = /^data-lexical(?:-|$)/;
 const XML_ATTRIBUTES = new Set(["space", "lang"]);
 const NAMESPACE_DECLARATIONS = new Set([SVG_NS, XLINK_NS, XML_NS]);
 
@@ -226,6 +231,16 @@ function isScopedSelector(selector: string, rootId: string): boolean {
 
 const MEDIA_QUERY = /^[-\w\s(),:.%=/]*$/;
 
+/** Every `(` closed by a later `)` and never a `)` first: a browser turns anything else into "not all", so drop it instead. */
+function hasBalancedParens(text: string): boolean {
+  let depth = 0;
+  for (const ch of text) {
+    if (ch === "(") depth++;
+    else if (ch === ")" && --depth < 0) return false;
+  }
+  return depth === 0;
+}
+
 /**
  * Re-emits the rules of a (comment-free, escape-decoded) stylesheet that are scoped under `#rootId`.
  * Statements (`@import`, `@namespace`, `@charset`) and every @-rule other than `@media` are dropped;
@@ -240,7 +255,7 @@ function cleanStylesheet(css: string, rootId: string, depth: number): string {
       const match = /^@media(?:\s+([\s\S]*))?$/i.exec(prelude);
       if (match === null) return;
       const query = (match[1] ?? "").trim();
-      if (!MEDIA_QUERY.test(query)) return;
+      if (!MEDIA_QUERY.test(query) || !hasBalancedParens(query)) return;
       const inner = cleanStylesheet(body, rootId, depth + 1);
       if (inner !== "") out += `@media ${query}{${inner}}`;
       return;
@@ -295,11 +310,20 @@ function cleanAttributes(element: Element): void {
       attr.value = cleanStyleAttribute(value);
       keep = true;
     } else {
-      keep = (ATTRIBUTES.has(name) || ATTRIBUTE_PREFIX.test(name)) && !isUnsafeValue(value);
+      keep =
+        (ATTRIBUTES.has(name) || (ATTRIBUTE_PREFIX.test(name) && !RESERVED_DATA_ATTRIBUTE.test(name))) &&
+        !isUnsafeValue(value);
     }
     if (!keep) element.removeAttributeNode(attr);
   }
 }
+
+/**
+ * `<title>` and `<desc>` are HTML integration points: under `innerHTML` the HTML parser re-parses
+ * their children in the HTML namespace, so they may hold text only. An element child is dropped
+ * with its content, exactly like a non-allow-listed element anywhere else.
+ */
+const TEXT_ONLY_ELEMENTS = new Set(["title", "desc"]);
 
 /**
  * Removes every child that is not an allow-listed, unprefixed SVG element or a text node; returns
@@ -308,11 +332,12 @@ function cleanAttributes(element: Element): void {
  */
 function cleanChildren(element: Element): Element[] {
   const kept: Element[] = [];
+  const textOnly = TEXT_ONLY_ELEMENTS.has(element.localName);
   for (const child of [...element.childNodes]) {
     switch (child.nodeType) {
       case Node.ELEMENT_NODE: {
         const el = child as Element;
-        if (el.namespaceURI !== SVG_NS || el.prefix !== null || !ELEMENTS.has(el.localName)) {
+        if (textOnly || el.namespaceURI !== SVG_NS || el.prefix !== null || !ELEMENTS.has(el.localName)) {
           el.remove();
         } else {
           kept.push(el);

@@ -37,11 +37,12 @@ function newDiagramRootId(): string {
  * `#<oldId>` selector prefix in its `<style>` elements rewritten to match. A root that already has
  * a unique-form id is returned unchanged, so re-importing stored markup is idempotent. Input that
  * is not a parseable `<svg>` document is returned as is (the sanitizer rejects it next); input over
- * the sanitizer's size cap is returned as `""` without being parsed. Never throws.
+ * the sanitizer's size cap, or carrying a DOCTYPE or entity declaration, is returned as `""`
+ * without being parsed — the same two guards `sanitizeSvg` applies before its own parse. Never throws.
  */
 export function withUniqueRootId(svg: string): string {
   if (typeof svg !== "string" || svg.trim() === "") return svg;
-  if (svg.length > MAX_SVG_CHARS) return "";
+  if (svg.length > MAX_SVG_CHARS || /<!(?:DOCTYPE|ENTITY)/i.test(svg)) return "";
   try {
     const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
     const root = doc.documentElement;

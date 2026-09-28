@@ -48,6 +48,17 @@ describe("withUniqueRootId", () => {
     }
   });
 
+  it("M5: rejects DOCTYPE and ENTITY declarations before parsing, like sanitizeSvg", () => {
+    for (const bad of [
+      `<!DOCTYPE svg [<!ENTITY x "y">]><svg ${NS} id="mermaid-1"><text>&x;</text></svg>`,
+      `<!doctype svg><svg ${NS}><rect/></svg>`,
+      `<svg ${NS}><!ENTITY x "y"><rect/></svg>`,
+    ]) {
+      expect(withUniqueRootId(bad)).toBe("");
+      expect(sanitizeSvg(withUniqueRootId(bad))).toBe("");
+    }
+  });
+
   it("rejects input over the sanitizer's size cap before parsing it", () => {
     const huge = `<svg ${NS}>${"a".repeat(MAX_SVG_CHARS)}</svg>`;
     expect(withUniqueRootId(huge)).toBe("");

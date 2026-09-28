@@ -503,3 +503,53 @@ describe("namespace declarations (fix round 2 of the diagram node)", () => {
     expect(sanitizeSvg(`<svg:svg xmlns:svg="${SVG}"><svg:rect/></svg:svg>`)).toBe("");
   });
 });
+
+// Each case here is mirrored by the handbook API's HandbookSvgSanitizer for output parity, so the
+// expectations are exact strings, not just "does not contain".
+describe("final review hardening (M1, M2, M6)", () => {
+  const idempotent = (clean: string) => expect(sanitizeSvg(clean)).toBe(clean);
+
+  it("M1: <title> and <desc> keep text only; an element child is dropped with its content", () => {
+    const clean = sanitizeSvg(
+      wrapId(
+        '<title>x<a href="#q">t</a>y</title><desc><style>#mermaid-1 rect{fill:red}</style>d<tspan>e</tspan></desc><text><title>inner<tspan>z</tspan></title>label</text>',
+      ),
+    );
+    expect(clean).toContain("<title>xy</title>");
+    expect(clean).toContain("<desc>d</desc>");
+    expect(clean).toContain("<text><title>inner</title>label</text>");
+    expect(clean).not.toMatch(/<a |<tspan|<style|fill:red/);
+    idempotent(clean);
+  });
+
+  it("M1: a <title> whose only child is an element serialises empty", () => {
+    const clean = sanitizeSvg(wrap('<title><a href="#q">t</a></title>'));
+    expect(clean).toContain("<title/>");
+    idempotent(clean);
+  });
+
+  it("M2: data-lexical and data-lexical-* attributes are dropped; other data-* stay", () => {
+    const clean = sanitizeSvg(
+      wrap(
+        '<g data-lexical-editor="true" data-lexical-slot="x" data-lexical-decorator="y" data-lexical="z" data-lexicalish="ok" data-id="A" data-look="classic"><rect/></g>',
+      ),
+    );
+    expect(clean).toContain('<g data-lexicalish="ok" data-id="A" data-look="classic"><rect/></g>');
+    expect(clean).not.toContain("data-lexical-");
+    expect(clean).not.toContain('data-lexical="');
+    idempotent(clean);
+  });
+
+  it("M6: an @media prelude with unbalanced parentheses drops the whole rule", () => {
+    const kept = sanitizeSvg(wrapId("<style>@media screen and (min-width: 1px){#mermaid-1 .a{fill:red}}</style>"));
+    expect(kept).toContain("<style>@media screen and (min-width: 1px){#mermaid-1 .a{fill:red;}}</style>");
+    idempotent(kept);
+    for (const query of [")screen", "(min-width: 1px))", "screen)", "((screen)", "(min-width: 1px) and )"]) {
+      const clean = sanitizeSvg(wrapId(`<style>@media ${query}{#mermaid-1 .a{fill:red}}</style>`));
+      expect(clean, query).toContain("<style/>");
+      expect(clean, query).not.toContain("fill:red");
+      idempotent(clean);
+    }
+  });
+});
+
