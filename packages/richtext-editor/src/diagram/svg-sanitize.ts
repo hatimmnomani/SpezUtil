@@ -11,7 +11,8 @@
  * on the list, so HTML labels would vanish here and again on the server.
  */
 
-const MAX_CHARS = 2_000_000;
+/** Longest markup accepted; svg-scope.ts applies the same cap before it parses anything. */
+export const MAX_SVG_CHARS = 2_000_000;
 /** Element nesting Mermaid needs is < 20; a deeper tree is not a diagram. */
 const MAX_ELEMENT_DEPTH = 256;
 /** Nested @media Mermaid needs is 0. */
@@ -352,7 +353,7 @@ function cleanTree(root: Element): boolean {
  * element in the SVG namespace. It never throws.
  */
 export function sanitizeSvg(svg: string): string {
-  if (typeof svg !== "string" || svg.trim() === "" || svg.length > MAX_CHARS) return "";
+  if (typeof svg !== "string" || svg.trim() === "" || svg.length > MAX_SVG_CHARS) return "";
   if (/<!(?:DOCTYPE|ENTITY)/i.test(svg)) return "";
   try {
     const doc = new DOMParser().parseFromString(svg, "image/svg+xml");

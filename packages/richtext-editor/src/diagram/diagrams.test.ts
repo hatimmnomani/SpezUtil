@@ -83,6 +83,45 @@ describe("registerDiagrams", () => {
     expect(svgOf(editor)).toBe("");
   });
 
+  it("falls back to a non-empty message when the renderer rejects with an empty one", async () => {
+    setDiagramRenderer(async () => {
+      throw new Error("");
+    });
+    const { editor } = setup();
+    editor.update(
+      () => {
+        $getRoot().clear();
+        $insertDiagram("a");
+      },
+      { discrete: true },
+    );
+    await vi.waitFor(() => expect(errorOf(editor)).toBe("Diagram render failed"));
+    expect(svgOf(editor)).toBe("");
+  });
+
+  it("treats a synchronously throwing host renderer as a failed render and clears its in-flight token", async () => {
+    const renderer = vi.fn((_s: string): Promise<string> => {
+      throw new Error("sync boom");
+    });
+    setDiagramRenderer(renderer);
+    const { editor } = setup();
+    let key = "";
+    editor.update(
+      () => {
+        $getRoot().clear();
+        key = $insertDiagram("a");
+      },
+      { discrete: true },
+    );
+    await vi.waitFor(() => expect(errorOf(editor)).toBe("sync boom"));
+    expect(renderer).toHaveBeenCalledTimes(1);
+    // Same key + same source again: a stuck token would skip this render.
+    setDiagramRenderer(async (s) => svgFor(s));
+    editor.update(() => ($getNodeByKey(key) as DiagramNode).setSource("b"), { discrete: true });
+    editor.update(() => ($getNodeByKey(key) as DiagramNode).setSource("a"), { discrete: true });
+    await vi.waitFor(() => expect(svgOf(editor)).toContain("<text>a</text>"));
+  });
+
   it("ignores a stale render when the source changed meanwhile", async () => {
     let release!: () => void;
     const gate = new Promise<void>((r) => (release = r));

@@ -34,6 +34,13 @@ export interface DiagramHandlers {
 
 /** Shown when the renderer resolves but nothing survives sanitizing (no `<svg>` root, or an empty one). */
 const UNUSABLE_SVG_MESSAGE = "The diagram renderer returned no usable SVG";
+/** Shown for a rejection whose message is empty: an empty error would leave the node with no svg and no error, i.e. stuck. */
+const FALLBACK_ERROR_MESSAGE = "Diagram render failed";
+
+function renderErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  return message || FALLBACK_ERROR_MESSAGE;
+}
 
 /** Inserts at the selection (or appends to the root); returns the node key. */
 export function $insertDiagram(source: string, drawioKey: string | null = null): NodeKey {
@@ -69,7 +76,10 @@ export function registerDiagrams(editor: LexicalEditor, root: HTMLElement, handl
     const token = `${key}\u0000${source}`;
     if (inFlight.has(token)) return;
     inFlight.add(token);
-    getDiagramRenderer()(source)
+    // Called inside a promise chain so a host renderer that throws synchronously takes the rejection
+    // branch too, instead of escaping the mutation listener with its token stuck in `inFlight`.
+    Promise.resolve()
+      .then(() => getDiagramRenderer()(source))
       .then(
         (svg) =>
           apply(key, source, (node) => {
@@ -77,8 +87,7 @@ export function registerDiagrams(editor: LexicalEditor, root: HTMLElement, handl
             // An empty result would look "unrendered" to the mutation listener and loop; record it instead.
             if (node.getSvg() === "") node.setRenderError(UNUSABLE_SVG_MESSAGE);
           }),
-        (error: unknown) =>
-          apply(key, source, (node) => node.setRenderError(error instanceof Error ? error.message : String(error))),
+        (error: unknown) => apply(key, source, (node) => node.setRenderError(renderErrorMessage(error))),
       )
       .finally(() => inFlight.delete(token));
   };

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MAX_SVG_CHARS, sanitizeSvg } from "./svg-sanitize";
 import { DIAGRAM_ROOT_ID, withUniqueRootId } from "./svg-scope";
 
 const NS = 'xmlns="http://www.w3.org/2000/svg"';
@@ -45,5 +46,25 @@ describe("withUniqueRootId", () => {
     for (const bad of ["", "<div/>", "<svg", "<svg><rect></svg>"]) {
       expect(withUniqueRootId(bad)).toBe(bad);
     }
+  });
+
+  it("rejects input over the sanitizer's size cap before parsing it", () => {
+    const huge = `<svg ${NS}>${"a".repeat(MAX_SVG_CHARS)}</svg>`;
+    expect(withUniqueRootId(huge)).toBe("");
+    expect(sanitizeSvg(withUniqueRootId(huge))).toBe("");
+  });
+
+  it.each([
+    ["prefix declared on the root", `<svg ${NS} xmlns:svg="${NS.slice(7, -1)}" id="mermaid-1"><svg:script>a()</svg:script><svg:g><rect/></svg:g></svg>`],
+    ["prefix declared on the child", `<svg ${NS} id="mermaid-1"><svg:script xmlns:svg="${NS.slice(7, -1)}">a()</svg:script><g><rect/></g></svg>`],
+  ])("re-serialisation unprefixes <svg:script> (%s); the sanitizer then removes it by local name", (_name, stored) => {
+    // The node's cleaning pipeline is sanitizeSvg(withUniqueRootId(svg)); see diagram-node.ts cleanDiagramSvg.
+    const rescoped = withUniqueRootId(stored);
+    expect(rescoped).not.toContain("<svg:"); // neither the child nor a re-prefixed root
+    expect(rescoped).toMatch(/^<svg /);
+    const clean = sanitizeSvg(rescoped);
+    expect(clean).not.toMatch(/script|a\(\)/);
+    expect(clean).toContain("<rect");
+    expect(idOf(clean)).toMatch(DIAGRAM_ROOT_ID);
   });
 });
