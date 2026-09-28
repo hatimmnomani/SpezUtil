@@ -447,6 +447,13 @@ export const styles: string = `
 .spez-rte mark.spez-rte-comment[data-active] {
   background: var(--rte-comment-active-bg);
 }
+
+.spez-rte .spez-rte-diagram { margin: 0.75em 0; }
+/* overflow + contain: a diagram's root-svg transform or margin cannot paint over host content. */
+.spez-rte .spez-rte-diagram-figure { margin: 0; overflow: hidden; contain: paint; text-align: center; }
+.spez-rte .spez-rte-diagram-figure svg { max-width: 100%; height: auto; }
+.spez-rte .spez-rte-diagram-error { color: #c62828; font-size: 0.875em; }
+.spez-rte .spez-rte-diagram-pending { color: var(--rte-muted); }
 `;
 
 export function injectGlobalStyles(doc: Document = document): void {
