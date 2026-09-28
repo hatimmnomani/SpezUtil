@@ -54,6 +54,7 @@ import { openHijriDatePicker } from "./hijri-insert";
 import { getLocaleStrings, type EditorLocale, type LocaleStrings } from "./locale";
 import { ARABIC_FONT_FAMILY } from "./font-arabic";
 import { listLudFonts, ludFontForFamily } from "./lud-fonts";
+import { ADD_COMMENT_MARK_COMMAND } from "./comments/comments";
 
 export const ALL_TOOLBAR_GROUPS = [
   "history",
@@ -659,6 +660,12 @@ export function buildToolbar(
         break;
       }
       case "comment":
+        toolbar.append(
+          group(
+            name,
+            button("💬", t.comment, () => editor.dispatchCommand(ADD_COMMENT_MARK_COMMAND, undefined), refs, "comment"),
+          ),
+        );
         break;
       case "diagram":
         break;

@@ -43,7 +43,7 @@ function $removeMarkId(id: string): void {
 }
 
 /** Read-only editors may hold no Lexical selection; fall back to the DOM selection. */
-function $commentSelection(editor: LexicalEditor): RangeSelection | null {
+export function $commentSelection(editor: LexicalEditor): RangeSelection | null {
   const selection = $getSelection();
   if ($isRangeSelection(selection) && !selection.isCollapsed()) return selection;
   const dom = editor._window?.getSelection() ?? (typeof window !== "undefined" ? window.getSelection() : null);

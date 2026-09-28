@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { $createTextNode, $getRoot, type ElementNode, type TextNode } from "lexical";
+import { $createTextNode, $getRoot, $setSelection, type ElementNode, type TextNode } from "lexical";
 import { $createLudTextNode, $isLudTextNode } from "../nodes/lud-text-node";
 import { $createCommentMarkNode, $isCommentMarkNode } from "../nodes/comment-mark-node";
 import { flushSync, makeEditor, seedParagraph } from "../test-utils";
 import {
+  $commentSelection,
   ADD_COMMENT_MARK_COMMAND,
   FOCUS_COMMENT_MARK_COMMAND,
   REMOVE_COMMENT_MARK_COMMAND,
@@ -193,5 +194,37 @@ describe("comment commands", () => {
     expect(para.children[0].type).toBe("comment-mark");
     expect(para.children[0].ids).toEqual([B]);
     expect(editor.read(() => $getRoot().getTextContent())).toBe("hello world");
+  });
+
+  it("$commentSelection falls back to the DOM selection when Lexical holds none", () => {
+    const { editor, root } = makeEditor();
+    seedParagraph(editor, () => $createTextNode("hello world"));
+    flushSync(editor);
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const textNode = walker.nextNode() as Text;
+    const range = document.createRange();
+    range.setStart(textNode, 0);
+    range.setEnd(textNode, 5);
+    const domSel = window.getSelection()!;
+    domSel.removeAllRanges();
+    domSel.addRange(range);
+
+    let sawFallback = false;
+    let text: string | null = null;
+    editor.update(
+      () => {
+        // Drop any Lexical selection in the same update; $commentSelection must still
+        // find one by reading the DOM selection set up above.
+        $setSelection(null);
+        const fallback = $commentSelection(editor);
+        sawFallback = fallback !== null;
+        text = fallback?.getTextContent() ?? null;
+      },
+      { discrete: true },
+    );
+
+    expect(sawFallback).toBe(true);
+    expect(text).toBe("hello");
   });
 });

@@ -2,6 +2,15 @@ import { $createParagraphNode, $getRoot, type LexicalEditor } from "lexical";
 import { $canShowPlaceholder } from "@lexical/text";
 import type { HijriDate } from "@spezutil/hijri-core";
 import { createEditorInstance } from "./editor";
+import {
+  ADD_COMMENT_MARK_COMMAND,
+  FOCUS_COMMENT_MARK_COMMAND,
+  REMOVE_COMMENT_MARK_COMMAND,
+  registerComments,
+  type CommentClickDetail,
+  type CommentsController,
+} from "./comments/comments";
+import type { CommentRequestDetail } from "./comments/anchor";
 import { exportHTML, importHTML } from "./html";
 import { insertHijriDate } from "./hijri-insert";
 import { injectGlobalStyles } from "./styles";
@@ -60,6 +69,10 @@ export class SpezRichtext extends HTMLElement {
   #fontSizes: FontSizeOption[] | null = null;
   #unregisterStatus: (() => void) | null = null;
   #changeTimer: ReturnType<typeof setTimeout> | undefined;
+  #comments: CommentsController | null = null;
+  #highlightMarks: readonly string[] | null = null;
+  #activeMark: string | null = null;
+  #lastCommentRequest: CommentRequestDetail | null = null;
 
   /** Escape hatch for advanced consumers; throws before first connect. */
   get editor(): LexicalEditor {
@@ -167,6 +180,17 @@ export class SpezRichtext extends HTMLElement {
     this.#editor = editor;
     this.#disposeEditor = dispose;
 
+    this.#comments = registerComments(editor, editable, {
+      onRequested: (detail) => {
+        this.#lastCommentRequest = detail;
+        this.dispatchEvent(new CustomEvent<CommentRequestDetail>("comment-requested", { bubbles: true, composed: true, detail }));
+      },
+      onClicked: (detail) =>
+        this.dispatchEvent(new CustomEvent<CommentClickDetail>("comment-clicked", { bubbles: true, composed: true, detail })),
+    });
+    this.#comments.setHighlight(this.#highlightMarks);
+    this.#comments.setActive(this.#activeMark);
+
     this.#buildToolbar();
     this.append(shell);
 
@@ -213,6 +237,8 @@ export class SpezRichtext extends HTMLElement {
     this.#toolbar = null;
     this.#unregisterStatus?.();
     this.#unregisterStatus = null;
+    this.#comments?.dispose();
+    this.#comments = null;
     this.#disposeEditor?.();
     this.#disposeEditor = null;
     this.#editor = null;
@@ -267,6 +293,47 @@ export class SpezRichtext extends HTMLElement {
 
   setHTML(html: string): void {
     importHTML(this.editor, html);
+  }
+
+  /** Thread mark ids to highlight; null (default) highlights every mark. */
+  get highlightMarks(): readonly string[] | null {
+    return this.#highlightMarks;
+  }
+
+  set highlightMarks(ids: readonly string[] | null) {
+    this.#highlightMarks = ids === null ? null : ids.filter((id) => typeof id === "string");
+    this.#comments?.setHighlight(this.#highlightMarks);
+  }
+
+  get activeMark(): string | null {
+    return this.#activeMark;
+  }
+
+  set activeMark(id: string | null) {
+    this.#activeMark = id;
+    this.#comments?.setActive(id);
+  }
+
+  /**
+   * Wraps the current selection (or, in read-only mode, the DOM selection) in a comment mark.
+   * Fires `comment-requested` and returns its detail; null when the selection is empty,
+   * blank or longer than 1,000 characters.
+   */
+  addCommentMark(markId?: string): CommentRequestDetail | null {
+    this.#lastCommentRequest = null;
+    this.editor.dispatchCommand(ADD_COMMENT_MARK_COMMAND, markId === undefined ? undefined : { markId });
+    this.editor.update(() => {}, { discrete: true });
+    return this.#lastCommentRequest;
+  }
+
+  removeCommentMark(markId: string): void {
+    this.editor.dispatchCommand(REMOVE_COMMENT_MARK_COMMAND, markId);
+    this.editor.update(() => {}, { discrete: true });
+  }
+
+  focusCommentMark(markId: string): void {
+    this.#activeMark = markId;
+    this.editor.dispatchCommand(FOCUS_COMMENT_MARK_COMMAND, markId);
   }
 
   clear(): void {
