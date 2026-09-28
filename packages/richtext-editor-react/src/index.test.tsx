@@ -4,8 +4,8 @@ import * as React from "react";
 import { SpezRichtext, type FontOption, type FontSizeOption } from "./index";
 
 // Type-level parity with the Angular wrapper's public API: both re-export the toolbar option types.
-const _fontSizeOption: FontSizeOption = { label: "16", value: "16px" };
-const _fontOption: FontOption = { label: "Amiri", value: "Amiri" };
+const _fontSizeOption: FontSizeOption = { label: "16", size: "16px" };
+const _fontOption: FontOption = { label: "Amiri", family: "Amiri" };
 void _fontSizeOption;
 void _fontOption;
 
