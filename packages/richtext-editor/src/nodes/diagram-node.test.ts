@@ -2,7 +2,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { $getRoot } from "lexical";
 import { exportHTML, importHTML } from "../html";
 import { makeEditor } from "../test-utils";
-import { $createDiagramNode, $isDiagramNode, DiagramNode, type SerializedDiagramNode } from "./diagram-node";
+import {
+  $createDiagramNode,
+  $isDiagramNode,
+  DiagramNode,
+  MISSING_SOURCE_MESSAGE,
+  type SerializedDiagramNode,
+} from "./diagram-node";
 
 const SVG = '<svg xmlns="http://www.w3.org/2000/svg"><text>A</text></svg>';
 const ROOT_ID = /^spez-rte-mermaid-[0-9A-HJKMNP-TV-Z]{26}$/;
@@ -68,6 +74,22 @@ describe("DiagramNode", () => {
     const json = firstJson(editor);
     expect(json).toEqual({ type: "diagram", version: 1, source: "b", svg: "", drawioKey: null });
     expect(JSON.stringify(json)).not.toContain("boom");
+  });
+
+  it("setSource records MISSING_SOURCE_MESSAGE for a blank source instead of leaving it pending forever", () => {
+    const { editor } = seed(() => $createDiagramNode("a", SVG));
+    editor.update(() => ($getRoot().getFirstChild() as DiagramNode).setSource("   "), { discrete: true });
+    const node = editor.read(() => $getRoot().getFirstChild() as DiagramNode);
+    expect(editor.read(() => node.getSvg())).toBe("");
+    expect(editor.read(() => node.getRenderError())).toBe(MISSING_SOURCE_MESSAGE);
+  });
+
+  it("setSource clears the error again once a real source replaces the blank one", () => {
+    const { editor } = seed(() => $createDiagramNode("a", SVG));
+    editor.update(() => ($getRoot().getFirstChild() as DiagramNode).setSource("   "), { discrete: true });
+    editor.update(() => ($getRoot().getFirstChild() as DiagramNode).setSource("graph TD;A"), { discrete: true });
+    const node = editor.read(() => $getRoot().getFirstChild() as DiagramNode);
+    expect(editor.read(() => node.getRenderError())).toBe("");
   });
 
   it("loads JSON without a source as an empty source with a render error, never a pending spinner (final review M11)", () => {

@@ -143,6 +143,52 @@ describe("lud sync", () => {
     expect(describeNodes(editor)).toEqual([{ type: "lud-text", text: "x", ludFont: "kanz-al-lulu" }]);
   });
 
+  describe("retagging an opaque (unrecognized-profile) node", () => {
+    it("retags to the known font when the user picks an explicit, known LuD family", () => {
+      const { editor } = makeEditor();
+      seedParagraph(editor, () => $createLudTextNode("x", "kanz-al-lulu"));
+      editor.update(
+        () => {
+          const node = ($getRoot().getFirstChild() as ElementNode).getFirstChild() as LudTextNode;
+          node.setStyle('font-family: "AL-KANZ";');
+        },
+        { discrete: true },
+      );
+      expect(describeNodes(editor)).toEqual([{ type: "lud-text", text: "x", ludFont: "al-kanz" }]);
+    });
+
+    it("stays opaque (not demoted, not retagged) when a non-LuD family is applied", () => {
+      const { editor } = makeEditor();
+      seedParagraph(editor, () => $createLudTextNode("x", "kanz-al-lulu"));
+      editor.update(
+        () => {
+          const node = ($getRoot().getFirstChild() as ElementNode).getFirstChild() as LudTextNode;
+          node.setStyle("font-family: Arial;");
+        },
+        { discrete: true },
+      );
+      expect(describeNodes(editor)).toEqual([{ type: "lud-text", text: "x", ludFont: "kanz-al-lulu" }]);
+    });
+
+    it("stays untouched when its style is empty or unchanged", () => {
+      const { editor } = makeEditor();
+      const style = 'font-family: "Kanz al-Lulu";';
+      seedParagraph(editor, () => $createLudTextNode("x", "kanz-al-lulu").setStyle(style));
+      editor.update(
+        () => {
+          const node = ($getRoot().getFirstChild() as ElementNode).getFirstChild() as LudTextNode;
+          node.markDirty();
+        },
+        { discrete: true },
+      );
+      expect(describeNodes(editor)).toEqual([{ type: "lud-text", text: "x", ludFont: "kanz-al-lulu" }]);
+      editor.getEditorState().read(() => {
+        const node = (($getRoot().getFirstChild() as ElementNode).getFirstChild()) as LudTextNode;
+        expect(node.getStyle()).toBe(style);
+      });
+    });
+  });
+
   it("removes an emptied lud-text node without leaving a dangling selection", () => {
     const { editor } = makeEditor();
     seedParagraph(editor, () => $createLudTextNode("x", "al-kanz"));

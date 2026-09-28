@@ -75,7 +75,10 @@ export class DiagramNode extends DecoratorNode<HTMLElement> {
   /**
    * A changed source invalidates the rendered svg; `registerDiagrams` re-renders. The render error
    * is cleared even when the source is unchanged, so re-submitting the same text after a failed
-   * render (a flaky Mermaid chunk load, a renderer outage) is a retry rather than a no-op.
+   * render (a flaky Mermaid chunk load, a renderer outage) is a retry rather than a no-op. A blank
+   * source is never rendered (the mutation listener skips it), so it records `MISSING_SOURCE_MESSAGE`
+   * instead of leaving both `__svg` and `__renderError` empty — the same state `updateFromJSON`
+   * records — so a node edited down to a blank source does not get stuck on the "…" placeholder.
    */
   setSource(source: string): this {
     const self = this.getWritable();
@@ -83,7 +86,7 @@ export class DiagramNode extends DecoratorNode<HTMLElement> {
       self.__source = source;
       self.__svg = "";
     }
-    self.__renderError = "";
+    self.__renderError = source.trim() === "" && self.__svg === "" ? MISSING_SOURCE_MESSAGE : "";
     return self;
   }
   /** Stores the sanitized svg (may be `""` if nothing usable survived). */

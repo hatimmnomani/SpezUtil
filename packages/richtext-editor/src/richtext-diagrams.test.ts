@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import "./index";
 import { setDiagramRenderer } from "./index";
+import { MISSING_SOURCE_MESSAGE } from "./nodes/diagram-node";
 import type { SpezRichtext } from "./richtext-editor";
 
 function create(attrs: Record<string, string> = {}): SpezRichtext {
@@ -33,6 +34,22 @@ describe("<spez-richtext> diagrams", () => {
     await vi.waitFor(() => expect(el.getJSON()).toContain("<text>b</text>"));
     expect(el.getJSON()).toContain('"drawioKey":"x.drawio"');
     expect(el.updateDiagram("nope", { source: "c" })).toBe(false);
+  });
+
+  it("insertDiagram with a blank source records an error instead of a permanent pending placeholder", () => {
+    const el = create();
+    el.insertDiagram("");
+    expect(el.querySelector(".spez-rte-diagram-pending")).toBeNull();
+    expect(el.querySelector(".spez-rte-diagram-error")!.textContent).toBe(MISSING_SOURCE_MESSAGE);
+  });
+
+  it("updateDiagram to a blank source records an error instead of a permanent pending placeholder", async () => {
+    const el = create();
+    const key = el.insertDiagram("a");
+    await vi.waitFor(() => expect(el.getJSON()).toContain("<text>a</text>"));
+    expect(el.updateDiagram(key, { source: "   " })).toBe(true);
+    expect(el.querySelector(".spez-rte-diagram-pending")).toBeNull();
+    expect(el.querySelector(".spez-rte-diagram-error")!.textContent).toBe(MISSING_SOURCE_MESSAGE);
   });
 
   it("toolbar button is opt-in, inserts the default diagram and asks the host to edit it", () => {

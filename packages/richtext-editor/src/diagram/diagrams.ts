@@ -48,9 +48,14 @@ function renderErrorMessage(error: unknown): string {
   return message || FALLBACK_ERROR_MESSAGE;
 }
 
-/** Inserts at the selection (or appends to the root); returns the node key. */
+/**
+ * Inserts at the selection (or appends to the root); returns the node key. Routed through
+ * `setSource` (a no-op on the source itself, since the constructor already stored it) so a blank
+ * source records `MISSING_SOURCE_MESSAGE` instead of leaving the node stuck on the pending "…"
+ * placeholder forever — the mutation listener never renders a blank source.
+ */
 export function $insertDiagram(source: string, drawioKey: string | null = null): NodeKey {
-  const node = $createDiagramNode(source, "", drawioKey);
+  const node = $createDiagramNode(source, "", drawioKey).setSource(source);
   if ($isRangeSelection($getSelection())) $insertNodes([node]);
   else $getRoot().append(node);
   return node.getKey();

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { $getNodeByKey, $getRoot } from "lexical";
-import { $isDiagramNode, type DiagramNode } from "../nodes/diagram-node";
+import { $isDiagramNode, MISSING_SOURCE_MESSAGE, type DiagramNode } from "../nodes/diagram-node";
 import { flushSync, makeEditor } from "../test-utils";
 import { setDiagramRenderer } from "./renderer";
 import { $insertDiagram, DEFAULT_DIAGRAM_SOURCE, INSERT_DIAGRAM_COMMAND, registerDiagrams } from "./diagrams";
@@ -242,6 +242,40 @@ describe("registerDiagrams", () => {
     editor.update(() => $getRoot().clear(), { discrete: true });
     await tick();
     expect(renderer).not.toHaveBeenCalled();
+  });
+
+  it("records MISSING_SOURCE_MESSAGE for a blank $insertDiagram source instead of leaving it pending forever", async () => {
+    const renderer = vi.fn(async (s: string) => svgFor(s));
+    setDiagramRenderer(renderer);
+    const { editor, root } = setup();
+    editor.update(
+      () => {
+        $getRoot().clear();
+        $insertDiagram("   ");
+      },
+      { discrete: true },
+    );
+    await tick();
+    expect(renderer).not.toHaveBeenCalled();
+    expect(errorOf(editor)).toBe(MISSING_SOURCE_MESSAGE);
+    expect(root.querySelectorAll(".spez-rte-diagram-pending")).toHaveLength(0);
+  });
+
+  it("records MISSING_SOURCE_MESSAGE for an empty-string $insertDiagram source too", async () => {
+    const renderer = vi.fn(async (s: string) => svgFor(s));
+    setDiagramRenderer(renderer);
+    const { editor, root } = setup();
+    editor.update(
+      () => {
+        $getRoot().clear();
+        $insertDiagram("");
+      },
+      { discrete: true },
+    );
+    await tick();
+    expect(renderer).not.toHaveBeenCalled();
+    expect(errorOf(editor)).toBe(MISSING_SOURCE_MESSAGE);
+    expect(root.querySelectorAll(".spez-rte-diagram-pending")).toHaveLength(0);
   });
 
   it("stops applying results after dispose", async () => {
