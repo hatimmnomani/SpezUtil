@@ -1,0 +1,17 @@
+{
+  "id": "kanz-al-marjaan",
+  "displayName": "Kanz al-Marjaan",
+  "status": "draft",
+  "fontFamily": "kanz-al-marjaan",
+  "fontFiles": { "ttf": "Kanz-al-Marjaan.ttf" },
+  "sequences": [
+    { "typed": "ثث", "unicode": "پ", "confirmed": false, "note": "meaning assumed from Al Kanz" },
+    { "typed": "حح", "unicode": "چ", "confirmed": false, "note": "meaning assumed from Al Kanz" },
+    { "typed": "ضض", "unicode": "ڑ", "confirmed": false, "note": "meaning assumed from Al Kanz" },
+    { "typed": "كك", "unicode": "گ", "confirmed": false, "note": "meaning assumed from Al Kanz" },
+    { "typed": "}", "unicode": "ں", "confirmed": false, "note": "brace draws as noon ghunna in this font too; meaning assumed" }
+  ],
+  "missingGlyphs": ["ژ"],
+  "preserve": ["ـــــ"],
+  "fallbackFont": "Noto Naskh Arabic"
+}

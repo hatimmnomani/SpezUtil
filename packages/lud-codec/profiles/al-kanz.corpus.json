@@ -1,0 +1,24 @@
+{
+  "profile": "al-kanz",
+  "allowDraft": false,
+  "cases": [
+    { "name": "peh", "typed": "ثثر", "unicode": "پر", "display": "پر", "html": "پر", "confirmed": true },
+    { "name": "gaf", "typed": "ككهر", "unicode": "گهر", "display": "گهر", "html": "گهر", "confirmed": true },
+    { "name": "yeh-barree-final", "typed": "نسس", "unicode": "نے", "display": "نسس", "html": "نسس", "confirmed": true },
+    { "name": "noon-ghunna", "typed": "ما}", "unicode": "ماں", "display": "ما}", "html": "ما}", "confirmed": true },
+    { "name": "tteh", "typed": "سوطط", "unicode": "سوٹ", "display": "سوطط", "html": "سوطط", "confirmed": true },
+    { "name": "heh-lossy", "typed": "تفظظيمهم", "unicode": "تفهيمهم", "display": "تفهيمهم", "html": "تفهيمهم", "confirmed": true },
+    { "name": "ddal", "typed": "صصا", "unicode": "ڈا", "display": "صصا", "html": "صصا", "confirmed": true },
+    { "name": "rreh", "typed": "ضض", "unicode": "ڑ", "display": "ضض", "html": "ضض", "confirmed": true },
+    { "name": "tcheh", "typed": "حح", "unicode": "چ", "display": "چ", "html": "چ", "confirmed": true },
+    { "name": "medial-seen-seen", "typed": "سسب", "unicode": "سسب", "display": "سسب", "html": "سسب", "confirmed": true },
+    { "name": "final-with-fatha", "typed": "نسسَ", "unicode": "نےَ", "display": "نسسَ", "html": "نسسَ", "confirmed": true },
+    { "name": "brace-after-latin", "typed": "a}", "unicode": "a}", "display": "a}", "html": "a}", "confirmed": true },
+    { "name": "tatweel-run", "typed": "ـــــ", "unicode": "ـــــ", "display": "ـــــ", "html": "ـــــ", "confirmed": true },
+    { "name": "triple-theh", "typed": "ثثث", "unicode": "پث", "display": "پث", "html": "پث", "confirmed": true },
+    { "name": "heh-goal-fallback", "typed": "ہم", "unicode": "ہم", "display": "ہم", "html": "<span class=\"lud-fallback\" style=\"font-family:&quot;Noto Naskh Arabic&quot;\">ہ</span>م", "confirmed": true },
+    { "name": "yeh-barree-not-final", "typed": "ےب", "unicode": "ےب", "display": "ےب", "html": "<span class=\"lud-fallback\" style=\"font-family:&quot;Noto Naskh Arabic&quot;\">ے</span>ب", "confirmed": true },
+    { "name": "handbook-intro-line", "typed": "هر وقت وحي ني روشني ما} ديكهيس", "unicode": "هر وقت وحي ني روشني ماں ديكهيس", "display": "هر وقت وحي ني روشني ما} ديكهيس", "html": "هر وقت وحي ني روشني ما} ديكهيس", "confirmed": true },
+    { "name": "empty", "typed": "", "unicode": "", "display": "", "html": "", "confirmed": true }
+  ]
+}

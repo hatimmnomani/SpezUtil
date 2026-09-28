@@ -1,0 +1,21 @@
+{
+  "id": "al-kanz",
+  "displayName": "Al Kanz",
+  "status": "confirmed",
+  "fontFamily": "AL-KANZ",
+  "fontFiles": { "woff2": "AL-KANZ.woff2", "ttf": "AL-KANZ.ttf" },
+  "sequences": [
+    { "typed": "ثث", "unicode": "پ", "confirmed": true },
+    { "typed": "كك", "unicode": "گ", "confirmed": true },
+    { "typed": "طط", "unicode": "ٹ", "confirmed": true },
+    { "typed": "سس", "unicode": "ے", "position": "final", "confirmed": true },
+    { "typed": "}", "unicode": "ں", "confirmed": true },
+    { "typed": "ظظ", "unicode": "ه", "confirmed": true },
+    { "typed": "حح", "unicode": "چ", "confirmed": true },
+    { "typed": "صص", "unicode": "ڈ", "confirmed": true },
+    { "typed": "ضض", "unicode": "ڑ", "confirmed": true }
+  ],
+  "missingGlyphs": ["ٹ", "ڈ", "ڑ", "ں", "ے", "ہ", "ھ", "ۓ"],
+  "preserve": ["ـــــ"],
+  "fallbackFont": "Noto Naskh Arabic"
+}

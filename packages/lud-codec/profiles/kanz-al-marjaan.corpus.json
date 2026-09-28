@@ -1,0 +1,10 @@
+{
+  "profile": "kanz-al-marjaan",
+  "allowDraft": true,
+  "cases": [
+    { "name": "peh", "typed": "ثثر", "unicode": "پر", "display": "پر", "html": "پر", "confirmed": false },
+    { "name": "tah-tah-not-a-sequence", "typed": "طط", "unicode": "طط", "display": "طط", "html": "طط", "confirmed": false },
+    { "name": "yeh-barree-native", "typed": "نے", "unicode": "نے", "display": "نے", "html": "نے", "confirmed": false },
+    { "name": "jeh-fallback", "typed": "ژ", "unicode": "ژ", "display": "ژ", "html": "<span class=\"lud-fallback\" style=\"font-family:&quot;Noto Naskh Arabic&quot;\">ژ</span>", "confirmed": false }
+  ]
+}
