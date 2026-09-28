@@ -54,6 +54,40 @@ describe("LudTextNode", () => {
     });
   });
 
+  it("updateFromJSON sets the profile family when the JSON carries no font-family (final review I1)", () => {
+    const { editor } = makeEditor();
+    seedParagraph(editor, () => $createLudTextNode("x", "al-kanz"));
+    for (const [style, expected] of [
+      ["", 'font-family: "AL-KANZ", "Noto Naskh Arabic";'],
+      ["color: red;", 'font-family: "AL-KANZ", "Noto Naskh Arabic"; color: red;'],
+      ['font-family: "AL-KANZ", "Noto Naskh Arabic";', 'font-family: "AL-KANZ", "Noto Naskh Arabic";'],
+      // A family that maps to another profile is kept verbatim here; lud-sync re-tags the node from it.
+      ['font-family: "AL-FATEMI-Lisaan-ud-Dawat";', 'font-family: "AL-FATEMI-Lisaan-ud-Dawat";'],
+    ]) {
+      const state = editor.getEditorState().toJSON() as any;
+      state.root.children[0].children[0].style = style;
+      editor.setEditorState(editor.parseEditorState(JSON.stringify(state)));
+      editor.getEditorState().read(() => {
+        const node = firstParagraphChildren(editor)[0] as LudTextNode;
+        expect($isLudTextNode(node)).toBe(true);
+        expect(node.getStyle()).toBe(expected);
+      });
+    }
+  });
+
+  it("updateFromJSON writes no family for a profile this build does not know", () => {
+    const { editor } = makeEditor();
+    seedParagraph(editor, () => $createLudTextNode("x", "al-kanz"));
+    const state = editor.getEditorState().toJSON() as any;
+    Object.assign(state.root.children[0].children[0], { ludFont: "kanz-al-lulu", style: "" });
+    editor.setEditorState(editor.parseEditorState(JSON.stringify(state)));
+    editor.getEditorState().read(() => {
+      const node = firstParagraphChildren(editor)[0] as LudTextNode;
+      expect(node.getLudFont()).toBe("kanz-al-lulu");
+      expect(node.getStyle()).toBe("");
+    });
+  });
+
   it("renders in the profile font and tags the DOM with data-lud-font", () => {
     const { editor, root } = makeEditor();
     seedParagraph(editor, () => $createLudTextNode(TYPED, "al-kanz"));

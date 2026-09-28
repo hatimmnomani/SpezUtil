@@ -1,3 +1,4 @@
+import { getStyleObjectFromCSS } from "@lexical/selection";
 import { DEFAULT_FALLBACK_FONT, getProfile, listProfiles } from "@spezutil/lud-codec";
 
 /** ludFont value for text typed in the Unicode fallback font (not a codec profile). */
@@ -56,6 +57,26 @@ export function listLudFonts(): LudFontOption[] {
     draft: false,
   });
   return fonts;
+}
+
+/**
+ * True for `unicode` and for every registered profile. A valid id this build has no profile for
+ * (a future or renamed profile, or one registered after the document loaded) is opaque: it is
+ * stored and round-tripped, but no family is derived for it and it is never re-typed.
+ */
+export function isKnownLudFont(id: string): boolean {
+  return id === UNICODE_LUD_FONT || getProfile(id) !== undefined;
+}
+
+/** The `font-family` value in an inline style, or "" when it has none. */
+export function fontFamilyIn(style: string): string {
+  return getStyleObjectFromCSS(style)["font-family"] ?? "";
+}
+
+/** `style` with `font-family: <family>;` in front; every other declaration is kept verbatim. */
+export function withFontFamily(style: string, family: string): string {
+  const rest = style.trim();
+  return rest === "" ? `font-family: ${family};` : `font-family: ${family}; ${rest}`;
 }
 
 export function familyForLudFont(id: string): string {

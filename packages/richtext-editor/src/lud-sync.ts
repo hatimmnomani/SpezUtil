@@ -1,11 +1,10 @@
 import { $createTextNode, TextNode, type LexicalEditor } from "lexical";
-import { getStyleObjectFromCSS } from "@lexical/selection";
 import { mergeRegister } from "@lexical/utils";
-import { familyForLudFont, ludFontForFamily, sameFamily } from "./lud-fonts";
+import { familyForLudFont, fontFamilyIn, isKnownLudFont, ludFontForFamily, sameFamily } from "./lud-fonts";
 import { $createLudTextNode, LudTextNode } from "./nodes/lud-text-node";
 
 function fontFamilyOf(node: TextNode): string {
-  return getStyleObjectFromCSS(node.getStyle())["font-family"] ?? "";
+  return fontFamilyIn(node.getStyle());
 }
 
 export function registerLudSync(editor: LexicalEditor): () => void {
@@ -21,13 +20,21 @@ export function registerLudSync(editor: LexicalEditor): () => void {
       // byte-identical to node's, so the caret offset survives untouched.
       node.replace(lud);
     }),
+    // `ludFont` is the stored truth; `style.font-family` is the user-facing copy of it, and the
+    // user edits only the copy. A node whose profile this build does not know is opaque and never
+    // touched (`isKnownLudFont`): re-typing it from a family that maps to nothing would lose the
+    // tag. A stored node with no family at all never reaches here with one missing, because
+    // `LudTextNode.updateFromJSON` restores it on load, so an empty family here means the user
+    // cleared the font (the picker's "None") and the node is demoted like any other unmapped family.
     editor.registerNodeTransform(LudTextNode, (node) => {
       if (node.getTextContent() === "") {
         node.remove();
         return;
       }
+      const current = node.getLudFont();
+      if (!isKnownLudFont(current)) return;
       const family = fontFamilyOf(node);
-      if (sameFamily(family, familyForLudFont(node.getLudFont()))) return;
+      if (sameFamily(family, familyForLudFont(current))) return;
       const ludFont = ludFontForFamily(family);
       if (ludFont !== null) {
         node.setLudFont(ludFont);

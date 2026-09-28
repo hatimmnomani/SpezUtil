@@ -11,10 +11,37 @@ import { $patchStyleText } from "@lexical/selection";
 import { importHTML } from "./html";
 import { $createLudTextNode, $isLudTextNode, type LudTextNode } from "./nodes/lud-text-node";
 import { firstParagraphChildren, makeEditor, seedParagraph } from "./test-utils";
+import "./index";
+import type { SpezRichtext } from "./richtext-editor";
 
 beforeEach(() => {
   document.body.innerHTML = "";
 });
+
+/** Serialised paragraph children, the shape a stored document (or the backend) hands `parseEditorState`. */
+function documentWith(children: object[]): string {
+  return JSON.stringify({
+    root: {
+      type: "root", version: 1, direction: null, format: "", indent: 0,
+      children: [{ type: "paragraph", version: 1, direction: null, format: "", indent: 0, children }],
+    },
+  });
+}
+
+const storedLud = (ludFont: string, style: string, text = "ككتاب") => ({
+  type: "lud-text", version: 1, ludFont, text, detail: 0, format: 0, mode: "normal", style,
+});
+
+/** Loads a stored document and then dirties every leaf, as the first keystroke after load would. */
+function loadAndTouch(editor: ReturnType<typeof makeEditor>["editor"], json: string): void {
+  editor.setEditorState(editor.parseEditorState(json));
+  editor.update(
+    () => {
+      for (const node of ($getRoot().getFirstChild() as ElementNode).getChildren()) node.markDirty();
+    },
+    { discrete: true },
+  );
+}
 
 function describeNodes(editor: ReturnType<typeof makeEditor>["editor"]) {
   return editor.getEditorState().read(() =>
@@ -135,6 +162,83 @@ describe("lud sync", () => {
       const selection = $getSelection();
       if (!$isRangeSelection(selection)) throw new Error("expected range selection");
       expect(selection.anchor.getNode().isAttached()).toBe(true);
+    });
+  });
+
+  describe("stored documents (final review I1)", () => {
+    const styleOf = (editor: ReturnType<typeof makeEditor>["editor"]) =>
+      editor.getEditorState().read(() => (firstParagraphChildren(editor)[0] as LudTextNode).getStyle());
+
+    it("leaves a stored node whose profile this build does not know untouched", () => {
+      const { editor } = makeEditor();
+      const style = 'font-family: "Kanz al-Lulu", "Noto Naskh Arabic";';
+      loadAndTouch(editor, documentWith([storedLud("kanz-al-lulu", style)]));
+      expect(describeNodes(editor)).toEqual([{ type: "lud-text", text: "ككتاب", ludFont: "kanz-al-lulu" }]);
+      expect(styleOf(editor)).toBe(style);
+    });
+
+    it("leaves an unknown profile with no style untouched too (no fallback family is written)", () => {
+      const { editor } = makeEditor();
+      loadAndTouch(editor, documentWith([storedLud("kanz-al-lulu", "")]));
+      expect(describeNodes(editor)).toEqual([{ type: "lud-text", text: "ككتاب", ludFont: "kanz-al-lulu" }]);
+      expect(styleOf(editor)).toBe("");
+    });
+
+    it("restores the profile family for a stored node with an empty style instead of demoting it", () => {
+      const { editor } = makeEditor();
+      loadAndTouch(editor, documentWith([storedLud("al-kanz", "")]));
+      expect(describeNodes(editor)).toEqual([{ type: "lud-text", text: "ككتاب", ludFont: "al-kanz" }]);
+      expect(styleOf(editor)).toBe('font-family: "AL-KANZ", "Noto Naskh Arabic";');
+    });
+
+    it("restores the fallback family for stored unicode text with an empty style", () => {
+      const { editor } = makeEditor();
+      loadAndTouch(editor, documentWith([storedLud("unicode", "")]));
+      expect(describeNodes(editor)).toEqual([{ type: "lud-text", text: "ككتاب", ludFont: "unicode" }]);
+      expect(styleOf(editor)).toBe('font-family: "Noto Naskh Arabic";');
+    });
+
+    it("keeps other style properties when it restores the family", () => {
+      const { editor } = makeEditor();
+      loadAndTouch(editor, documentWith([storedLud("al-kanz", "color: red;")]));
+      expect(describeNodes(editor)).toEqual([{ type: "lud-text", text: "ككتاب", ludFont: "al-kanz" }]);
+      expect(styleOf(editor)).toContain('font-family: "AL-KANZ", "Noto Naskh Arabic";');
+      expect(styleOf(editor)).toContain("color: red;");
+    });
+
+    it("keeps a stored node whose style already carries its profile family (control)", () => {
+      const { editor } = makeEditor();
+      loadAndTouch(editor, documentWith([storedLud("al-kanz", 'font-family: "AL-KANZ", "Noto Naskh Arabic";')]));
+      expect(describeNodes(editor)).toEqual([{ type: "lud-text", text: "ككتاب", ludFont: "al-kanz" }]);
+    });
+
+    it("still demotes a known profile whose family the user replaced with a non-LuD font", () => {
+      const { editor } = makeEditor();
+      loadAndTouch(editor, documentWith([storedLud("al-kanz", "font-family: Arial;")]));
+      expect(describeNodes(editor)).toEqual([{ type: "text", text: "ككتاب", ludFont: null }]);
+    });
+
+    it("survives the element's value setter and the next edit (setValue → edit → getJSON)", () => {
+      const el = document.createElement("spez-richtext") as SpezRichtext;
+      document.body.appendChild(el);
+      el.value = documentWith([storedLud("kanz-al-lulu", 'font-family: "Kanz al-Lulu";'), storedLud("al-kanz", "")]);
+      // A keystroke inside the first node: the caret's style mirrors the node's, as it does in the browser.
+      el.editor.update(
+        () => {
+          const first = ($getRoot().getFirstChild() as ElementNode).getFirstChild() as LudTextNode;
+          const selection = first.select(2, 2);
+          selection.style = first.getStyle();
+          selection.insertText("x");
+        },
+        { discrete: true },
+      );
+      const children = JSON.parse(el.getJSON()).root.children[0].children as Array<Record<string, unknown>>;
+      expect(children.map((c) => [c.type, c.ludFont])).toEqual([
+        ["lud-text", "kanz-al-lulu"],
+        ["lud-text", "al-kanz"],
+      ]);
+      expect(children[0]!.text).toBe("ككxتاب");
+      expect(children[1]!.style).toBe('font-family: "AL-KANZ", "Noto Naskh Arabic";');
     });
   });
 });

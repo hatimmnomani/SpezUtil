@@ -13,7 +13,7 @@ import {
   type Spread,
   type TextFormatType,
 } from "lexical";
-import { familyForLudFont, normalizeLudFontId } from "../lud-fonts";
+import { familyForLudFont, fontFamilyIn, isKnownLudFont, normalizeLudFontId, withFontFamily } from "../lud-fonts";
 
 export type SerializedLudTextNode = Spread<{ ludFont: string }, SerializedTextNode>;
 
@@ -108,12 +108,26 @@ export class LudTextNode extends TextNode {
     return { element };
   }
 
+  /** No style is pre-computed here: `updateFromJSON` derives the family only when the JSON has none. */
   static importJSON(serializedNode: SerializedLudTextNode): LudTextNode {
-    return $createLudTextNode(serializedNode.text, serializedNode.ludFont).updateFromJSON(serializedNode);
+    return $applyNodeReplacement(new LudTextNode(serializedNode.text, serializedNode.ludFont)).updateFromJSON(
+      serializedNode,
+    );
   }
 
+  /**
+   * A stored node may carry no `font-family` (the backend writes the minimal shape, and hand-edited
+   * JSON drops the redundant style): the profile family is restored so the text renders in its font
+   * and lud-sync sees a family that agrees with `ludFont`. A family the JSON does carry is kept as
+   * is, and nothing is written for a profile this build does not know (see `isKnownLudFont`).
+   */
   updateFromJSON(serializedNode: LexicalUpdateJSON<SerializedLudTextNode>): this {
-    return super.updateFromJSON(serializedNode).setLudFont(serializedNode.ludFont);
+    const self = super.updateFromJSON(serializedNode).setLudFont(serializedNode.ludFont);
+    const ludFont = self.getLudFont();
+    if (fontFamilyIn(self.getStyle()) === "" && isKnownLudFont(ludFont)) {
+      self.setStyle(withFontFamily(self.getStyle(), familyForLudFont(ludFont)));
+    }
+    return self;
   }
 
   exportJSON(): SerializedLudTextNode {
