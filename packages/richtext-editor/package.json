@@ -28,7 +28,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "contract"
   ],
   "scripts": {
     "build": "tsup",
