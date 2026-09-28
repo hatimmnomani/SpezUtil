@@ -40,6 +40,19 @@ describe("CommentMarkNode", () => {
     expect(again.root.children[0].children[0]).toMatchObject({ type: "comment-mark", ids: [A], format: "", indent: 0 });
   });
 
+  it("drops non-ULID ids from JSON, matching importDOM (final review M9)", () => {
+    const { editor } = makeEditor();
+    seedParagraph(editor, () => $createTextNode("attend daily"));
+    const state = editor.getEditorState().toJSON() as any;
+    const text = state.root.children[0].children[0];
+    state.root.children[0].children = [
+      { type: "comment-mark", version: 1, ids: ["bad", 42, A, "01ARZ3NDEKTSV4RRFFQ69G5FAI", B], children: [text] },
+    ];
+    editor.setEditorState(editor.parseEditorState(JSON.stringify(state)));
+    const again = editor.getEditorState().toJSON() as any;
+    expect(again.root.children[0].children[0]).toMatchObject({ type: "comment-mark", ids: [A, B] });
+  });
+
   it("renders a highlightable <mark> carrying the thread ids", () => {
     const { editor, root } = makeEditor();
     seedParagraph(editor, () => $createCommentMarkNode([A, B]).append($createTextNode("x")));

@@ -55,7 +55,9 @@ export class CommentMarkNode extends MarkNode {
       format: serializedNode.format ?? "",
       indent: serializedNode.indent ?? 0,
       direction: serializedNode.direction ?? null,
-      ids: (serializedNode.ids ?? []).filter((id) => typeof id === "string"),
+      // Same rule as importDOM's `data-thread-ids`: a non-ULID id is dropped (the backend rejects it
+      // with `mark_id_invalid` anyway); a mark left with no ids is unwrapped by the comments transform.
+      ids: (serializedNode.ids ?? []).filter((id) => typeof id === "string" && isMarkId(id)),
     });
   }
 
