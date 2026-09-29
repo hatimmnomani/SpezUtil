@@ -1,0 +1,34 @@
+name: Visual baselines
+
+# Manually dispatched. Regenerates the Playwright screenshot baselines inside the same container the
+# CI `visual` job uses (see apps/storybook/tests/visual/README.md — baselines are never generated on a
+# developer machine) and uploads them as an artifact for review. Nothing is committed by this job:
+# download the artifact, review the PNGs, and commit them under
+# apps/storybook/tests/visual/editorial.spec.ts-snapshots/.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    # Must stay identical to the CI `visual` job's image and the @playwright/test devDependency.
+    container: mcr.microsoft.com/playwright:v1.63.0-jammy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build --filter @spezutil/storybook...
+      - run: pnpm --filter @spezutil/storybook test:visual:update
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines
+          path: apps/storybook/tests/visual/*-snapshots/
+          retention-days: 7
