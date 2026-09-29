@@ -1628,6 +1628,19 @@ export class HijriCalendarElement extends HTMLElement {
     // must stay byte-for-byte what it was before this phase).
     const colTrack = this._size === "wide" ? "1fr" : "minmax(var(--hcal-column-min-width), 1fr)";
     const cols = `var(--hcal-gutter-width) repeat(${dayCount}, ${colTrack})`;
+    // The rows below are flex items of `part="scroll"`, so without a floor they are sized to
+    // its *client* width, not to the sum of the track minimums above: the grid tracks then
+    // overflow their own row box. `.tg-head` (overflow visible) still paints its cells past the
+    // box, but `.tg-body`'s `overflow-x: clip` cuts its columns off at the client width, so once
+    // `part="scroll"` scrolls, the body stops short of the head (and the sticky corner/all-day
+    // label lose their pin once the offset passes the too-narrow row box). Giving every row the
+    // same explicit `min-width` makes each row box as wide as its tracks, i.e. as wide as the
+    // scroll width. `wide` keeps `1fr` tracks that never overflow, so it gets no floor (Global
+    // Constraint 1: the `wide` render stays byte-for-byte unchanged).
+    const rowMin =
+      this._size === "wide"
+        ? ""
+        : `;min-width:calc(var(--hcal-gutter-width) + ${dayCount} * var(--hcal-column-min-width))`;
     const slotHeightVar = `--_slot-h:calc(var(--hcal-hour-height) * ${slotMinutes} / 60)`;
 
     const showBanner = dayCount === 1 && this.dayHeader === "banner";
@@ -1751,14 +1764,14 @@ export class HijriCalendarElement extends HTMLElement {
       .join("");
 
     const alldayHtml = showAllDayRow
-      ? `<div class="tg-allday" style="grid-template-columns:${cols}">
+      ? `<div class="tg-allday" style="grid-template-columns:${cols}${rowMin}">
         <div class="tg-allday-label" part="allday-label">${escapeHtml(this.loc.allDayLabel)}</div>${allDayCols}
       </div>`
       : "";
 
     const tgHead = showBanner
       ? this.dayBannerHtml(model.columns[0]!)
-      : `<div class="tg-head" style="grid-template-columns:${cols}"><div></div>${heads}</div>`;
+      : `<div class="tg-head" style="grid-template-columns:${cols}${rowMin}"><div></div>${heads}</div>`;
 
     // §5.9 (task 5): `.tg-head`, `.tg-allday` (when present) and `.tg-body` share one
     // `part="scroll"` horizontal-scroll container at every band — at `wide` the unconstrained
@@ -1771,7 +1784,7 @@ export class HijriCalendarElement extends HTMLElement {
       <div part="scroll">
         ${tgHead}
         ${alldayHtml}
-        <div class="tg-body" style="grid-template-columns:${cols};${slotHeightVar}">
+        <div class="tg-body" style="grid-template-columns:${cols};${slotHeightVar}${rowMin}">
           <div class="tg-gutter" part="time-gutter">${gutterSlots.join("")}</div>
           ${dayCols}
         </div>
