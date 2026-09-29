@@ -330,6 +330,44 @@ describe("<hijri-calendar> week/day scroll container (Ruling B)", () => {
       "repeat(7, minmax(var(--hcal-column-min-width), 1fr))"
     );
   });
+
+  // Regression: the rows are flex items of part="scroll", so without an explicit floor they
+  // were sized to its client width and .tg-body's overflow-x: clip cut the scrolled columns off
+  // short of the header. Every row must carry the same min-width as the sum of its track minimums.
+  it("head, all-day and body rows share a min-width equal to the track minimums at medium/narrow", () => {
+    const expected = "min-width:calc(var(--hcal-gutter-width) + 7 * var(--hcal-column-min-width))";
+    for (const width of [400, 700]) {
+      const el = mount({ date: "2026-07-06", view: "week", "allday-row": "always" }, width);
+      for (const sel of [".tg-head", ".tg-allday", ".tg-body"]) {
+        const style = (sr(el).querySelector(sel) as HTMLElement).getAttribute("style")!;
+        expect(style, `${sel} @ ${width}px`).toContain(expected);
+      }
+    }
+  });
+
+  it("wide rows get no min-width floor (Global Constraint 1: wide is unchanged)", () => {
+    const el = mount({ date: "2026-07-06", view: "week", "allday-row": "always" }, 1000);
+    for (const sel of [".tg-head", ".tg-allday", ".tg-body"]) {
+      expect((sr(el).querySelector(sel) as HTMLElement).getAttribute("style")).not.toContain("min-width");
+    }
+  });
+
+  it("the day view's single column gets a one-column floor at narrow", () => {
+    const el = mount({ date: "2026-07-06", view: "day" }, 400);
+    const style = (sr(el).querySelector(".tg-body") as HTMLElement).getAttribute("style")!;
+    expect(style).toContain("min-width:calc(var(--hcal-gutter-width) + 1 * var(--hcal-column-min-width))");
+  });
+
+  it("pinned gutter cells paint an opaque base under --hcal-gutter-bg so scrolled columns never show through", () => {
+    const el = mount({ date: "2026-07-06", view: "week" }, 400);
+    const css = sr(el).querySelector("style")!.textContent!;
+    expect(css).toMatch(
+      /\.tg-gutter,\s*\.tg-allday-label,\s*\.tg-head\s*>\s*:first-child\s*\{[^}]*background:\s*linear-gradient\(var\(--hcal-gutter-bg\),\s*var\(--hcal-gutter-bg\)\),\s*linear-gradient\(var\(--hcal-header-bg\),\s*var\(--hcal-header-bg\)\),\s*var\(--hcal-bg\)/
+    );
+    expect(css).toMatch(
+      /\.tg-gutter\s*\{\s*background:\s*linear-gradient\(var\(--hcal-gutter-bg\),\s*var\(--hcal-gutter-bg\)\),\s*var\(--hcal-bg\)/
+    );
+  });
 });
 
 describe("<hijri-calendar> weekday-format render-time downgrade at narrow (§5.9 task 3)", () => {

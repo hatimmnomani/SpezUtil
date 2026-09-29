@@ -259,7 +259,12 @@ ${arabicFontFace}
    unit-acceptance bullet ("styles string contains 'position: sticky' for '.tg-gutter'") and to
    document original intent — but if you are touching sticky/scroll CSS here, the gutter's real
    behaviour is in the JS, not this file; do not "clean up" wireStickyGutter() as redundant. */
-.tg-gutter, .tg-allday-label, .tg-head > :first-child { position: sticky; inset-inline-start: 0; z-index: 3; background: var(--hcal-gutter-bg, var(--hcal-bg)); }
+/* Pinned cells need an opaque background, or the columns scrolling underneath them show
+   through (the default --hcal-gutter-bg is transparent). --hcal-gutter-bg is layered over the
+   colours each cell already sits on at rest (.tg-head/.tg-allday's --hcal-header-bg over .cal's
+   --hcal-bg here, .cal's --hcal-bg alone for .tg-gutter below; both defaults are transparent), so
+   the unscrolled render is unchanged for any of those values, opaque or translucent. */
+.tg-gutter, .tg-allday-label, .tg-head > :first-child { position: sticky; inset-inline-start: 0; z-index: 3; background: linear-gradient(var(--hcal-gutter-bg), var(--hcal-gutter-bg)), linear-gradient(var(--hcal-header-bg), var(--hcal-header-bg)), var(--hcal-bg); }
 .tg-head { position: sticky; top: 0; z-index: 4; }
 .tg-head { display: grid; border-bottom: 1px solid var(--hcal-border); background: var(--hcal-header-bg); }
 .tg-col-head { text-align: center; padding: 6px 2px; border-inline-start: 1px solid var(--hcal-border); display: flex; flex-direction: column; align-items: center; }
@@ -296,7 +301,7 @@ ${arabicFontFace}
 /* position comes from the sticky rule above (.tg-gutter, .tg-allday-label, .tg-head >
    :first-child) — not redeclared here so that rule's position: sticky isn't shadowed by a
    same-specificity position: relative later in the cascade. */
-.tg-gutter { background: var(--hcal-gutter-bg); }
+.tg-gutter { background: linear-gradient(var(--hcal-gutter-bg), var(--hcal-gutter-bg)), var(--hcal-bg); }
 .tg-slot { height: var(--_slot-h); box-sizing: border-box; }
 .tg-gutter .tg-slot { position: relative; }
 .tg-gutter .tg-slot span { position: absolute; top: -7px; inset-inline-end: 6px; font-size: 10px; color: var(--hcal-muted); white-space: nowrap; font-family: var(--hcal-font-family-mono); }
