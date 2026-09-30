@@ -9,8 +9,9 @@ import {
   type LexicalCommand,
   type LexicalEditor,
 } from "lexical";
-import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+import { QuoteNode } from "@lexical/rich-text";
 import { mergeRegister } from "@lexical/utils";
+import { AnchorHeadingNode } from "./nodes/heading-node";
 
 const RTL_CHAR = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/;
 const LTR_CHAR = /[A-Za-z\u00C0-\u024F]/;
@@ -40,7 +41,7 @@ export function registerAutoDirection(editor: LexicalEditor): () => void {
   };
   return mergeRegister(
     editor.registerNodeTransform(ParagraphNode, transform),
-    editor.registerNodeTransform(HeadingNode, transform),
+    editor.registerNodeTransform(AnchorHeadingNode, transform),
     editor.registerNodeTransform(QuoteNode, transform),
   );
 }

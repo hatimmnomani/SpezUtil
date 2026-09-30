@@ -55,6 +55,10 @@ export {
   DiagramNode,
   $createDiagramNode,
   $isDiagramNode,
+  AnchorHeadingNode,
+  $createAnchorHeadingNode,
+  $isAnchorHeadingNode,
+  headingAnchorId,
 } from "./nodes";
 export type {
   SerializedAyatNode,
@@ -67,6 +71,7 @@ export type {
   SerializedLudTextNode,
   SerializedCommentMarkNode,
   SerializedDiagramNode,
+  SerializedAnchorHeadingNode,
 } from "./nodes";
 
 if (typeof customElements !== "undefined" && !customElements.get("spez-richtext")) {

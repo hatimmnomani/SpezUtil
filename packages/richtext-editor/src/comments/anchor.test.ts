@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { $createLineBreakNode, $createParagraphNode, $createTextNode, $getRoot } from "lexical";
-import { $createHeadingNode } from "@lexical/rich-text";
+import { $createAnchorHeadingNode } from "../nodes/heading-node";
 import { $createCommentMarkNode } from "../nodes/comment-mark-node";
 import { $createLudTextNode } from "../nodes/lud-text-node";
 import { $createHijriDateNode } from "../nodes/hijri-date-node";
@@ -36,7 +36,7 @@ describe("anchor index (mirrors backend LexicalText.Plain)", () => {
   it("counts lud-text and linebreaks, skips hijri-date tokens, ends headings with \\n", () => {
     const editor = seed(() => {
       $getRoot().append(
-        $createHeadingNode("h2").append($createTextNode("Title")),
+        $createAnchorHeadingNode("h2").append($createTextNode("Title")),
         $createParagraphNode().append(
           $createLudTextNode("نسس", "al-kanz"),
           $createLineBreakNode(),

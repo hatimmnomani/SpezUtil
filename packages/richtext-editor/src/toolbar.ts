@@ -19,17 +19,18 @@ import {
   type TextFormatType,
 } from "lexical";
 import {
-  $createHeadingNode,
   $createQuoteNode,
   $isHeadingNode,
   $isQuoteNode,
   type HeadingTagType,
 } from "@lexical/rich-text";
 import {
+  $copyBlockFormatIndent,
   $getSelectionStyleValueForProperty,
   $patchStyleText,
   $setBlocksType,
 } from "@lexical/selection";
+import { $createAnchorHeadingNode, $isAnchorHeadingNode } from "./nodes/heading-node";
 import {
   $isListNode,
   INSERT_ORDERED_LIST_COMMAND,
@@ -484,7 +485,15 @@ function $setBlock(editor: LexicalEditor, type: BlockType): void {
         $setBlocksType(selection, () => $createAyatNode());
         break;
       default:
-        $setBlocksType(selection, () => $createHeadingNode(type as HeadingTagType));
+        // A level change (h2 → h3) replaces the node, so the handbook anchor is carried across.
+        $setBlocksType(
+          selection,
+          () => $createAnchorHeadingNode(type as HeadingTagType),
+          (prev, next) => {
+            $copyBlockFormatIndent(prev, next);
+            if ($isAnchorHeadingNode(prev) && $isAnchorHeadingNode(next)) next.setAnchor(prev.getAnchor());
+          },
+        );
     }
   });
   editor.focus();

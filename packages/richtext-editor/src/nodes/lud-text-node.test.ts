@@ -75,6 +75,65 @@ describe("LudTextNode", () => {
     }
   });
 
+  // 0.5.1: the backend's minimal lud-text shape has no `style` key at all (not ""), and
+  // TextNode.updateFromJSON copies that `undefined` into __style — the editor used to throw on it
+  // and render a blank body.
+  function loadParagraph(editor: ReturnType<typeof makeEditor>["editor"], child: Record<string, unknown>): void {
+    const state = {
+      root: {
+        type: "root", version: 1, direction: null, format: "", indent: 0,
+        children: [
+          { type: "paragraph", version: 1, direction: null, format: "", indent: 0, textFormat: 0, textStyle: "", children: [child] },
+        ],
+      },
+    };
+    editor.setEditorState(editor.parseEditorState(JSON.stringify(state)));
+  }
+
+  it("loads the minimal lud-text shape with no style key and derives the profile family", () => {
+    const { editor, root } = makeEditor();
+    const minimal = { type: "lud-text", version: 1, text: TYPED, ludFont: "al-kanz", format: 0, detail: 0, mode: "normal" };
+    expect(() => loadParagraph(editor, minimal)).not.toThrow();
+    editor.getEditorState().read(() => {
+      const node = firstParagraphChildren(editor)[0] as LudTextNode;
+      expect($isLudTextNode(node)).toBe(true);
+      expect(node.getTextContent()).toBe(TYPED);
+      expect(node.getStyle()).toBe('font-family: "AL-KANZ", "Noto Naskh Arabic";');
+    });
+    expect(root.querySelector("[data-lud-font]")?.textContent).toBe(TYPED);
+  });
+
+  it("treats a null style like a missing one", () => {
+    const { editor } = makeEditor();
+    const node = { type: "lud-text", version: 1, text: "x", ludFont: "al-fatemi", format: 0, detail: 0, mode: "normal", style: null };
+    expect(() => loadParagraph(editor, node)).not.toThrow();
+    editor.getEditorState().read(() => {
+      expect((firstParagraphChildren(editor)[0] as LudTextNode).getStyle()).toMatch(/^font-family: "AL-FATEMI/);
+    });
+  });
+
+  it("keeps a style the JSON does carry unchanged", () => {
+    const { editor } = makeEditor();
+    const style = 'font-family: "AL-KANZ", "Noto Naskh Arabic"; color: red;';
+    loadParagraph(editor, { type: "lud-text", version: 1, text: "x", ludFont: "al-kanz", format: 0, detail: 0, mode: "normal", style });
+    editor.getEditorState().read(() => {
+      expect((firstParagraphChildren(editor)[0] as LudTextNode).getStyle()).toBe(style);
+    });
+  });
+
+  it("keeps the text of a minimal node whose ludFont this build does not know", () => {
+    const { editor, root } = makeEditor();
+    const minimal = { type: "lud-text", version: 1, text: TYPED, ludFont: "kanz-al-lulu", format: 0, detail: 0, mode: "normal" };
+    expect(() => loadParagraph(editor, minimal)).not.toThrow();
+    editor.getEditorState().read(() => {
+      const node = firstParagraphChildren(editor)[0] as LudTextNode;
+      expect(node.getLudFont()).toBe("kanz-al-lulu");
+      expect(node.getTextContent()).toBe(TYPED);
+      expect(node.getStyle()).toBe("");
+    });
+    expect(root.textContent).toBe(TYPED);
+  });
+
   it("updateFromJSON writes no family for a profile this build does not know", () => {
     const { editor } = makeEditor();
     seedParagraph(editor, () => $createLudTextNode("x", "al-kanz"));

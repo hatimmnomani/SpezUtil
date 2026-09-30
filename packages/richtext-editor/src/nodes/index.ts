@@ -1,9 +1,10 @@
 import type { Klass, LexicalNode } from "lexical";
-import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+import { QuoteNode } from "@lexical/rich-text";
 import { ListItemNode, ListNode } from "@lexical/list";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { AyatNode } from "./ayat-node";
+import { AnchorHeadingNode } from "./heading-node";
 import { CommentMarkNode } from "./comment-mark-node";
 import { DiagramNode } from "./diagram-node";
 import { HijriDateNode } from "./hijri-date-node";
@@ -11,8 +12,9 @@ import { ImageNode } from "./image-node";
 import { LudTextNode } from "./lud-text-node";
 import { TranslitLineNode, TranslitPairNode } from "./translit-nodes";
 
+/** `AnchorHeadingNode` (type "heading") stands in for the stock HeadingNode: see heading-node.ts. */
 export const EDITOR_NODES: Array<Klass<LexicalNode>> = [
-  HeadingNode,
+  AnchorHeadingNode,
   QuoteNode,
   ListNode,
   ListItemNode,
@@ -70,3 +72,5 @@ export { CommentMarkNode, $createCommentMarkNode, $isCommentMarkNode } from "./c
 export type { SerializedCommentMarkNode } from "./comment-mark-node";
 export { DiagramNode, $createDiagramNode, $isDiagramNode } from "./diagram-node";
 export type { SerializedDiagramNode } from "./diagram-node";
+export { AnchorHeadingNode, $createAnchorHeadingNode, $isAnchorHeadingNode, headingAnchorId } from "./heading-node";
+export type { SerializedAnchorHeadingNode } from "./heading-node";
