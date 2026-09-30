@@ -120,9 +120,23 @@ export class LudTextNode extends TextNode {
    * JSON drops the redundant style): the profile family is restored so the text renders in its font
    * and lud-sync sees a family that agrees with `ludFont`. A family the JSON does carry is kept as
    * is, and nothing is written for a profile this build does not know (see `isKnownLudFont`).
+   *
+   * The minimal shape may omit `style` altogether (or send null): TextNode.updateFromJSON would copy
+   * that into `__style` verbatim and every later style read would throw, so a non-string style is
+   * read as "" first. `format`, `detail` and `mode` get the same TextNode defaults for the same reason.
    */
   updateFromJSON(serializedNode: LexicalUpdateJSON<SerializedLudTextNode>): this {
-    const self = super.updateFromJSON(serializedNode).setLudFont(serializedNode.ludFont);
+    // Typed as required, but genuinely absent on the backend's minimal JSON at runtime.
+    const raw = serializedNode as Partial<LexicalUpdateJSON<SerializedLudTextNode>>;
+    const self = super
+      .updateFromJSON({
+        ...serializedNode,
+        style: typeof raw.style === "string" ? raw.style : "",
+        format: typeof raw.format === "number" ? raw.format : 0,
+        detail: typeof raw.detail === "number" ? raw.detail : 0,
+        mode: raw.mode ?? "normal",
+      })
+      .setLudFont(serializedNode.ludFont);
     const ludFont = self.getLudFont();
     if (fontFamilyIn(self.getStyle()) === "" && isKnownLudFont(ludFont)) {
       self.setStyle(withFontFamily(self.getStyle(), familyForLudFont(ludFont)));
