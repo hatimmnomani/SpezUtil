@@ -91,6 +91,38 @@ describe("toolbar", () => {
     });
   });
 
+  it("changing a heading's level keeps its anchor; turning it into a paragraph drops it", () => {
+    const el = create();
+    el.setValue(
+      JSON.stringify({
+        root: {
+          type: "root", version: 1, direction: null, format: "", indent: 0,
+          children: [
+            {
+              type: "heading", version: 1, direction: "ltr", format: "", indent: 0, tag: "h2", anchor: "marahil-nizaam",
+              children: [{ type: "text", version: 1, text: "title", format: 0, detail: 0, mode: "normal", style: "" }],
+            },
+          ],
+        },
+      }),
+    );
+    const select = el.querySelector<HTMLSelectElement>(".spez-rte-toolbar select")!;
+    el.editor.update(() => $selectAll(), { discrete: true });
+    select.value = "h3";
+    select.dispatchEvent(new Event("change"));
+    flush(el);
+    let first = JSON.parse(el.getJSON()).root.children[0];
+    expect(first).toMatchObject({ type: "heading", tag: "h3", anchor: "marahil-nizaam" });
+
+    el.editor.update(() => $selectAll(), { discrete: true });
+    select.value = "paragraph";
+    select.dispatchEvent(new Event("change"));
+    flush(el);
+    first = JSON.parse(el.getJSON()).root.children[0];
+    expect(first.type).toBe("paragraph");
+    expect("anchor" in first).toBe(false);
+  });
+
   it("ayat insert button wraps the block in an AyatNode", () => {
     const el = create();
     el.setHTML("<p>بسم الله</p>");
