@@ -28,6 +28,7 @@ import {
 import { $createImageNode, INSERT_IMAGE_COMMAND } from "./nodes/image-node";
 import { registerAutoDirection, registerDirectionCommand } from "./direction";
 import { registerLudSync } from "./lud-sync";
+import { registerTableDeletion } from "./table-deletion";
 
 /**
  * Lexical's HTML import only maps text *formats* (bold, italic, …) from
@@ -166,6 +167,7 @@ export function createEditorInstance(rootElement: HTMLElement): EditorInstance {
     registerList(editor),
     registerTablePlugin(editor),
     registerTableSelectionObserver(editor),
+    registerTableDeletion(editor),
     registerLinkCommand(editor),
     registerImageCommand(editor),
     registerTabIndentation(editor),
