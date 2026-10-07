@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { placeBar, type Box } from "./placement";
+import { clearOfToolbar, placeBar, type Box } from "./placement";
 
 const bar = { width: 300, height: 36 };
 const table: Box = { left: 20, top: 200, width: 400, height: 150 };
@@ -44,5 +44,33 @@ describe("placeBar", () => {
     const active: Box = { left: 20, top: 500, width: 100, height: 40 };
     const p = placeBar(tall, active, bar, visible, 600, false);
     expect(p.top).toBe(4);
+  });
+});
+
+describe("clearOfToolbar", () => {
+  const rect = (top: number, bottom: number) => ({ top, bottom });
+
+  it("keeps the viewport edge when the toolbar is not over the shell", () => {
+    // A static toolbar sits above the shell, so its bottom is at or above the shell's top.
+    expect(clearOfToolbar(0, 100, rect(40, 80))).toBe(0);
+    expect(clearOfToolbar(0, 100, rect(40, 100))).toBe(0);
+  });
+
+  it("starts below a toolbar stuck over the top of the shell", () => {
+    // The shell scrolled 60px under the viewport top; the toolbar is pinned at 0..53.
+    expect(clearOfToolbar(60, -60, rect(0, 53))).toBe(113);
+  });
+
+  it("includes a sticky offset (the toolbar pinned below a host header)", () => {
+    expect(clearOfToolbar(0, -100, rect(64, 117))).toBe(217);
+  });
+
+  it("never returns less than the visible top it was given", () => {
+    expect(clearOfToolbar(300, 0, rect(0, 53))).toBe(300);
+  });
+
+  it("ignores a toolbar with no box (display none, not rendered)", () => {
+    expect(clearOfToolbar(0, -50, rect(0, 0))).toBe(0);
+    expect(clearOfToolbar(0, -50, null)).toBe(0);
   });
 });

@@ -66,7 +66,8 @@ export const tableStyles: string = `
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 5;
+  /* Above the text, below the toolbar and its More menu (z-index 2 in the toolbar, --rte-toolbar-z 5 when pinned). */
+  z-index: 1;
   font-size: 0.85rem;
   color: var(--rte-table-ui-fg);
 }

@@ -13,6 +13,25 @@ export interface BarPlacement {
 
 const GAP = 8;
 
+/**
+ * The first y (shell coordinates) the table bar may use. Normally the top of the viewport, but a pinned
+ * (sticky) toolbar sits over the top of the shell and the bar must start below it, not under or over it.
+ *
+ * @param visibleTop the visible top edge without any toolbar, in shell coordinates
+ * @param shellTop   the shell's own top edge in viewport coordinates
+ * @param toolbar    the toolbar's box in viewport coordinates, or null when there is none to avoid
+ */
+export function clearOfToolbar(
+  visibleTop: number,
+  shellTop: number,
+  toolbar: { top: number; bottom: number } | null,
+): number {
+  if (toolbar === null || toolbar.bottom <= toolbar.top) return visibleTop;
+  // A toolbar above the shell (the static layout, or a sticky one not yet stuck) overlaps nothing.
+  if (toolbar.bottom <= shellTop) return visibleTop;
+  return Math.max(visibleTop, toolbar.bottom - shellTop);
+}
+
 const overlaps = (a: Box, b: Box): boolean =>
   a.left < b.left + b.width && a.left + a.width > b.left && a.top < b.top + b.height && a.top + a.height > b.top;
 

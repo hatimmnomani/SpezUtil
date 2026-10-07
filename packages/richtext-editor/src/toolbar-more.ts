@@ -36,7 +36,7 @@ const FOCUSABLE = "button:not(:disabled), select:not(:disabled), input:not(:disa
 
 /**
  * The More menu: a disclosure button plus a panel of labelled rows. Keyboard: Enter, Space or ArrowDown
- * open it and move into it; ArrowUp/Down walk the buttons, Tab walks every control, Escape closes it and
+ * open it and move into it; ArrowUp/Down walk the buttons, Tab walks every control, Escape (from anywhere in the menu or the editor) closes it and
  * returns to the button, and focus leaving the menu closes it.
  */
 export function createMoreMenu(t: LocaleStrings, sections: readonly MoreSectionContent[]): MoreMenu {
@@ -95,6 +95,7 @@ export function createMoreMenu(t: LocaleStrings, sections: readonly MoreSectionC
   const isOpen = (): boolean => !panel.hidden;
 
   const open = (focusFirst = false): void => {
+    if (!isOpen()) root.ownerDocument.addEventListener("keydown", onDocKey, true);
     panel.hidden = false;
     trigger.setAttribute("aria-expanded", "true");
     if (focusFirst) panel.querySelector<HTMLElement>(FOCUSABLE)?.focus();
@@ -102,6 +103,7 @@ export function createMoreMenu(t: LocaleStrings, sections: readonly MoreSectionC
 
   const close = (restoreFocus = false): void => {
     if (!isOpen()) return;
+    root.ownerDocument.removeEventListener("keydown", onDocKey, true);
     panel.hidden = true;
     trigger.setAttribute("aria-expanded", "false");
     if (restoreFocus) trigger.focus();
@@ -124,14 +126,25 @@ export function createMoreMenu(t: LocaleStrings, sections: readonly MoreSectionC
       open(true);
     }
   };
+  /**
+   * Escape, while open, wherever focus is: a mouse open leaves focus in the editor (the trigger does not take
+   * it), so a listener on the panel alone would never hear the key. Heard in the capture phase at the document
+   * and consumed there, so the editor's own Escape (leaving a table, say) does not also run. Only Escapes
+   * aimed at this editor (or at nothing) count; another widget on the page keeps its own Escape.
+   */
+  const onDocKey = (event: KeyboardEvent): void => {
+    if (event.key !== "Escape" || !isOpen()) return;
+    // A popover opened from here (the Hijri date picker) takes its own Escape first.
+    if (root.ownerDocument.querySelector(".spez-rte-popover")) return;
+    const target = event.target as Node | null;
+    const host = root.closest(".spez-rte");
+    const doc = root.ownerDocument;
+    const mine = target === doc.body || target === doc.documentElement || target === doc || (host !== null && target !== null && host.contains(target));
+    if (!mine) return;
+    event.stopPropagation();
+    close(true);
+  };
   const onPanelKey = (event: KeyboardEvent): void => {
-    if (event.key === "Escape") {
-      // A popover opened from here (the Hijri date picker) takes its own Escape first.
-      if (root.ownerDocument.querySelector(".spez-rte-popover")) return;
-      event.stopPropagation();
-      close(true);
-      return;
-    }
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp" && event.key !== "Home" && event.key !== "End") return;
     const target = event.target as HTMLElement;
     // A <select> uses these keys itself; leave it to Tab to move on.
@@ -192,6 +205,7 @@ export function createMoreMenu(t: LocaleStrings, sections: readonly MoreSectionC
     dispose: () => {
       observer?.disconnect();
       root.ownerDocument.removeEventListener("pointerdown", onDocPointer, true);
+      root.ownerDocument.removeEventListener("keydown", onDocKey, true);
     },
   };
 }

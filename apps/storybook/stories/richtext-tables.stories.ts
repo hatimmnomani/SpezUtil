@@ -47,8 +47,9 @@ function tableDoc(rows: Cell[][], colWidths?: number[]) {
 
 function editor(attrs: Record<string, string> = {}, setup?: (el: HTMLElement & { value: string | null; initialHtml: string | null }) => void) {
   const el = document.createElement("spez-richtext") as HTMLElement & { value: string | null; initialHtml: string | null };
-  el.setAttribute("toolbar", "history,inline,insert");
-  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  // `default-toolbar` leaves the toolbar attribute off, which gives the compact default with its More menu.
+  if (!("default-toolbar" in attrs)) el.setAttribute("toolbar", "history,inline,insert");
+  for (const [k, v] of Object.entries(attrs)) if (k !== "default-toolbar") el.setAttribute(k, v);
   setup?.(el);
   return el;
 }
@@ -96,4 +97,29 @@ const EXCEL = `<table style='border-collapse:collapse;width:144pt'><col width=64
 
 export const Pasted = {
   render: () => editor({}, (el) => (el.initialHtml = cleanPastedHtml(EXCEL).html)),
+};
+
+/** The compact default toolbar (with its More menu) above a table. */
+export const DefaultToolbar = { render: () => editor({ "default-toolbar": "" }, (el) => (el.value = tableDoc(basic))) };
+
+/** A table just under a pinned toolbar, in a document tall enough for the page to scroll: the bar must clear the toolbar. */
+export const StickyToolbar = {
+  render: () =>
+    editor({ "default-toolbar": "", "toolbar-mode": "sticky" }, (el) => {
+      const filler = Array.from({ length: 40 }, (_, i) => para(`Filler paragraph ${i + 1}, so the page has somewhere to scroll.`));
+      const doc = JSON.parse(tableDoc(basic)) as { root: { children: unknown[] } };
+      doc.root.children.push(...filler);
+      el.value = JSON.stringify(doc);
+    }),
+};
+
+/** Two tables, to see grips follow the pointer rather than the caret. */
+export const TwoTables = {
+  render: () =>
+    editor({}, (el) => {
+      const a = JSON.parse(tableDoc(basic)) as { root: { children: unknown[] } };
+      const b = JSON.parse(tableDoc(basic, [120, 120, 240])) as { root: { children: unknown[] } };
+      a.root.children.push(...b.root.children);
+      el.value = JSON.stringify(a);
+    }),
 };

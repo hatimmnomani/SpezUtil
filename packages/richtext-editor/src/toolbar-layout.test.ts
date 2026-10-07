@@ -278,6 +278,57 @@ describe("the More menu", () => {
     expect(document.activeElement).toBe(triggerOf(el));
   });
 
+  describe("Escape after a mouse open (focus never moved into the menu)", () => {
+    const mouseOpen = (el: SpezRichtext) =>
+      triggerOf(el).dispatchEvent(new MouseEvent("click", { detail: 1, bubbles: true, cancelable: true }));
+
+    it("closes from the editor and returns focus to the button", () => {
+      const el = create();
+      const editable = el.querySelector<HTMLElement>(".spez-rte-editor")!;
+      editable.focus();
+      mouseOpen(el);
+      expect(panelOf(el).hidden).toBe(false);
+      expect(panelOf(el).contains(document.activeElement)).toBe(false);
+      const seenByEditor = vi.fn();
+      editable.addEventListener("keydown", seenByEditor);
+      key(editable, "Escape");
+      expect(panelOf(el).hidden).toBe(true);
+      expect(triggerOf(el).getAttribute("aria-expanded")).toBe("false");
+      expect(document.activeElement).toBe(triggerOf(el));
+      // Consumed: the editor's own Escape handling (leaving a table, say) must not also run.
+      expect(seenByEditor).not.toHaveBeenCalled();
+    });
+
+    it("closes when nothing at all has focus", () => {
+      const el = create();
+      mouseOpen(el);
+      key(document.body, "Escape");
+      expect(panelOf(el).hidden).toBe(true);
+      expect(document.activeElement).toBe(triggerOf(el));
+    });
+
+    it("ignores an Escape aimed at something else on the page", () => {
+      const el = create();
+      const other = document.createElement("input");
+      document.body.append(other);
+      mouseOpen(el);
+      key(other, "Escape");
+      expect(panelOf(el).hidden).toBe(false);
+    });
+
+    it("stops listening once closed (an Escape then reaches the editor)", () => {
+      const el = create();
+      const editable = el.querySelector<HTMLElement>(".spez-rte-editor")!;
+      mouseOpen(el);
+      triggerOf(el).click();
+      expect(panelOf(el).hidden).toBe(true);
+      const seenByEditor = vi.fn();
+      editable.addEventListener("keydown", seenByEditor);
+      key(editable, "Escape");
+      expect(seenByEditor).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("closes when focus leaves it", () => {
     const el = create();
     triggerOf(el).click();

@@ -41,7 +41,7 @@ import {
   type CellRect,
   type CellVerticalAlign,
 } from "./model";
-import { placeBar, type Box } from "./placement";
+import { clearOfToolbar, placeBar, type Box } from "./placement";
 import { fillTemplate, getTableStrings, type TableStrings } from "./strings";
 
 export interface TableUIOptions {
@@ -125,6 +125,8 @@ export function registerTableUI(editor: LexicalEditor, options: TableUIOptions):
   shell.append(root);
 
   let hoveredKey: string | null = null;
+  /** Last pointer position over the shell (viewport coordinates), for re-resolving the hovered table when only the content moved. */
+  let pointer: { x: number; y: number } | null = null;
   let hoverTimer: ReturnType<typeof setTimeout> | undefined;
   let blurred = false;
   let frame = 0;
@@ -145,12 +147,18 @@ export function registerTableUI(editor: LexicalEditor, options: TableUIOptions):
   });
 
   // ---- snapshot -----------------------------------------------------------------------------
-  const takeSnapshot = (): Snapshot | null =>
+  /**
+   * `forcedKey === null`: the table the caret / selection is in (what the bar acts on), else null.
+   * Otherwise that table, with the selection details only when the selection is in it (hovering a table other
+   * than the caret's must describe the hovered one).
+   */
+  const takeSnapshot = (forcedKey: string | null): Snapshot | null =>
     editor.read(() => {
-      const info = $getTableSelectionInfo();
+      const raw = $getTableSelectionInfo();
+      const info = raw !== null && (forcedKey === null || raw.table.getKey() === forcedKey) ? raw : null;
       let table: TableNode | null = info?.table ?? null;
-      if (table === null && hoveredKey !== null) {
-        const n = $getNodeByKey(hoveredKey);
+      if (table === null && forcedKey !== null) {
+        const n = $getNodeByKey(forcedKey);
         table = $isTableNode(n) ? n : null;
       }
       if (table === null) return null;
@@ -266,12 +274,20 @@ export function registerTableUI(editor: LexicalEditor, options: TableUIOptions):
     const onDown = (e: Event) => {
       if (!menu.contains(e.target as Node) && !(opener && opener.contains(e.target as Node))) close();
     };
+    // Escape is heard at the document, not on the menu: pressing the menu's padding or a label (nothing there takes
+    // focus) leaves focus on <body>, where a listener on the menu never sees the key. Only an Escape aimed at this
+    // editor or at nothing counts, and it is consumed so the editor's own Escape (leaving the table) does not run.
+    const onDocKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const target = e.target as Node | null;
+      const host = shell.parentElement ?? shell;
+      if (target !== document.body && target !== document.documentElement && !(target && host.contains(target))) return;
+      e.stopPropagation();
+      close();
+      editor.focus();
+    };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        close();
-        editor.focus();
-      } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         const list = items();
         const i = list.indexOf(document.activeElement as HTMLElement);
         const next = list[(i + (e.key === "ArrowDown" ? 1 : -1) + list.length) % list.length];
@@ -285,10 +301,12 @@ export function registerTableUI(editor: LexicalEditor, options: TableUIOptions):
       menu.remove();
       opener?.setAttribute("aria-expanded", "false");
       document.removeEventListener("pointerdown", onDown, true);
+      document.removeEventListener("keydown", onDocKey, true);
       menu.removeEventListener("keydown", onKey);
       if (closeMenu === close) closeMenu = null;
     };
     document.addEventListener("pointerdown", onDown, true);
+    document.addEventListener("keydown", onDocKey, true);
     menu.addEventListener("keydown", onKey);
     closeMenu = close;
     (menu.querySelector<HTMLElement>("[data-autofocus]") ?? items()[0])?.focus();
@@ -804,13 +822,26 @@ export function registerTableUI(editor: LexicalEditor, options: TableUIOptions):
       snap = null;
       return;
     }
-    const s = takeSnapshot();
+    // The bar follows the caret; grips and resize strips follow the pointer, wherever the caret is.
+    const s = takeSnapshot(null);
     snap = s;
-    if (s === null) {
+    if (hoveredKey === null && pointer !== null && closeMenu === null) hoveredKey = tableKeyUnderPointer();
+    let handleSnap: Snapshot | null = s;
+    if (hoveredKey !== null && hoveredKey !== s?.tableKey) {
+      handleSnap = takeSnapshot(hoveredKey);
+      if (handleSnap === null) hoveredKey = null; // the hovered table is gone
+      handleSnap ??= s;
+    }
+    if (handleSnap === null) {
       hideAll();
       return;
     }
-    renderHandles(s);
+    renderHandles(handleSnap);
+    if (s === null) {
+      bar.hidden = true;
+      ring.hidden = true;
+      return;
+    }
 
     if (s.active && !blurred) {
       bar.hidden = false;
@@ -822,7 +853,10 @@ export function registerTableUI(editor: LexicalEditor, options: TableUIOptions):
         const tbox = rel(table.getBoundingClientRect());
         const wbox = rel((domOf(s.tableKey) ?? table).getBoundingClientRect());
         const cbox = rel(anchor.getBoundingClientRect());
-        const visTop = Math.max(0, -s0.top) ;
+        // A pinned toolbar over the top of the shell is not usable room: start below it.
+        const toolbarEl = shell.parentElement?.querySelector<HTMLElement>(":scope > .spez-rte-toolbar") ?? null;
+        const toolbarBox = toolbarEl && getComputedStyle(toolbarEl).visibility !== "hidden" ? toolbarEl.getBoundingClientRect() : null;
+        const visTop = clearOfToolbar(Math.max(0, -s0.top), s0.top, toolbarBox);
         const visBottom = window.innerHeight - s0.top;
         const p = placeBar(
           { left: wbox.left, top: tbox.top, width: wbox.width, height: tbox.height },
@@ -861,21 +895,34 @@ export function registerTableUI(editor: LexicalEditor, options: TableUIOptions):
   });
   const unEditable = editor.registerEditableListener(schedule);
 
+  /** The table (key) a DOM node sits in, or null. */
+  const tableKeyOf = (target: Element): string | null => {
+    if (!target.closest?.("table.spez-rte-table, .spez-rte-table-scroll")) return null;
+    return editor.read(() => {
+      const n = $getNearestNodeFromDOMNode(target);
+      const t = n ? $findTableNode(n) : null;
+      return t ? t.getKey() : null;
+    });
+  };
+  /** Only called with a pointer known and the hover unset: one hit-test, and only when the document has a table. */
+  const tableKeyUnderPointer = (): string | null => {
+    if (pointer === null || editable.querySelector("table.spez-rte-table") === null) return null;
+    const hit = document.elementFromPoint(pointer.x, pointer.y);
+    return hit && shell.contains(hit) && !root.contains(hit) ? tableKeyOf(hit) : null;
+  };
+
   const onPointerMove = (e: PointerEvent) => {
-    if (dragging) return;
+    pointer = { x: e.clientX, y: e.clientY };
+    // While a drag or a menu holds the overlay, the handles it is built on must not be swapped under it.
+    if (dragging || closeMenu !== null) return;
     const target = e.target as Element | null;
     if (!target || root.contains(target)) {
       clearTimeout(hoverTimer);
       return;
     }
-    const inTable = target.closest?.("table.spez-rte-table, .spez-rte-table-scroll");
     clearTimeout(hoverTimer);
-    if (inTable) {
-      const key = editor.read(() => {
-        const n = $getNearestNodeFromDOMNode(target);
-        const t = n ? $findTableNode(n) : null;
-        return t ? t.getKey() : null;
-      });
+    const key = tableKeyOf(target);
+    if (key !== null) {
       if (key !== hoveredKey) {
         hoveredKey = key;
         schedule();
@@ -888,6 +935,7 @@ export function registerTableUI(editor: LexicalEditor, options: TableUIOptions):
     }
   };
   const onLeave = () => {
+    pointer = null;
     clearTimeout(hoverTimer);
     hoverTimer = setTimeout(() => {
       if (!root.matches(":hover")) {

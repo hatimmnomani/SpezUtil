@@ -18,3 +18,9 @@ Table editing, at the level of a document editor.
 - New exports: `insertTable`, `cleanPastedHtml`, `TABLE_SHORTCUTS`, `TABLE_MIN_COL_WIDTH`, `TABLE_MAX_COL_WIDTH`, `TABLE_MAX_ROWS`, `TABLE_MAX_COLS`.
 
 Stored documents: all new attributes are optional. `table.colWidths` (number[], px) is written once a column is resized and `tablecell.verticalAlign` (`"middle"` | `"bottom"`) once set. Both are Lexical's own table properties, so 0.5.1 documents load and save unchanged. A server-side renderer must read them for readers to see widths and vertical alignment.
+
+Also in this release (fixes found integrating 0.6.0):
+
+- **More menu**: Escape now closes it wherever focus is in the editor, including after a mouse open (the button does not take focus), and returns focus to the button. The table bar and grip menus hear Escape the same way, so it still works after pressing the menu's padding.
+- **Table grips and resize strips** follow the pointer, not the caret: hovering any table shows its row/column grips, "+" buttons and column resize strips, even when the caret is in another table, in none, or after Escape stepped out of the table. The table bar stays tied to the caret.
+- **Table bar and a pinned toolbar**: with `toolbar-mode="sticky"` the bar is placed below the stuck toolbar instead of under or over it. The table overlay now sits below the toolbar and its More menu (z-index 1, was 5, which tied with `--rte-toolbar-z` and painted over it).
