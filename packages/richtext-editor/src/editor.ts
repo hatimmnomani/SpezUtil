@@ -16,7 +16,11 @@ import {
 import { registerRichText } from "@lexical/rich-text";
 import { registerList } from "@lexical/list";
 import { createEmptyHistoryState, registerHistory } from "@lexical/history";
-import { registerTablePlugin, registerTableSelectionObserver } from "@lexical/table";
+import {
+  registerTablePlugin,
+  registerTableSelectionObserver,
+  setScrollableTablesActive,
+} from "@lexical/table";
 import { $toggleLink, TOGGLE_LINK_COMMAND, type LinkAttributes } from "@lexical/link";
 import { mergeRegister } from "@lexical/utils";
 import {
@@ -28,6 +32,7 @@ import {
 import { $createImageNode, INSERT_IMAGE_COMMAND } from "./nodes/image-node";
 import { registerAutoDirection, registerDirectionCommand } from "./direction";
 import { registerLudSync } from "./lud-sync";
+import { registerTableSupport } from "./table";
 
 /**
  * Lexical's HTML import only maps text *formats* (bold, italic, …) from
@@ -85,6 +90,13 @@ const theme = {
   link: "spez-rte-link",
   mark: "spez-rte-comment",
   markOverlap: "spez-rte-comment-overlap",
+  table: "spez-rte-table",
+  tableRow: "spez-rte-table-row",
+  tableCell: "spez-rte-table-cell",
+  tableCellHeader: "spez-rte-table-cell-header",
+  tableCellSelected: "spez-rte-table-cell-selected",
+  tableSelection: "spez-rte-table-selecting",
+  tableScrollableWrapper: "spez-rte-table-scroll",
 };
 
 /** Mounts DecoratorNode outputs (ImageNode) into their container elements. */
@@ -159,6 +171,8 @@ export function createEditorInstance(rootElement: HTMLElement): EditorInstance {
       throw error;
     },
   });
+  // Wide tables scroll inside their own wrapper instead of stretching the page.
+  setScrollableTablesActive(editor, true);
   editor.setRootElement(rootElement);
   const dispose = mergeRegister(
     registerRichText(editor),
@@ -166,6 +180,7 @@ export function createEditorInstance(rootElement: HTMLElement): EditorInstance {
     registerList(editor),
     registerTablePlugin(editor),
     registerTableSelectionObserver(editor),
+    registerTableSupport(editor),
     registerLinkCommand(editor),
     registerImageCommand(editor),
     registerTabIndentation(editor),
