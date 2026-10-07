@@ -10,7 +10,7 @@
   - **Transliteration pair** — an Arabic line + its transliteration that move, edit, and export as one unit
   - **Hijri date token** — atomic inline date backed by [`@spezutil/hijri-core`](https://www.npmjs.com/package/@spezutil/hijri-core) (Bohra/Misri tabular calendar); stores the actual `{year, month, day}`, not just text
 - Core formatting: bold / italic / underline / strikethrough / subscript / superscript / inline code, font size, headings, quote, lists, indent/outdent, alignment, undo/redo, clear formatting
-- Links, images (by URL), tables
+- Links, images (by URL), tables with a size-picker, floating table bar, row/column grips, column resize, cell selection, merge/split, paste cleaning and full keyboard support (see the docs' Tables page)
 - Optional word/character count status line
 - Output: **Lexical JSON** (canonical, lossless) + **HTML** export/import
 - Localized toolbar (`en`, `ar`)

@@ -25,7 +25,7 @@ export const tableStyles: string = `
 .spez-rte-editor .spez-rte-table-scroll {
   overflow-x: auto;
   max-width: 100%;
-  margin: 0.5em 0;
+  margin: 1em 0 0.5em;
 }
 .spez-rte-editor .spez-rte-table {
   border-collapse: collapse;
@@ -161,7 +161,9 @@ export const tableStyles: string = `
   flex-direction: column;
   align-items: stretch;
   gap: 1px;
+  width: max-content;
   min-width: 190px;
+  max-width: min(320px, calc(100% - 8px));
   padding: 4px;
   background: var(--rte-table-ui-bg);
   color: var(--rte-table-ui-fg);

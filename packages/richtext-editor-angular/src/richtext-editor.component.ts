@@ -40,6 +40,7 @@ import type {
       [toolbarPinned]="toolbarPinned"
       [fonts]="fonts"
       [fontSizes]="fontSizes"
+      [tableTools]="tableTools"
       [highlightMarks]="highlightMarks"
       [activeMark]="activeMark"
       (change)="onChange($event)"
@@ -72,6 +73,8 @@ export class SpezRichtextComponent {
   /** Toolbar font list; replaces the defaults (spread DEFAULT_FONTS to extend). */
   @Input() fonts: FontOption[] | null = null;
   @Input() fontSizes: FontSizeOption[] | null = null;
+  /** Floating table bar, row/column grips and column-resize strips. Default true; false hides them (keyboard and paste handling stay). */
+  @Input() tableTools = true;
   /** Thread mark ids to highlight; null highlights all. */
   @Input() highlightMarks: string[] | null = null;
   @Input() activeMark: string | null = null;

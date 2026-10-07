@@ -146,7 +146,7 @@ export function registerTableUI(editor: LexicalEditor, options: TableUIOptions):
 
   // ---- snapshot -----------------------------------------------------------------------------
   const takeSnapshot = (): Snapshot | null =>
-    editor.getEditorState().read(() => {
+    editor.read(() => {
       const info = $getTableSelectionInfo();
       let table: TableNode | null = info?.table ?? null;
       if (table === null && hoveredKey !== null) {
@@ -592,7 +592,7 @@ export function registerTableUI(editor: LexicalEditor, options: TableUIOptions):
     const key = s.tableKey;
     const t = tableElOf(key);
     const rtl = t ? isRtl(t) : false;
-    const simple = editor.getEditorState().read(() => {
+    const simple = editor.read(() => {
       const n = $getNodeByKey(key);
       return $isTableNode(n) && n.getChildren().every((r) => "getChildren" in r && (r as unknown as { getChildren(): { getColSpan(): number; getRowSpan(): number }[] }).getChildren().every((c) => c.getColSpan() === 1 && c.getRowSpan() === 1));
     });
@@ -871,7 +871,7 @@ export function registerTableUI(editor: LexicalEditor, options: TableUIOptions):
     const inTable = target.closest?.("table.spez-rte-table, .spez-rte-table-scroll");
     clearTimeout(hoverTimer);
     if (inTable) {
-      const key = editor.getEditorState().read(() => {
+      const key = editor.read(() => {
         const n = $getNearestNodeFromDOMNode(target);
         const t = n ? $findTableNode(n) : null;
         return t ? t.getKey() : null;

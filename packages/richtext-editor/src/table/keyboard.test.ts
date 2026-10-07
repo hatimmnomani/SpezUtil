@@ -71,8 +71,7 @@ describe("Tab navigation", () => {
     expect(caret(editor)).toEqual({ row: 2, col: 0 });
   });
 
-  it("reports the added row to the hooks", () => {
-    // Covered through the UI layer; here: the structural result is what matters.
+  it("keeps adding rows on repeated Tab at the end", () => {
     const editor = setup(1, 1);
     update(editor, () => $cellAt($firstTable(), 0, 0)!.selectEnd());
     tab(editor);

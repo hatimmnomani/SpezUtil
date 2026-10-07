@@ -16,6 +16,7 @@ title: API reference
 | `toolbar-layout` | `compact` \| `legacy` | `compact` (default): one row plus a More menu. `legacy`: the 0.5 flat, wrapping toolbar. |
 | `toolbar-config` | JSON | The same object as the `toolbarConfig` property, for plain HTML. |
 | `toolbar-mode` | `static` \| `sticky` \| `focus` | How the toolbar sits relative to the content (default `static`). |
+| `table-tools` | `off` \| `false` | Hides the floating table bar, row/column grips and column-resize strips (default on). See [Tables](./tables). |
 | `toolbar-pinned` | boolean | In `focus` mode, keep the toolbar showing without focus. |
 | `fonts` | comma-separated font families | Simple form of the toolbar font list, e.g. `fonts="Amiri, Tahoma, Arial"`. Use the `fonts` *property* for labels and full font stacks. |
 

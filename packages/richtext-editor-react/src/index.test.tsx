@@ -18,6 +18,12 @@ describe("SpezRichtext (React)", () => {
     expect(el.querySelector(".spez-rte-editor")).not.toBeNull();
   });
 
+  it("forwards the tableTools property", () => {
+    const { container } = render(React.createElement(SpezRichtext, { tableTools: false }));
+    const el = container.querySelector("spez-richtext")!;
+    expect(el.tableTools).toBe(false);
+  });
+
   it("forwards the initialHtml property", () => {
     const { container } = render(
       React.createElement(SpezRichtext, { initialHtml: "<p>Salaam</p>" }),

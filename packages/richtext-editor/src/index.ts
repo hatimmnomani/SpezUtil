@@ -5,6 +5,17 @@ export type { ChangeDetail } from "./richtext-editor";
 export { exportHTML, importHTML } from "./html";
 export { detectDirection, SET_DIRECTION_COMMAND } from "./direction";
 export { insertHijriDate } from "./hijri-insert";
+export { insertTable } from "./table/actions";
+export type { InsertTableOptions } from "./table/actions";
+export { cleanPastedHtml } from "./table/paste";
+export { TABLE_SHORTCUTS } from "./table/shortcuts";
+export type { TableShortcut } from "./table/shortcuts";
+export {
+  TABLE_MIN_COL_WIDTH,
+  TABLE_MAX_COL_WIDTH,
+  TABLE_MAX_ROWS,
+  TABLE_MAX_COLS,
+} from "./table/model";
 export { injectGlobalStyles, styles } from "./styles";
 export { getLocaleStrings } from "./locale";
 export type { EditorLocale, LocaleStrings } from "./locale";
