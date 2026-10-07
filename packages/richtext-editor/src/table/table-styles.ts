@@ -16,9 +16,9 @@ export const tableStyles: string = `
   --rte-table-header-bg: color-mix(in srgb, var(--rte-fg) 6%, var(--rte-bg));
   --rte-table-cell-padding: 6px 10px;
   --rte-table-selection: var(--rte-accent);
-  --rte-table-ui-bg: var(--rte-bg);
-  --rte-table-ui-fg: var(--rte-fg);
-  --rte-table-ui-border: var(--rte-border);
+  --rte-table-ui-bg: var(--rte-menu-bg, var(--rte-bg));
+  --rte-table-ui-fg: var(--rte-menu-fg, var(--rte-fg));
+  --rte-table-ui-border: var(--rte-menu-border, var(--rte-border));
   --rte-table-grip: color-mix(in srgb, var(--rte-fg) 16%, transparent);
 }
 
@@ -91,7 +91,7 @@ export const tableStyles: string = `
   background: var(--rte-table-ui-bg);
   border: 1px solid var(--rte-table-ui-border);
   border-radius: var(--rte-radius);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 6px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--rte-menu-shadow, 0 1px 2px rgba(0, 0, 0, 0.06), 0 6px 20px rgba(0, 0, 0, 0.12));
   user-select: none;
   -webkit-user-select: none;
 }
@@ -167,7 +167,7 @@ export const tableStyles: string = `
   color: var(--rte-table-ui-fg);
   border: 1px solid var(--rte-table-ui-border);
   border-radius: var(--rte-radius);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 6px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--rte-menu-shadow, 0 1px 2px rgba(0, 0, 0, 0.06), 0 6px 20px rgba(0, 0, 0, 0.12));
   z-index: 6;
 }
 .spez-rte-tmenu button { justify-content: flex-start; width: 100%; white-space: nowrap; }
