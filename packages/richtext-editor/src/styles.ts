@@ -1,4 +1,5 @@
 import { arabicFontDataUrl, ARABIC_FONT_FAMILY } from "./font-arabic";
+import { tableStyles } from "./table/table-styles";
 
 const STYLE_ID = "spez-rte-styles";
 
@@ -489,22 +490,6 @@ export const styles: string = `
   border-radius: 4px;
 }
 
-.spez-rte-editor table {
-  border-collapse: collapse;
-  margin: 0.5em 0;
-  width: 100%;
-}
-.spez-rte-editor th, .spez-rte-editor td {
-  border: 1px solid var(--rte-border);
-  padding: 4px 8px;
-  min-width: 3em;
-  vertical-align: top;
-}
-.spez-rte-editor th {
-  background: var(--rte-toolbar-bg);
-  text-align: start;
-}
-
 .spez-rte-popover {
   position: absolute;
   z-index: 10;
@@ -671,6 +656,6 @@ export function injectGlobalStyles(doc: Document = document): void {
   if (doc.getElementById(STYLE_ID)) return;
   const style = doc.createElement("style");
   style.id = STYLE_ID;
-  style.textContent = styles;
+  style.textContent = styles + tableStyles;
   doc.head.appendChild(style);
 }

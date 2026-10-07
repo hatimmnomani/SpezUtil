@@ -38,6 +38,7 @@ import {
 import { configFromGroupList } from "./toolbar-config";
 import { getLocaleStrings, type EditorLocale } from "./locale";
 import { DEFAULT_HIJRI_FORMAT } from "./nodes/hijri-date-node";
+import { registerTableUI, type TableUIController } from "./table/ui";
 
 export interface ChangeDetail {
   json: string;
@@ -68,6 +69,7 @@ export class SpezRichtext extends HTMLElement {
       "fonts",
       "font-sizes",
       "word-count",
+      "table-tools",
     ];
   }
 
@@ -87,6 +89,7 @@ export class SpezRichtext extends HTMLElement {
   #changeTimer: ReturnType<typeof setTimeout> | undefined;
   #comments: CommentsController | null = null;
   #disposeDiagrams: (() => void) | null = null;
+  #tableUI: TableUIController | null = null;
   #highlightMarks: readonly string[] | null = null;
   #activeMark: string | null = null;
   #lastCommentRequest: CommentRequestDetail | null = null;
@@ -222,6 +225,21 @@ export class SpezRichtext extends HTMLElement {
     this.#toolbar?.focus();
   }
 
+  /**
+   * Floating table bar, row/column grips and column-resize strips. On by default; set the
+   * `table-tools="off"` attribute (or this property to false) to hide them. Table keyboard
+   * handling, paste cleaning and the insert picker are unaffected.
+   */
+  get tableTools(): boolean {
+    const v = this.getAttribute("table-tools");
+    return v === null || !["off", "false", "0", "none"].includes(v.toLowerCase());
+  }
+
+  set tableTools(on: boolean) {
+    if (on) this.removeAttribute("table-tools");
+    else this.setAttribute("table-tools", "off");
+  }
+
   connectedCallback(): void {
     if (this.#editor !== null) return;
     injectGlobalStyles(this.ownerDocument);
@@ -262,6 +280,12 @@ export class SpezRichtext extends HTMLElement {
     this.#applyToolbarMode();
     this.#buildToolbar();
     this.append(shell);
+    this.#tableUI = registerTableUI(editor, {
+      shell,
+      editable,
+      getLocale: () => this.locale,
+      isEnabled: () => this.tableTools,
+    });
 
     this.#applyDir();
     this.#applyPlaceholderText();
@@ -313,6 +337,8 @@ export class SpezRichtext extends HTMLElement {
     this.#comments = null;
     this.#disposeDiagrams?.();
     this.#disposeDiagrams = null;
+    this.#tableUI?.dispose();
+    this.#tableUI = null;
     this.#disposeEditor?.();
     this.#disposeEditor = null;
     this.#editor = null;
@@ -340,7 +366,11 @@ export class SpezRichtext extends HTMLElement {
         // An Arabic toolbar's own direction depends on whether the element sets one.
         if (this.locale === "ar") this.#buildToolbar();
         break;
+      case "table-tools":
+        this.#tableUI?.refresh();
+        break;
       case "locale":
+        this.#tableUI?.refresh();
         this.#buildToolbar();
         this.#updateStatusText();
         break;
