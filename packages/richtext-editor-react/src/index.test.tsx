@@ -71,4 +71,22 @@ describe("SpezRichtext (React)", () => {
     el.addCommentMark();
     expect(onCommentRequested).toHaveBeenCalledTimes(1);
   });
+
+  it("forwards the toolbar API: config, mode and pinning", () => {
+    const { container, rerender } = render(
+      React.createElement(SpezRichtext, {
+        toolbarConfig: { groups: ["history", "inline"], more: false },
+        toolbarMode: "sticky",
+      } as never),
+    );
+    const el = container.querySelector("spez-richtext")!;
+    expect([...el.querySelectorAll(".spez-rte-toolbar > .spez-rte-group")].map((g) => g.getAttribute("data-group"))).toEqual([
+      "history",
+      "inline",
+    ]);
+    expect(el.toolbarMode).toBe("sticky");
+    rerender(React.createElement(SpezRichtext, { toolbarMode: "focus", toolbarPinned: true } as never));
+    expect(el.toolbarMode).toBe("focus");
+    expect(el.toolbarPinned).toBe(true);
+  });
 });

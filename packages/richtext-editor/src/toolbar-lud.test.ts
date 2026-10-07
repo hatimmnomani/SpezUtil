@@ -38,8 +38,10 @@ beforeEach(() => {
 });
 
 describe("LuD font picker", () => {
-  it("is opt-in: the default toolbar is unchanged", () => {
-    const el = create();
+  it("is opt-in in the legacy layout: its toolbar is unchanged", () => {
+    const el = document.createElement("spez-richtext");
+    el.setAttribute("toolbar-layout", "legacy");
+    document.body.appendChild(el);
     const groups = [...el.querySelectorAll(".spez-rte-group")].map((g) => g.getAttribute("data-group"));
     expect(groups).toEqual(["history", "block", "font", "inline", "color", "list", "indent", "align", "direction", "insert"]);
   });
@@ -47,7 +49,7 @@ describe("LuD font picker", () => {
   it("lists Al Kanz, Al-Fatemi, Kanz al-Marjaan and Unicode, marking drafts", () => {
     const el = create("lud");
     const options = [...ludSelect(el).options].map((o) => [o.value, o.textContent]);
-    expect(options[0]).toEqual(["", "None"]);
+    expect(options[0]).toEqual(["", "Default"]);
     expect(options.map((o) => o[0])).toEqual(["", "al-kanz", "al-fatemi", "kanz-al-marjaan", "unicode"]);
     expect(options[2]![1]).toContain("(draft)");
   });

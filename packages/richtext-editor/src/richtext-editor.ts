@@ -23,16 +23,19 @@ import { exportHTML, importHTML } from "./html";
 import { insertHijriDate } from "./hijri-insert";
 import { injectGlobalStyles } from "./styles";
 import {
-  ALL_TOOLBAR_GROUPS,
   DEFAULT_FONTS,
   DEFAULT_FONT_SIZES,
-  DEFAULT_TOOLBAR_GROUPS,
+  TOOLBAR_MODES,
   buildToolbar,
+  resolveToolbarLayout,
   type FontOption,
   type FontSizeOption,
-  type ToolbarGroup,
+  type ResolvedToolbarLayout,
+  type ToolbarConfig,
   type ToolbarInstance,
+  type ToolbarMode,
 } from "./toolbar";
+import { configFromGroupList } from "./toolbar-config";
 import { getLocaleStrings, type EditorLocale } from "./locale";
 import { DEFAULT_HIJRI_FORMAT } from "./nodes/hijri-date-node";
 
@@ -58,6 +61,10 @@ export class SpezRichtext extends HTMLElement {
       "dir",
       "locale",
       "toolbar",
+      "toolbar-layout",
+      "toolbar-config",
+      "toolbar-mode",
+      "toolbar-pinned",
       "fonts",
       "font-sizes",
       "word-count",
@@ -75,6 +82,7 @@ export class SpezRichtext extends HTMLElement {
   #pendingHtml: string | null = null;
   #fonts: FontOption[] | null = null;
   #fontSizes: FontSizeOption[] | null = null;
+  #toolbarConfig: ToolbarConfig | null = null;
   #unregisterStatus: (() => void) | null = null;
   #changeTimer: ReturnType<typeof setTimeout> | undefined;
   #comments: CommentsController | null = null;
@@ -167,6 +175,53 @@ export class SpezRichtext extends HTMLElement {
     this.#buildToolbar();
   }
 
+  /**
+   * Declarative toolbar layout: ordered groups of item ids, the More menu, hidden/shown items and the
+   * collapse order. `null` (default) uses the `toolbar` / `toolbar-layout` attributes, else the default
+   * compact layout. Takes effect immediately; see {@link ToolbarConfig}.
+   */
+  get toolbarConfig(): ToolbarConfig | null {
+    return this.#toolbarConfig;
+  }
+
+  set toolbarConfig(config: ToolbarConfig | null) {
+    this.#toolbarConfig = config;
+    this.#buildToolbar();
+  }
+
+  /**
+   * How the toolbar sits relative to the content: `static` (default), `sticky` (pinned to the top of its
+   * scroll container) or `focus` (shown only while the editor has focus, overlaid so content never shifts).
+   * Reflects the `toolbar-mode` attribute. Persisting the choice is the host app's job.
+   */
+  get toolbarMode(): ToolbarMode {
+    const attr = this.getAttribute("toolbar-mode");
+    return (TOOLBAR_MODES as readonly string[]).includes(attr ?? "") ? (attr as ToolbarMode) : "static";
+  }
+
+  set toolbarMode(mode: ToolbarMode) {
+    this.setToolbarMode(mode);
+  }
+
+  /** Changes the toolbar display mode at runtime. Unknown values fall back to `static`. */
+  setToolbarMode(mode: ToolbarMode): void {
+    this.setAttribute("toolbar-mode", (TOOLBAR_MODES as readonly string[]).includes(mode) ? mode : "static");
+  }
+
+  /** In `focus` mode, keep the toolbar showing even though the editor has no focus. Reflects `toolbar-pinned`. */
+  get toolbarPinned(): boolean {
+    return this.hasAttribute("toolbar-pinned");
+  }
+
+  set toolbarPinned(pinned: boolean) {
+    this.toggleAttribute("toolbar-pinned", pinned);
+  }
+
+  /** Moves keyboard focus to the toolbar (what Alt+F10 does from the text). No-op without a toolbar. */
+  focusToolbar(): void {
+    this.#toolbar?.focus();
+  }
+
   connectedCallback(): void {
     if (this.#editor !== null) return;
     injectGlobalStyles(this.ownerDocument);
@@ -204,6 +259,7 @@ export class SpezRichtext extends HTMLElement {
       onEditRequested: (detail) => this.#emitDiagramEdit(detail),
     });
 
+    this.#applyToolbarMode();
     this.#buildToolbar();
     this.append(shell);
 
@@ -281,15 +337,23 @@ export class SpezRichtext extends HTMLElement {
         break;
       case "dir":
         this.#applyDir();
+        // An Arabic toolbar's own direction depends on whether the element sets one.
+        if (this.locale === "ar") this.#buildToolbar();
         break;
       case "locale":
         this.#buildToolbar();
         this.#updateStatusText();
         break;
       case "toolbar":
+      case "toolbar-layout":
+      case "toolbar-config":
       case "fonts":
       case "font-sizes":
         this.#buildToolbar();
+        break;
+      case "toolbar-mode":
+      case "toolbar-pinned":
+        this.#applyToolbarMode();
         break;
       case "word-count":
         this.#syncStatusVisibility();
@@ -431,12 +495,41 @@ export class SpezRichtext extends HTMLElement {
       .map((size) => ({ label: size, size }));
   }
 
-  #toolbarGroups(): readonly ToolbarGroup[] {
+  /**
+   * Property config wins over the `toolbar-config` JSON attribute, which wins over the legacy
+   * `toolbar="a,b"` group list (which selects the `legacy` layout unless `toolbar-layout` says otherwise).
+   * Null means no toolbar (`toolbar="none"`, or nothing left to show).
+   */
+  #resolveToolbar(): ResolvedToolbarLayout | null {
     const attr = this.getAttribute("toolbar");
-    if (attr === null || attr.trim() === "") return DEFAULT_TOOLBAR_GROUPS;
-    if (attr.trim() === "none") return [];
-    const requested = attr.split(",").map((s) => s.trim());
-    return ALL_TOOLBAR_GROUPS.filter((g) => requested.includes(g));
+    if (attr !== null && attr.trim() === "none") return null;
+    const layoutAttr = this.getAttribute("toolbar-layout");
+    const layout = layoutAttr === "legacy" || layoutAttr === "compact" ? layoutAttr : undefined;
+    let config: ToolbarConfig | null = this.#toolbarConfig;
+    if (config === null) {
+      const json = this.getAttribute("toolbar-config");
+      if (json !== null && json.trim() !== "") {
+        try {
+          const parsed: unknown = JSON.parse(json);
+          if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) config = parsed as ToolbarConfig;
+        } catch {
+          console.warn("<spez-richtext>: ignoring a toolbar-config attribute that is not valid JSON");
+        }
+      }
+    }
+    if (config === null) {
+      config =
+        attr !== null && attr.trim() !== "" ? configFromGroupList(attr, layout) : { layout };
+    } else if (layout !== undefined && config.layout === undefined) {
+      config = { ...config, layout };
+    }
+    const resolved = resolveToolbarLayout(config ?? {});
+    return resolved.groups.length === 0 && resolved.more.length === 0 ? null : resolved;
+  }
+
+  #applyToolbarMode(): void {
+    this.dataset.toolbarMode = this.toolbarMode;
+    this.toggleAttribute("data-toolbar-pinned", this.toolbarPinned);
   }
 
   #buildToolbar(): void {
@@ -444,18 +537,19 @@ export class SpezRichtext extends HTMLElement {
     this.#toolbar?.dispose();
     this.#toolbar?.element.remove();
     this.#toolbar = null;
-    const groups = this.#toolbarGroups();
-    if (groups.length === 0) return;
+    const layout = this.#resolveToolbar();
+    if (layout === null) return;
     this.#toolbar = buildToolbar(
       this.#editor,
       this,
-      groups,
+      layout,
       this.locale,
       this.#fontOptions(),
       this.#fontSizeOptions(),
       (detail) => this.#emitDiagramEdit(detail),
     );
     this.prepend(this.#toolbar.element);
+    this.#toolbar.refreshLayout();
   }
 
   #applyDir(): void {

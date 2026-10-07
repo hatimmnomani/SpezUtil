@@ -16,6 +16,8 @@ import type {
   FontOption,
   FontSizeOption,
   SpezRichtext,
+  ToolbarConfig,
+  ToolbarMode,
 } from "@spezutil/richtext-editor";
 
 @Component({
@@ -32,6 +34,10 @@ import type {
       [attr.dir]="dir"
       [attr.locale]="locale"
       [attr.toolbar]="toolbar"
+      [attr.toolbar-layout]="toolbarLayout"
+      [toolbarConfig]="toolbarConfig"
+      [attr.toolbar-mode]="toolbarMode"
+      [toolbarPinned]="toolbarPinned"
       [fonts]="fonts"
       [fontSizes]="fontSizes"
       [highlightMarks]="highlightMarks"
@@ -53,8 +59,16 @@ export class SpezRichtextComponent {
   @Input() placeholder: string | null = null;
   @Input() dir: string | null = null;
   @Input() locale: string | null = null;
-  /** Comma-separated groups; add `lud`, `comment`, `diagram` to opt in. */
+  /** Legacy comma-separated group list (selects the `legacy` layout); prefer `toolbarConfig`. */
   @Input() toolbar: string | null = null;
+  /** `compact` (default): one row plus a More menu. `legacy`: the 0.5 flat, wrapping toolbar. */
+  @Input() toolbarLayout: "compact" | "legacy" | null = null;
+  /** Declarative layout: groups of item ids, the More menu, hide/show, collapse order. Wins over `toolbar`. */
+  @Input() toolbarConfig: ToolbarConfig | null = null;
+  /** `static` (default), `sticky` or `focus`. Change it at any time; persisting it is the app's job. */
+  @Input() toolbarMode: ToolbarMode | null = null;
+  /** In `focus` mode, keep the toolbar showing while the editor has no focus. */
+  @Input() toolbarPinned = false;
   /** Toolbar font list; replaces the defaults (spread DEFAULT_FONTS to extend). */
   @Input() fonts: FontOption[] | null = null;
   @Input() fontSizes: FontSizeOption[] | null = null;
@@ -88,6 +102,13 @@ export class SpezRichtextComponent {
   }
   updateDiagram(nodeKey: string, patch: { source?: string; drawioKey?: string | null }): boolean {
     return this.element.updateDiagram(nodeKey, patch);
+  }
+  setToolbarMode(mode: ToolbarMode): void {
+    this.toolbarMode = mode;
+    this.element.setToolbarMode(mode);
+  }
+  focusToolbar(): void {
+    this.element.focusToolbar();
   }
   getJSON(): string {
     return this.element.getJSON();
