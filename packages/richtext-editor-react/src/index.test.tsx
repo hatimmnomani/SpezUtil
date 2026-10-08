@@ -18,6 +18,12 @@ describe("SpezRichtext (React)", () => {
     expect(el.querySelector(".spez-rte-editor")).not.toBeNull();
   });
 
+  it("forwards the tableTools property", () => {
+    const { container } = render(React.createElement(SpezRichtext, { tableTools: false }));
+    const el = container.querySelector("spez-richtext")!;
+    expect(el.tableTools).toBe(false);
+  });
+
   it("forwards the initialHtml property", () => {
     const { container } = render(
       React.createElement(SpezRichtext, { initialHtml: "<p>Salaam</p>" }),
@@ -70,5 +76,23 @@ describe("SpezRichtext (React)", () => {
     window.getSelection()!.addRange(range);
     el.addCommentMark();
     expect(onCommentRequested).toHaveBeenCalledTimes(1);
+  });
+
+  it("forwards the toolbar API: config, mode and pinning", () => {
+    const { container, rerender } = render(
+      React.createElement(SpezRichtext, {
+        toolbarConfig: { groups: ["history", "inline"], more: false },
+        toolbarMode: "sticky",
+      } as never),
+    );
+    const el = container.querySelector("spez-richtext")!;
+    expect([...el.querySelectorAll(".spez-rte-toolbar > .spez-rte-group")].map((g) => g.getAttribute("data-group"))).toEqual([
+      "history",
+      "inline",
+    ]);
+    expect(el.toolbarMode).toBe("sticky");
+    rerender(React.createElement(SpezRichtext, { toolbarMode: "focus", toolbarPinned: true } as never));
+    expect(el.toolbarMode).toBe("focus");
+    expect(el.toolbarPinned).toBe(true);
   });
 });

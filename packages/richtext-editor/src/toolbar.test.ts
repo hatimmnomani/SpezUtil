@@ -48,7 +48,7 @@ function create(attrs: Record<string, string> = {}): SpezRichtext {
 
 function clickButton(el: SpezRichtext, title: string): void {
   const btn = [...el.querySelectorAll<HTMLButtonElement>(".spez-rte-toolbar button")].find(
-    (b) => b.title === title,
+    (b) => b.getAttribute("aria-label") === title,
   );
   expect(btn, `toolbar button "${title}"`).toBeDefined();
   btn!.click();
@@ -196,25 +196,22 @@ describe("toolbar", () => {
   it("undo button starts disabled", () => {
     const el = create();
     const undo = [...el.querySelectorAll<HTMLButtonElement>("button")].find(
-      (b) => b.title === "Undo",
+      (b) => b.getAttribute("aria-label") === "Undo",
     )!;
     expect(undo.disabled).toBe(true);
   });
 
   it("uses Arabic labels for locale=ar", () => {
     const el = create({ locale: "ar" });
-    const bold = [...el.querySelectorAll<HTMLButtonElement>("button")].find(
-      (b) => b.textContent === "B",
-    )!;
-    expect(bold.title).toBe("غامق");
+    const bold = el.querySelector<HTMLButtonElement>('button[data-item="bold"]')!;
+    expect(bold.getAttribute("aria-label")).toBe("غامق");
+    expect(bold.title).toMatch(/^غامق \((⌘|Ctrl\+)B\)$/);
   });
 });
 
 describe("toolbar font selector", () => {
   function fontSelect(el: SpezRichtext): HTMLSelectElement {
-    const select = el.querySelector<HTMLSelectElement>(
-      '.spez-rte-toolbar [data-group="font"] select',
-    );
+    const select = el.querySelector<HTMLSelectElement>('.spez-rte-toolbar [data-item="font-family"]');
     expect(select, "font select").not.toBeNull();
     return select!;
   }
@@ -437,12 +434,11 @@ describe("toolbar color controls", () => {
 });
 
 describe("toolbar font-size selector", () => {
-  // The font-size select is the second <select> in the "font" group, after
-  // the font-family select — locale-independent, unlike matching on title.
+  // Found by item id: locale-independent, and the same in every layout.
   function fontSizeSelect(el: SpezRichtext): HTMLSelectElement {
-    const selects = el.querySelectorAll<HTMLSelectElement>('.spez-rte-toolbar [data-group="font"] select');
-    expect(selects.length, "font-size select").toBeGreaterThanOrEqual(2);
-    return selects[1]!;
+    const select = el.querySelector<HTMLSelectElement>('.spez-rte-toolbar [data-item="font-size"]');
+    expect(select, "font-size select").not.toBeNull();
+    return select!;
   }
 
   it("renders the default size list plus a default row", () => {

@@ -68,6 +68,21 @@ export interface LocaleStrings {
   diagram: string;
   wordCount: string;
   characterCount: string;
+  blockStyle: string;
+  toolbarLabel: string;
+  moreFormatting: string;
+  moreTools: string;
+  sectionTextStyle: string;
+  sectionParagraph: string;
+  sectionInsert: string;
+  groupHistory: string;
+  groupBlock: string;
+  groupInline: string;
+  groupColor: string;
+  groupLists: string;
+  groupAlignDir: string;
+  groupInsert: string;
+  groupComment: string;
 }
 
 const en: LocaleStrings = {
@@ -131,13 +146,28 @@ const en: LocaleStrings = {
   translit: "Transliteration pair",
   translitArabicPlaceholder: "Arabic",
   translitLatinPlaceholder: "Transliteration",
-  ludFont: "LuD font",
-  ludFontNone: "None",
+  ludFont: "Lisan ud-Dawat font",
+  ludFontNone: "Default",
   ludFontDraft: "(draft)",
   comment: "Comment",
   diagram: "Diagram",
   wordCount: "{count} words",
   characterCount: "{count} characters",
+  blockStyle: "Block style",
+  toolbarLabel: "Formatting",
+  moreFormatting: "More formatting",
+  moreTools: "More tools",
+  sectionTextStyle: "Text style",
+  sectionParagraph: "Paragraph",
+  sectionInsert: "Insert",
+  groupHistory: "History",
+  groupBlock: "Block style",
+  groupInline: "Text",
+  groupColor: "Colour",
+  groupLists: "Lists and indent",
+  groupAlignDir: "Alignment and direction",
+  groupInsert: "Insert",
+  groupComment: "Comment",
 };
 
 const ar: LocaleStrings = {
@@ -202,12 +232,27 @@ const ar: LocaleStrings = {
   translitArabicPlaceholder: "النص العربي",
   translitLatinPlaceholder: "النقل الحرفي",
   ludFont: "خط لسان الدعوة",
-  ludFontNone: "بلا",
+  ludFontNone: "افتراضي",
   ludFontDraft: "(مسودة)",
   comment: "تعليق",
   diagram: "مخطط",
   wordCount: "{count} كلمة",
   characterCount: "{count} حرف",
+  blockStyle: "نمط الفقرة",
+  toolbarLabel: "التنسيق",
+  moreFormatting: "المزيد من التنسيق",
+  moreTools: "أدوات أخرى",
+  sectionTextStyle: "نمط النص",
+  sectionParagraph: "الفقرة",
+  sectionInsert: "إدراج",
+  groupHistory: "السجل",
+  groupBlock: "نمط الفقرة",
+  groupInline: "النص",
+  groupColor: "الألوان",
+  groupLists: "القوائم والإزاحة",
+  groupAlignDir: "المحاذاة والاتجاه",
+  groupInsert: "إدراج",
+  groupComment: "تعليق",
 };
 
 const tables: Record<EditorLocale, LocaleStrings> = { en, ar };

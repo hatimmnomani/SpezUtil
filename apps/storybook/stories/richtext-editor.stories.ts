@@ -157,3 +157,127 @@ export const Diagram = () => {
   });
   return html`${el}`;
 };
+
+/* -------------------------------------------------------------------------- */
+/* Toolbar API                                                                */
+/* -------------------------------------------------------------------------- */
+
+const TOOLBAR_DOC = [
+  "<h2>Toolbar</h2>",
+  "<p>Select some text and use the toolbar. Hover a button for its shortcut.</p>",
+  "<p>السلام عليكم ورحمة الله وبركاته</p>",
+].join("");
+
+/** An editor inside a box whose width the story controls, so the overflow behaviour can be seen. */
+function boxed(width: string, el: HTMLElement) {
+  const box = document.createElement("div");
+  box.style.cssText = `width:${width};max-width:100%;resize:horizontal;overflow:auto;padding:4px;border:1px dashed #9ca3af`;
+  box.append(el);
+  return html`<p style="font:12px system-ui;margin:0 0 6px">Drag the dashed box's corner to resize it.</p>${box}`;
+}
+
+export const ToolbarDefault = () => {
+  const el = document.createElement("spez-richtext");
+  el.initialHtml = TOOLBAR_DOC;
+  return html`${el}`;
+};
+(ToolbarDefault as any).parameters = {
+  docs: { description: { story: "The default compact layout: one row, with strike, sub/sup, code, justify, auto direction, Hijri date, ayat, transliteration, the font pickers and the Lisan ud-Dawat font picker in **More**." } },
+};
+
+export const ToolbarCustomGroups = () => {
+  const el = document.createElement("spez-richtext");
+  el.initialHtml = TOOLBAR_DOC;
+  el.toolbarConfig = {
+    groups: [
+      "history",
+      { id: "text", items: ["bold", "italic", "underline"], label: "Text" },
+      "lists",
+      "insert",
+    ],
+    more: ["strikethrough", "code", "hijri-date"],
+    hide: ["image"],
+    show: ["comment"],
+  };
+  return html`${el}`;
+};
+
+export const ToolbarOverflow = () => {
+  const el = document.createElement("spez-richtext");
+  el.initialHtml = TOOLBAR_DOC;
+  return boxed("560px", el);
+};
+(ToolbarOverflow as any).parameters = {
+  docs: { description: { story: "Groups collapse into More as the box narrows (alignment and direction first) and return when it widens. Below the narrowest, the row wraps instead of clipping." } },
+};
+
+export const ToolbarFocusMode = () => {
+  const el = document.createElement("spez-richtext");
+  el.setToolbarMode("focus");
+  el.initialHtml = TOOLBAR_DOC;
+  const pin = document.createElement("button");
+  pin.textContent = "Pin toolbar";
+  pin.onclick = () => (el.toolbarPinned = !el.toolbarPinned);
+  return html`<p>${pin} The toolbar appears over the top of the page only while the editor has focus. Nothing shifts.</p>${el}`;
+};
+
+export const ToolbarSticky = () => {
+  const el = document.createElement("spez-richtext");
+  el.setToolbarMode("sticky");
+  el.initialHtml = Array.from({ length: 40 }, (_, i) => `<p>Paragraph ${i + 1}. Scroll: the toolbar stays pinned.</p>`).join("");
+  const box = document.createElement("div");
+  box.style.cssText = "height:320px;overflow:auto;border:1px solid #d9dee4";
+  box.append(el);
+  return html`${box}`;
+};
+
+export const ToolbarModes = () => {
+  const el = document.createElement("spez-richtext");
+  el.initialHtml = TOOLBAR_DOC;
+  const select = document.createElement("select");
+  for (const m of ["static", "sticky", "focus"]) select.add(new Option(m, m));
+  select.onchange = () => el.setToolbarMode(select.value as "static" | "sticky" | "focus");
+  return html`<label>Mode ${select}</label>${el}`;
+};
+
+export const ToolbarRtl = () => {
+  const el = document.createElement("spez-richtext");
+  el.setAttribute("locale", "ar");
+  el.setAttribute("dir", "rtl");
+  el.initialHtml = "<p>السلام عليكم ورحمة الله وبركاته</p>";
+  return boxed("560px", el);
+};
+
+export const ToolbarThemed = () => {
+  const el = document.createElement("spez-richtext");
+  el.initialHtml = TOOLBAR_DOC;
+  el.setToolbarMode("sticky");
+  el.style.cssText = [
+    "--rte-toolbar-bg:#0f1b2d",
+    "--rte-toolbar-fg:#e8dcc0",
+    "--rte-toolbar-muted:#9aa7b8",
+    "--rte-toolbar-border:#2a3b55",
+    "--rte-toolbar-hover-bg:#1c2d47",
+    "--rte-toolbar-active-bg:#2a3b55",
+    "--rte-toolbar-active-fg:#f2c75c",
+    "--rte-toolbar-active-border:#f2c75c",
+    "--rte-toolbar-focus-ring:#f2c75c",
+    "--rte-menu-bg:#0f1b2d",
+    "--rte-menu-fg:#e8dcc0",
+    "--rte-menu-border:#2a3b55",
+    "--rte-toolbar-radius:0",
+    "--rte-control-radius:0",
+    "--rte-toolbar-icon-size:1.25rem",
+  ].join(";");
+  return html`${el}`;
+};
+
+export const ToolbarLegacy = () => {
+  const el = document.createElement("spez-richtext");
+  el.setAttribute("toolbar-layout", "legacy");
+  el.initialHtml = TOOLBAR_DOC;
+  return html`${el}`;
+};
+(ToolbarLegacy as any).parameters = {
+  docs: { description: { story: "The 0.5 layout: flat groups that wrap, no More menu. Icons and accessibility are the new ones." } },
+};
