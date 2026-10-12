@@ -12,7 +12,12 @@ title: API reference
 | `placeholder` | string | Shown while empty. |
 | `dir` | `rtl` \| `ltr` \| `auto` | Base direction (default `auto`; paragraphs still auto-detect from their first strong character). |
 | `locale` | `en` \| `ar` | Toolbar language (default `en`). |
-| `toolbar` | comma-separated groups or `none` | Groups: history, block, font, inline, color, list, indent, align, direction, insert (default set), plus opt-in lud, comment, diagram. |
+| `toolbar` | comma-separated groups or `none` | The legacy group list: history, block, font, inline, color, list, indent, align, direction, insert, plus opt-in lud, comment, diagram. Setting it selects the `legacy` layout. `none` removes the toolbar. Prefer `toolbarConfig`; see [Toolbar](#toolbar). |
+| `toolbar-layout` | `compact` \| `legacy` | `compact` (default): one row plus a More menu. `legacy`: the 0.5 flat, wrapping toolbar. |
+| `toolbar-config` | JSON | The same object as the `toolbarConfig` property, for plain HTML. |
+| `toolbar-mode` | `static` \| `sticky` \| `focus` | How the toolbar sits relative to the content (default `static`). |
+| `table-tools` | `off` \| `false` | Hides the floating table bar, row/column grips and column-resize strips (default on). See [Tables](./tables). |
+| `toolbar-pinned` | boolean | In `focus` mode, keep the toolbar showing without focus. |
 | `fonts` | comma-separated font families | Simple form of the toolbar font list, e.g. `fonts="Amiri, Tahoma, Arial"`. Use the `fonts` *property* for labels and full font stacks. |
 
 ## Properties
@@ -22,6 +27,9 @@ title: API reference
 | `value` | `string \| null` | Serialized Lexical editor state JSON (get/set; canonical persistence format). |
 | `initialHtml` | `string \| null` | HTML applied on first init when no `value` was set. |
 | `fonts` | `FontOption[] \| null` | Toolbar font list (`{ label, family }[]`). Replaces the defaults; spread the exported `DEFAULT_FONTS` to extend them instead. `null` restores the defaults. |
+| `toolbarConfig` | `ToolbarConfig \| null` | Declarative toolbar layout; see [Toolbar](#toolbar). `null` restores the default. |
+| `toolbarMode` | `'static' \| 'sticky' \| 'focus'` | Reflects `toolbar-mode`. Set it at any time, or call `setToolbarMode(mode)`. |
+| `toolbarPinned` | `boolean` | Reflects `toolbar-pinned`. |
 | `editor` | `LexicalEditor` | Escape hatch for advanced use (custom commands, transforms, …). Throws before first connect. |
 | `highlightMarks` | `string[] \| null` | Comment mark ids to highlight; `null` (default) highlights every mark. Marks not listed stay in the document but are not highlighted or clickable. |
 | `activeMark` | `string \| null` | Mark id drawn as the active thread. |
@@ -101,9 +109,139 @@ editor.insertHijriDate({ year: 1446, month: 9, day: 17 }, "D MMMM YYYY");
 If `@spezutil/hijri-datepicker` is loaded on the page, the toolbar button opens a date-picker
 popover instead of inserting today's date directly.
 
+## Toolbar
+
+New in 0.6. The toolbar is one compact row of icon buttons, grouped, with an overflow **More** menu.
+Every control has an inline SVG icon (no icon font), an `aria-label`, and a tooltip that shows its
+shortcut (Cmd on Apple platforms, Ctrl elsewhere). Toggles carry `aria-pressed`.
+
+### Default layout
+
+```
+history | block | inline | color | lists | align-dir | insert | More
+```
+
+| Group | Items |
+| --- | --- |
+| `history` | `undo`, `redo` |
+| `block` | `block` (paragraph / heading / quote / ayat select) |
+| `inline` | `bold`, `italic`, `underline`, `clear-formatting` |
+| `color` | `text-color`, `highlight-color` |
+| `lists` | `bullet-list`, `number-list`, `outdent`, `indent` |
+| `align-dir` | `align-start`, `align-center`, `align-end`, `dir-rtl`, `dir-ltr` |
+| `insert` | `link`, `image`, `table`, `diagram` |
+| More, text | `font-family`, `font-size`, `lud-font` ("Lisan ud-Dawat font"; empty option "Default"), `strikethrough`, `subscript`, `superscript`, `code` |
+| More, paragraph | `align-justify`, `dir-auto` |
+| More, insert | `hijri-date`, `ayat`, `transliteration` |
+| opt-in | `comment` (group `comment`; add with `show: ["comment"]`) |
+
+### Configuring it
+
+```ts
+el.toolbarConfig = {
+  // Ordered groups. A string is a preset group; an object defines your own.
+  groups: ["history", "block", { id: "text", items: ["bold", "italic"] }, "lists", "insert"],
+  // The More menu: a list of item ids, explicit sections, or false for none.
+  more: ["strikethrough", "code", "hijri-date"],
+  hide: ["image"],        // remove items wherever they are
+  show: ["comment"],      // add items that are not in the layout (into their home group, else More)
+  collapse: ["insert", "lists"], // groups that give way to More as width shrinks, first listed first
+  overflow: true,         // false: never collapse
+};
+```
+
+`layout: "legacy"` starts from the 0.5 groups instead. `DEFAULT_TOOLBAR_LAYOUT` and
+`LEGACY_TOOLBAR_LAYOUT` are exported so you can spread them and edit.
+
+### Upgrading from 0.5
+
+With nothing set, the toolbar is now the compact layout above. To keep the 0.5 layout (flat groups
+that wrap, no More menu), set `toolbar-layout="legacy"`. An explicit `toolbar="a,b,c"` attribute is
+unchanged: it selects the legacy layout with exactly those groups. In every layout the buttons draw
+SVG icons instead of text glyphs, and a button's `title` now includes its shortcut
+(`Bold (Ctrl+B)`): find buttons by `aria-label` or `data-item`, not by `title`.
+
+### Responsive overflow
+
+A `ResizeObserver` moves whole groups (the real elements, so their state and listeners come with
+them) into the More menu, in `collapse` order, until the row fits, and moves them back when it grows.
+When nothing is left to collapse the row wraps rather than clipping.
+
+### Display mode
+
+| Mode | Behaviour |
+| --- | --- |
+| `static` (default) | In the normal flow above the content. |
+| `sticky` | Pinned to the top of its scroll container (`--rte-toolbar-sticky-top` sets the offset). |
+| `focus` | Shown only while the editor has focus (or `toolbarPinned`), overlaid on the top of the content, so nothing shifts. |
+
+```ts
+el.setToolbarMode("focus");   // or el.toolbarMode = "focus", or toolbar-mode="focus"
+el.toolbarPinned = true;
+```
+
+The package does not remember the choice; persist it in your app and set it on load.
+
+### Keyboard
+
+The toolbar is `role="toolbar"` with a roving tabindex: Tab enters it once, Left/Right (mirrored in
+RTL) move between controls, Home/End jump to the ends, Escape returns to the text. From the text,
+**Alt+F10** moves to the toolbar. In the More menu: Enter, Space or Down opens it and moves in, Up/Down
+walk the buttons, Tab walks every control, Escape closes it and returns to its button.
+
+### Right to left
+
+Layout uses logical properties, so the toolbar mirrors under `dir="rtl"`. With `locale="ar"` and no
+`dir` on the element, an Arabic toolbar reads right to left on its own. Icons that point toward the
+start of the line (alignment, indent, bullets) mirror too.
+
+### Adding your own items
+
+```ts
+import { registerToolbarItem, type SpezRichtext } from "@spezutil/richtext-editor";
+
+registerToolbarItem({
+  id: "clear-all",
+  label: (t) => "Clear document",
+  icon: "clear-formatting",
+  shortcut: "mod+shift+K",
+  create: (ctx) => ctx.button({ id: "clear-all", label: () => "Clear document", icon: "clear-formatting", shortcut: "mod+shift+K" },
+    () => (ctx.host as SpezRichtext).clear()),
+});
+el.toolbarConfig = { groups: ["history", { id: "mine", items: ["clear-all"] }] };
+```
+
+Registering an id that already exists replaces the built-in (the "Insert table" button is the item
+`table`, which is how table tooling hooks in). `sync(element, state, ctx)` runs after every update.
+
+### Theming
+
+Colours, spacing, radius and type come from custom properties with neutral defaults; set them on the
+element or any ancestor.
+
+| Property | Default | |
+| --- | --- | --- |
+| `--rte-toolbar-bg` | `#f7f8f9` | Toolbar background. |
+| `--rte-toolbar-fg` | `var(--rte-fg)` | Icon and text colour. |
+| `--rte-toolbar-muted` | `var(--rte-muted)` | Section titles, shortcuts. |
+| `--rte-toolbar-border` / `--rte-toolbar-divider` | `var(--rte-border)` | Bottom edge / dividers between groups. |
+| `--rte-toolbar-hover-bg` | accent at 10% | Hover. |
+| `--rte-toolbar-active-bg` / `-fg` / `-border` | accent tints | Pressed and expanded. |
+| `--rte-toolbar-focus-ring` | `var(--rte-accent)` | Keyboard focus outline. |
+| `--rte-toolbar-field-bg` / `-fg` | `var(--rte-bg)` / `var(--rte-fg)` | Select controls. |
+| `--rte-toolbar-radius` | `var(--rte-radius)` | Toolbar's top corners. |
+| `--rte-control-radius` / `--rte-control-height` | `5px` / `28px` | Buttons and selects. |
+| `--rte-toolbar-gap`, `-padding-block`, `-padding-inline` | `2px`, `6px`, `8px` | Spacing. |
+| `--rte-toolbar-font-size`, `-label-size`, `-icon-size` | `0.85rem`, `0.75rem`, `1.125rem` | Type and icons. |
+| `--rte-toolbar-height` | `2.5rem` | Row height reserved in `focus` mode. |
+| `--rte-toolbar-z`, `--rte-toolbar-sticky-top` | `5`, `0px` | Stacking and pin offset. |
+| `--rte-toolbar-shadow` | soft black | Focus-mode overlay. |
+| `--rte-menu-bg` / `-fg` / `-border` / `-shadow` | base tokens | More menu. |
+| `--rte-menu-min-width`, `--rte-menu-max-height` | `18rem`, `70vh` | More menu size. |
+
 ## Font selector
 
-The toolbar's `font` group applies a font to the selected text (stored as an inline `font-family`
+The `font-family` and `font-size` items (in the More menu by default) apply a font to the selected text (stored as an inline `font-family`
 style; survives HTML export/import). The default list is the embedded Amiri plus safe
 cross-platform stacks. Configure it with the `fonts` property:
 

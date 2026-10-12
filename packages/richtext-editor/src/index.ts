@@ -5,11 +5,51 @@ export type { ChangeDetail } from "./richtext-editor";
 export { exportHTML, importHTML } from "./html";
 export { detectDirection, SET_DIRECTION_COMMAND } from "./direction";
 export { insertHijriDate } from "./hijri-insert";
+export { insertTable } from "./table/actions";
+export type { InsertTableOptions } from "./table/actions";
+export { cleanPastedHtml } from "./table/paste";
+export { TABLE_SHORTCUTS } from "./table/shortcuts";
+export type { TableShortcut } from "./table/shortcuts";
+export {
+  TABLE_MIN_COL_WIDTH,
+  TABLE_MAX_COL_WIDTH,
+  TABLE_MAX_ROWS,
+  TABLE_MAX_COLS,
+} from "./table/model";
 export { injectGlobalStyles, styles } from "./styles";
 export { getLocaleStrings } from "./locale";
 export type { EditorLocale, LocaleStrings } from "./locale";
-export { ALL_TOOLBAR_GROUPS, DEFAULT_TOOLBAR_GROUPS, DEFAULT_FONTS, DEFAULT_FONT_SIZES } from "./toolbar";
-export type { FontOption, FontSizeOption, ToolbarGroup } from "./toolbar";
+export {
+  ALL_TOOLBAR_GROUPS,
+  DEFAULT_TOOLBAR_GROUPS,
+  DEFAULT_TOOLBAR_LAYOUT,
+  LEGACY_TOOLBAR_LAYOUT,
+  DEFAULT_FONTS,
+  DEFAULT_FONT_SIZES,
+  TOOLBAR_MODES,
+  resolveToolbarLayout,
+  registerToolbarItem,
+  getToolbarItem,
+  listToolbarItems,
+} from "./toolbar";
+export type {
+  FontOption,
+  FontSizeOption,
+  ResolvedToolbarLayout,
+  ToolbarConfig,
+  ToolbarGroup,
+  ToolbarGroupConfig,
+  ToolbarMode,
+  ToolbarMoreSection,
+} from "./toolbar";
+export type {
+  PopoverOpener,
+  ToolbarItemContext,
+  ToolbarItemDefinition,
+  ToolbarSelectionState,
+} from "./toolbar-registry";
+export { TOOLBAR_ICONS, createIcon } from "./toolbar-icons";
+export { formatShortcut } from "./toolbar-a11y";
 export {
   ADD_COMMENT_MARK_COMMAND,
   REMOVE_COMMENT_MARK_COMMAND,

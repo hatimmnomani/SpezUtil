@@ -21,7 +21,16 @@ export const SpezRichtext = createComponent({
   },
 });
 
-export { DEFAULT_FONTS, DEFAULT_TOOLBAR_GROUPS, listLudFonts, setDiagramRenderer } from "@spezutil/richtext-editor";
+export {
+  DEFAULT_FONTS,
+  DEFAULT_TOOLBAR_GROUPS,
+  DEFAULT_TOOLBAR_LAYOUT,
+  LEGACY_TOOLBAR_LAYOUT,
+  listLudFonts,
+  registerToolbarItem,
+  resolveToolbarLayout,
+  setDiagramRenderer,
+} from "@spezutil/richtext-editor";
 export type {
   ChangeDetail,
   CommentClickDetail,
@@ -32,5 +41,11 @@ export type {
   FontOption,
   FontSizeOption,
   LudFontOption,
+  ToolbarConfig,
   ToolbarGroup,
+  ToolbarGroupConfig,
+  ToolbarItemContext,
+  ToolbarItemDefinition,
+  ToolbarMode,
+  ToolbarMoreSection,
 } from "@spezutil/richtext-editor";

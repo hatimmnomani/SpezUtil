@@ -10,7 +10,7 @@
   - **Transliteration pair** — an Arabic line + its transliteration that move, edit, and export as one unit
   - **Hijri date token** — atomic inline date backed by [`@spezutil/hijri-core`](https://www.npmjs.com/package/@spezutil/hijri-core) (Bohra/Misri tabular calendar); stores the actual `{year, month, day}`, not just text
 - Core formatting: bold / italic / underline / strikethrough / subscript / superscript / inline code, font size, headings, quote, lists, indent/outdent, alignment, undo/redo, clear formatting
-- Links, images (by URL), tables
+- Links, images (by URL), tables with a size-picker, floating table bar, row/column grips, column resize, cell selection, merge/split, paste cleaning and full keyboard support (see the docs' Tables page)
 - Optional word/character count status line
 - Output: **Lexical JSON** (canonical, lossless) + **HTML** export/import
 - Localized toolbar (`en`, `ar`)
@@ -189,7 +189,8 @@ Exports as:
 | `placeholder` | string | Shown while empty |
 | `dir` | `rtl` \| `ltr` \| `auto` | Base direction (default `auto`; paragraphs still auto-detect) |
 | `locale` | `en` \| `ar` | Toolbar language (default `en`) |
-| `toolbar` | comma-separated groups or `none` | Default groups: `history,block,font,inline,color,list,indent,align,direction,insert`. Opt-in groups (never on by default): `lud` (LuD font picker — see [LuD text](#lud-text-lisan-ud-dawat)), `comment` (comment button — see [Comment marks](#comment-marks)), `diagram` (◇ button — see [Diagrams](#diagrams)) |
+| `toolbar-layout` / `toolbar-config` / `toolbar-mode` / `toolbar-pinned` | see docs | New in 0.6: compact layout with a More menu, `toolbarConfig` property, `static`/`sticky`/`focus` display mode. Full reference: the docs site, *Toolbar*. `toolbar-layout="legacy"` restores the 0.5 layout. |
+| `toolbar` | comma-separated groups or `none` | Legacy group list (selects the legacy layout). Default groups: `history,block,font,inline,color,list,indent,align,direction,insert`. Opt-in groups (never on by default): `lud` (LuD font picker — see [LuD text](#lud-text-lisan-ud-dawat)), `comment` (comment button — see [Comment marks](#comment-marks)), `diagram` (◇ button — see [Diagrams](#diagrams)) |
 | `fonts` | comma-separated font families | Simple form of the font list, e.g. `fonts="Amiri, Tahoma, Arial"` (use the `fonts` *property* for labels and full font stacks) |
 | `font-sizes` | comma-separated font sizes | Simple form of the font-size list, e.g. `font-sizes="12px, 16px, 24px"` (use the `fontSizes` *property* for labels that differ from the CSS value) |
 | `word-count` | boolean | Shows a word/character count status line below the editor |
