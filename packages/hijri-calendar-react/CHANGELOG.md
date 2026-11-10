@@ -1,5 +1,13 @@
 # @spezutil/hijri-calendar-react
 
+## 0.2.1
+
+### Patch Changes
+
+- 8afbcfe: Add `month-grid="hijri" | "gregorian"` (`monthGrid`) to `<hijri-calendar>` and the matching `anchor` option on `buildMonthModel` / `buildCalendarMonthModel`. With `gregorian` the month view is framed around the Gregorian month containing `date` (grid, out-of-month cells, prev/next stepping) while every cell keeps its Hijri date and numerals; the title becomes the Hijri month range the Gregorian month spans. Default stays `hijri`, so existing consumers are unchanged.
+- Updated dependencies [8afbcfe]
+  - @spezutil/hijri-calendar@0.4.0
+
 ## 0.2.0
 
 ### Minor Changes
