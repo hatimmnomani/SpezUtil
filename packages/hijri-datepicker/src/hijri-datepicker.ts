@@ -285,6 +285,9 @@ export class HijriDatepicker extends HTMLElement {
   private selectSingle(cell: DayCell): void {
     this.selected = cell.hijri;
     const iso = toIso(cell.gregorian);
+    // With enable-time the spinner always displays a time (00:00 when none was set), so
+    // commit exactly what it shows rather than emitting a date-only value.
+    if (this.enableTime && !this.time) this.time = { hour: 0, minute: 0 };
     const value = this.time ? combineDateTime(iso, this.time) : iso;
     this.applyAttrs(() => this.setAttribute("value", value));
     this.render();
