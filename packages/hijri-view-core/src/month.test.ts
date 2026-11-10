@@ -18,6 +18,28 @@ describe("buildMonthModel", () => {
     expect(inMonth[0].hijri.day).toBe(1);
   });
 
+  it("frames the grid around a Gregorian month when anchor is gregorian", () => {
+    // May 2026: starts Fri 1 May, week-start Sunday → grid starts Sun 26 Apr.
+    const model = buildMonthModel(cal, { year: 2026, month: 5 }, { anchor: "gregorian" });
+    const cells = model.weeks.flat();
+    expect(cells.length).toBe(42);
+    expect(cells[0].gregorian.toISOString().slice(0, 10)).toBe("2026-04-26");
+    const inMonth = cells.filter((c) => c.inCurrentMonth);
+    expect(inMonth.length).toBe(31);
+    expect(inMonth[0].gregorian.getUTCDate()).toBe(1);
+    expect(inMonth[30].gregorian.getUTCDate()).toBe(31);
+    // Hijri dates are still computed per cell and span two Hijri months.
+    const hijriMonths = new Set(inMonth.map((c) => c.hijri.month));
+    expect(hijriMonths.size).toBe(2);
+    expect(model.year).toBe(2026);
+    expect(model.month).toBe(5);
+  });
+
+  it("keeps the Hijri framing by default", () => {
+    const model = buildMonthModel(cal, { year: 1445, month: 9 }, { anchor: "hijri" });
+    expect(model.weeks.flat().filter((c) => c.inCurrentMonth).length).toBe(cal.monthLength(1445, 9));
+  });
+
   it("marks selected and disabled cells", () => {
     const selected = { year: 1445, month: 9, day: 5 };
     const model = buildMonthModel(cal, { year: 1445, month: 9 }, {

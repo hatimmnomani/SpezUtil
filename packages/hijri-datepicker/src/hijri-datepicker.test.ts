@@ -127,6 +127,36 @@ describe("<hijri-datepicker>", () => {
     expect(detail.time).toEqual({ hour: 14, minute: 0 });
   });
 
+  it("enable-time: picking a day commits the displayed time (00:00) without touching the spinner", () => {
+    const el = mount({ "enable-time": "", "time-format": "12" });
+    let detail: any = null;
+    el.addEventListener("change", (e) => (detail = (e as CustomEvent).detail));
+    (el.shadowRoot!.querySelector("[data-i]:not([disabled])") as HTMLButtonElement).click();
+    expect(el.getAttribute("value")).toMatch(/^\d{4}-\d{2}-\d{2}T00:00$/);
+    expect(detail.gregorian).toMatch(/T00:00$/);
+    expect(detail.time).toEqual({ hour: 0, minute: 0 });
+  });
+
+  it("enable-time: picking a day keeps a time already chosen in the spinner", () => {
+    const el = mount({ "enable-time": "", "time-format": "24" });
+    const hour = el.shadowRoot!.querySelector('[data-time="hour"]') as HTMLInputElement;
+    hour.value = "09";
+    hour.dispatchEvent(new Event("change", { bubbles: true }));
+    let detail: any = null;
+    el.addEventListener("change", (e) => (detail = (e as CustomEvent).detail));
+    (el.shadowRoot!.querySelector("[data-i]:not([disabled])") as HTMLButtonElement).click();
+    expect(detail.time).toEqual({ hour: 9, minute: 0 });
+  });
+
+  it("without enable-time a picked day stays date-only", () => {
+    const el = mount({});
+    let detail: any = null;
+    el.addEventListener("change", (e) => (detail = (e as CustomEvent).detail));
+    (el.shadowRoot!.querySelector("[data-i]:not([disabled])") as HTMLButtonElement).click();
+    expect(detail.gregorian).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(detail.time).toBeUndefined();
+  });
+
   it("12h time picker shows an AM/PM toggle", () => {
     const el = mount({ value: "2024-03-15", "enable-time": "", "time-format": "12" });
     const ampm = el.shadowRoot!.querySelector('[data-time="meridiem"]');
