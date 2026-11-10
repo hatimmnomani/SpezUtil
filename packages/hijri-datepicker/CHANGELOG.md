@@ -1,5 +1,17 @@
 # @spezutil/hijri-datepicker
 
+## 0.3.0
+
+### Minor Changes
+
+- bab7db2: `<hijri-datepicker>` gains `numerals="arab" | "latn"` (**default now `arab`** — Hijri day numbers and the Hijri year render in Arabic-Indic digits; set `numerals="latn"` for the previous Latin look), `numerals-gregorian` (default `latn`), `names="translit" | "ar"` (Arabic month/weekday names) and `weekday-format="narrow" | "short"`. Every visual trait is now a `--dtp-*` custom property with the stock value as default (`--dtp-border`, `--dtp-width`, `--dtp-hover-bg`, title/weekday/day-number size+colour tokens, selected/range/today colours, `--dtp-font-family` which was referenced but never declared), and the header/title/weekday elements expose `::part()` names (`calendar`, `header`, `title`, `title-primary`, `title-secondary`, `weekday`).
+
+### Patch Changes
+
+- 9691578: With `enable-time`, picking a day now commits the time the spinner displays (00:00 when none was set) in both the `value` attribute and the `change` event (`detail.time`, `gregorian` as `YYYY-MM-DDTHH:mm`). Previously the spinner showed "12:00 AM" but the first day pick emitted a date-only value until the spinner was edited.
+- Updated dependencies [8afbcfe]
+  - @spezutil/hijri-view-core@0.3.0
+
 ## 0.2.2
 
 ### Patch Changes
